@@ -1,0 +1,44 @@
+{
+    "tabs": [
+        {
+            "id": "brillouin_calculator",
+            "name": "Brillouin Zone Calculator",
+            "description": "Calculate and visualize H, K, L indices from angles and vice versa",
+            "module_package": "brillouin_calculator",
+            "tab_class": "BrillouinCalculatorTab",
+            "icon": "icons/calculator.png",
+            "enabled": true,
+            "order": 1
+        },
+        {
+            "id": "brillouin_visualizer",
+            "name": "Brillouin Zone Visualizer",
+            "description": "Visualize the Brillouin zone for different crystal structures",
+            "module_package": "brillouin_visualizer",
+            "tab_class": "BrillouinVisualizerTab",
+            "icon": "icons/visualizer.png",
+            "enabled": true,
+            "order": 2
+        },
+        {
+            "id": "trajectory_planner",
+            "name": "Trajectory Planner",
+            "description": "Plan measurement trajectories for RIXS experiments",
+            "module_package": "trajectory_planner",
+            "tab_class": "TrajectoryPlannerTab",
+            "icon": "icons/planner.png",
+            "enabled": true,
+            "order": 3
+        },
+        {
+            "id": "placeholder",
+            "name": "Place Holder Tab",
+            "description": "Placeholder for future functionality",
+            "module_package": "placeholder_module",
+            "tab_class": "PlaceholderTab",
+            "icon": "icons/placeholder.png",
+            "enabled": true,
+            "order": 4
+        }
+    ]
+} 
