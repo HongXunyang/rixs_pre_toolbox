@@ -25,7 +25,8 @@ import sys
 import os
 import numpy as np
 import matplotlib
-matplotlib.use('Qt5Agg')
+
+matplotlib.use("Qt5Agg")
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -37,10 +38,10 @@ from packages.brillouin_visualizer.interface import BrillouinVisualizer
 
 class MatplotlibCanvas(FigureCanvas):
     """Matplotlib canvas for embedding in Qt applications."""
-    
+
     def __init__(self, width=6, height=5, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = self.fig.add_subplot(111, projection='3d')
+        self.axes = self.fig.add_subplot(111, projection="3d")
         super(MatplotlibCanvas, self).__init__(self.fig)
         self.fig.tight_layout()
 
@@ -62,7 +63,7 @@ class BrillouinVisualizerTab(TabInterface):
         """Initialize UI components."""
         # Create main layout with two columns
         main_layout = QGridLayout()
-        self.layout.addLayout(main_layout)
+        self.layout.addLayout(main_layout, 0, 0)  # Specify row 0, column 0
 
         # Left panel - controls
         left_panel = QGridLayout()
@@ -117,8 +118,15 @@ class BrillouinVisualizerTab(TabInterface):
         # Lattice type selection
         lattice_form = QFormLayout()
         self.lattice_type_combo = QComboBox()
-        self.lattice_type_combo.addItems(["Simple Cubic (SC)", "Body-Centered Cubic (BCC)", 
-                                        "Face-Centered Cubic (FCC)", "Hexagonal", "Custom"])
+        self.lattice_type_combo.addItems(
+            [
+                "Simple Cubic (SC)",
+                "Body-Centered Cubic (BCC)",
+                "Face-Centered Cubic (FCC)",
+                "Hexagonal",
+                "Custom",
+            ]
+        )
         lattice_form.addRow("Lattice Type:", self.lattice_type_combo)
         manual_layout.addLayout(lattice_form, 0, 0)
 
@@ -188,7 +196,9 @@ class BrillouinVisualizerTab(TabInterface):
         # View direction selection
         direction_form = QFormLayout()
         self.view_direction_combo = QComboBox()
-        self.view_direction_combo.addItems(["3D View", "View along x", "View along y", "View along z"])
+        self.view_direction_combo.addItems(
+            ["3D View", "View along x", "View along y", "View along z"]
+        )
         self.view_direction_combo.currentIndexChanged.connect(self.update_visualization)
         direction_form.addRow("View Direction:", self.view_direction_combo)
         view_layout.addLayout(direction_form, 0, 0)
@@ -272,14 +282,18 @@ class BrillouinVisualizerTab(TabInterface):
             success = self.visualizer.initialize_from_cif(file_path)
 
             if success:
-                QMessageBox.information(self, "Success", "Crystal structure loaded successfully!")
+                QMessageBox.information(
+                    self, "Success", "Crystal structure loaded successfully!"
+                )
                 self.update_structure_info()
                 self.update_special_points_list()
                 self.update_visualization()
             else:
                 QMessageBox.warning(self, "Error", "Failed to load crystal structure.")
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error loading crystal structure: {str(e)}")
+            QMessageBox.critical(
+                self, "Error", f"Error loading crystal structure: {str(e)}"
+            )
 
     @pyqtSlot()
     def load_from_parameters(self):
@@ -300,25 +314,31 @@ class BrillouinVisualizerTab(TabInterface):
 
             # Get lattice constants
             lattice_constants = {
-                'a': self.a_input.value(),
-                'b': self.b_input.value(),
-                'c': self.c_input.value(),
-                'alpha': self.alpha_input.value(),
-                'beta': self.beta_input.value(),
-                'gamma': self.gamma_input.value()
+                "a": self.a_input.value(),
+                "b": self.b_input.value(),
+                "c": self.c_input.value(),
+                "alpha": self.alpha_input.value(),
+                "beta": self.beta_input.value(),
+                "gamma": self.gamma_input.value(),
             }
 
-            success = self.visualizer.initialize_from_parameters(lattice_type, lattice_constants)
+            success = self.visualizer.initialize_from_parameters(
+                lattice_type, lattice_constants
+            )
 
             if success:
-                QMessageBox.information(self, "Success", "Brillouin zone generated successfully!")
+                QMessageBox.information(
+                    self, "Success", "Brillouin zone generated successfully!"
+                )
                 self.update_structure_info()
                 self.update_special_points_list()
                 self.update_visualization()
             else:
                 QMessageBox.warning(self, "Error", "Failed to generate Brillouin zone.")
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error generating Brillouin zone: {str(e)}")
+            QMessageBox.critical(
+                self, "Error", f"Error generating Brillouin zone: {str(e)}"
+            )
 
     @pyqtSlot(int)
     def update_lattice_inputs(self, index):
@@ -389,11 +409,11 @@ class BrillouinVisualizerTab(TabInterface):
             if view_index == 0:
                 view_direction = None  # 3D view
             elif view_index == 1:
-                view_direction = 'x'
+                view_direction = "x"
             elif view_index == 2:
-                view_direction = 'y'
+                view_direction = "y"
             else:
-                view_direction = 'z'
+                view_direction = "z"
 
             # Get whether to show special points
             show_points = self.show_points_check.isChecked()
@@ -406,14 +426,16 @@ class BrillouinVisualizerTab(TabInterface):
                 self.canvas.fig.clear()
 
                 # If current view is 3D but new view is 2D or vice versa, need to recreate axes
-                old_projection = getattr(self.canvas.axes, 'projection', None)
-                new_projection = '3d' if view_direction is None else None
+                old_projection = getattr(self.canvas.axes, "projection", None)
+                new_projection = "3d" if view_direction is None else None
 
                 if old_projection != new_projection:
                     # Remove old axes and create new ones with correct projection
                     self.canvas.fig.delaxes(self.canvas.axes)
                     if new_projection:
-                        self.canvas.axes = self.canvas.fig.add_subplot(111, projection=new_projection)
+                        self.canvas.axes = self.canvas.fig.add_subplot(
+                            111, projection=new_projection
+                        )
                     else:
                         self.canvas.axes = self.canvas.fig.add_subplot(111)
 
@@ -422,18 +444,29 @@ class BrillouinVisualizerTab(TabInterface):
                     # Get content from the generated figure axes
                     if i == 0:  # Only handling the first subplot for simplicity
                         # Copy properties to existing axes
-                        if new_projection == '3d':
+                        if new_projection == "3d":
                             # 3D axes
                             for collection in ax.collections:
                                 self.canvas.axes.add_collection3d(collection.copy())
                             for line in ax.lines:
-                                self.canvas.axes.plot3D(line.get_xdata(), line.get_ydata(), line.get_zdata(),
-                                                     color=line.get_color(), linestyle=line.get_linestyle(),
-                                                     linewidth=line.get_linewidth(), alpha=line.get_alpha())
+                                self.canvas.axes.plot3D(
+                                    line.get_xdata(),
+                                    line.get_ydata(),
+                                    line.get_zdata(),
+                                    color=line.get_color(),
+                                    linestyle=line.get_linestyle(),
+                                    linewidth=line.get_linewidth(),
+                                    alpha=line.get_alpha(),
+                                )
                             for text in ax.texts:
-                                self.canvas.axes.text(text.get_position()[0], text.get_position()[1], 
-                                                   text.get_position()[2], text.get_text(),
-                                                   fontsize=text.get_fontsize(), color=text.get_color())
+                                self.canvas.axes.text(
+                                    text.get_position()[0],
+                                    text.get_position()[1],
+                                    text.get_position()[2],
+                                    text.get_text(),
+                                    fontsize=text.get_fontsize(),
+                                    color=text.get_color(),
+                                )
 
                             # Copy axis settings
                             self.canvas.axes.set_xlim(ax.get_xlim())
@@ -448,13 +481,22 @@ class BrillouinVisualizerTab(TabInterface):
                             for collection in ax.collections:
                                 self.canvas.axes.add_collection(collection.copy())
                             for line in ax.lines:
-                                self.canvas.axes.plot(line.get_xdata(), line.get_ydata(),
-                                                   color=line.get_color(), linestyle=line.get_linestyle(),
-                                                   linewidth=line.get_linewidth(), alpha=line.get_alpha())
+                                self.canvas.axes.plot(
+                                    line.get_xdata(),
+                                    line.get_ydata(),
+                                    color=line.get_color(),
+                                    linestyle=line.get_linestyle(),
+                                    linewidth=line.get_linewidth(),
+                                    alpha=line.get_alpha(),
+                                )
                             for text in ax.texts:
-                                self.canvas.axes.text(text.get_position()[0], text.get_position()[1], 
-                                                   text.get_text(), fontsize=text.get_fontsize(), 
-                                                   color=text.get_color())
+                                self.canvas.axes.text(
+                                    text.get_position()[0],
+                                    text.get_position()[1],
+                                    text.get_text(),
+                                    fontsize=text.get_fontsize(),
+                                    color=text.get_color(),
+                                )
 
                             # Copy axis settings
                             self.canvas.axes.set_xlim(ax.get_xlim())
@@ -462,12 +504,14 @@ class BrillouinVisualizerTab(TabInterface):
                             self.canvas.axes.set_xlabel(ax.get_xlabel())
                             self.canvas.axes.set_ylabel(ax.get_ylabel())
                             self.canvas.axes.set_title(ax.get_title())
-                            if hasattr(ax, 'get_aspect') and ax.get_aspect() == 'equal':
-                                self.canvas.axes.set_aspect('equal')
+                            if hasattr(ax, "get_aspect") and ax.get_aspect() == "equal":
+                                self.canvas.axes.set_aspect("equal")
 
                 self.canvas.draw()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error updating visualization: {str(e)}")
+            QMessageBox.critical(
+                self, "Error", f"Error updating visualization: {str(e)}"
+            )
 
     @pyqtSlot()
     def add_to_path(self):
@@ -491,11 +535,15 @@ class BrillouinVisualizerTab(TabInterface):
     def visualize_path(self):
         """Visualize the selected path through the Brillouin zone."""
         if not self.visualizer.is_initialized():
-            QMessageBox.warning(self, "Warning", "Please load a crystal structure first.")
+            QMessageBox.warning(
+                self, "Warning", "Please load a crystal structure first."
+            )
             return
 
         if self.path_list.count() < 2:
-            QMessageBox.warning(self, "Warning", "Please select at least two points for the path.")
+            QMessageBox.warning(
+                self, "Warning", "Please select at least two points for the path."
+            )
             return
 
         try:
@@ -514,9 +562,12 @@ class BrillouinVisualizerTab(TabInterface):
                 self.canvas.fig.clear()
 
                 # Ensure we have 3D axes
-                if not hasattr(self.canvas.axes, 'projection') or self.canvas.axes.projection != '3d':
+                if (
+                    not hasattr(self.canvas.axes, "projection")
+                    or self.canvas.axes.projection != "3d"
+                ):
                     self.canvas.fig.delaxes(self.canvas.axes)
-                    self.canvas.axes = self.canvas.fig.add_subplot(111, projection='3d')
+                    self.canvas.axes = self.canvas.fig.add_subplot(111, projection="3d")
 
                 # Copy content from generated figure to canvas figure
                 for i, ax in enumerate(path_fig.get_axes()):
@@ -525,13 +576,24 @@ class BrillouinVisualizerTab(TabInterface):
                         for collection in ax.collections:
                             self.canvas.axes.add_collection3d(collection.copy())
                         for line in ax.lines:
-                            self.canvas.axes.plot3D(line.get_xdata(), line.get_ydata(), line.get_zdata(),
-                                                 color=line.get_color(), linestyle=line.get_linestyle(),
-                                                 linewidth=line.get_linewidth(), alpha=line.get_alpha())
+                            self.canvas.axes.plot3D(
+                                line.get_xdata(),
+                                line.get_ydata(),
+                                line.get_zdata(),
+                                color=line.get_color(),
+                                linestyle=line.get_linestyle(),
+                                linewidth=line.get_linewidth(),
+                                alpha=line.get_alpha(),
+                            )
                         for text in ax.texts:
-                            self.canvas.axes.text(text.get_position()[0], text.get_position()[1], 
-                                               text.get_position()[2], text.get_text(),
-                                               fontsize=text.get_fontsize(), color=text.get_color())
+                            self.canvas.axes.text(
+                                text.get_position()[0],
+                                text.get_position()[1],
+                                text.get_position()[2],
+                                text.get_text(),
+                                fontsize=text.get_fontsize(),
+                                color=text.get_color(),
+                            )
 
                         # Copy axis settings
                         self.canvas.axes.set_xlim(ax.get_xlim())
@@ -551,7 +613,7 @@ class BrillouinVisualizerTab(TabInterface):
 
     def open_file(self, file_path):
         """Handle opening a file from the main window."""
-        if file_path.lower().endswith('.cif'):
+        if file_path.lower().endswith(".cif"):
             self.file_path_input.setText(file_path)
             self.load_from_file()
             return True
@@ -559,4 +621,4 @@ class BrillouinVisualizerTab(TabInterface):
 
     def get_module_instance(self):
         """Get the backend module instance."""
-        return self.visualizer 
+        return self.visualizer

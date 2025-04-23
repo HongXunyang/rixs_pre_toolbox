@@ -16,10 +16,12 @@ from PyQt5.QtWidgets import (
     QSplitter,
     QGridLayout,
     QWidget,
+    QStackedWidget,
 )
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 
+from packages.gui.init_window import InitWindow
 
 class MainWindow(QMainWindow):
     """Main application window with tab-based interface."""
@@ -30,17 +32,17 @@ class MainWindow(QMainWindow):
         # Load application configuration
         self.config = self._load_config()
 
+        # Initialize lattice parameters
+        self.lattice_parameters = None
+
         # Setup window properties
         self.setup_window()
 
         # Create main UI components
         self.setup_ui()
 
-        # Add tabs from registry
-        self.load_tabs()
-
-        # Setup status bar
-        self.statusBar().showMessage("Ready")
+        # Show initialization window first
+        self.show_init_window()
 
     def setup_window(self):
         """Setup window properties."""
@@ -63,19 +65,28 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.layout = QGridLayout(self.central_widget)
         self.layout.setContentsMargins(5, 5, 5, 5)
-        self.layout.setSpacing(10)  # Add some spacing between widgets
+        self.layout.setSpacing(10)
 
-        # Create tab widget
+        # Create stacked widget for switching between init and main views
+        self.stacked_widget = QStackedWidget()
+        self.layout.addWidget(self.stacked_widget, 0, 0)
+
+        # Create initialization window
+        self.init_window = InitWindow(self)
+        self.stacked_widget.addWidget(self.init_window)
+
+        # Create main tab widget
         self.tab_widget = QTabWidget()
-        self.tab_widget.setTabPosition(QTabWidget.North)
+        self.tab_widget.setTabPosition(QTabWidget.West)
         self.tab_widget.setMovable(True)
         self.tab_widget.setDocumentMode(True)
-
-        # Add tab widget to layout at (0,0)
-        self.layout.addWidget(self.tab_widget, 0, 0)
+        self.stacked_widget.addWidget(self.tab_widget)
 
         # Create menu bar
         self.create_menu_bar()
+
+        # Create toolbar
+        self.create_toolbar()
 
         # Create status bar
         self.setStatusBar(QStatusBar())
@@ -99,6 +110,14 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
+        # File -> Reset Parameters
+        self.reset_action = QAction("&Reset Parameters", self)
+        self.reset_action.setShortcut("Ctrl+R")
+        self.reset_action.triggered.connect(self.reset_parameters)
+        file_menu.addAction(self.reset_action)
+
+        file_menu.addSeparator()
+
         # File -> Exit
         exit_action = QAction("E&xit", self)
         exit_action.setShortcut("Ctrl+Q")
@@ -113,10 +132,60 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
 
+    def create_toolbar(self):
+        """Create application toolbar."""
+        # Create toolbar
+        self.toolbar = self.addToolBar("Main Toolbar")
+        self.toolbar.setMovable(False)
+        self.toolbar.setIconSize(QSize(24, 24))
+
+        # Add reset parameters action (using the same action from menu)
+        reset_icon_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "static",
+            "icons",
+            "reset.png",
+        )
+        self.reset_action.setIcon(QIcon(reset_icon_path))
+        self.reset_action.setToolTip("Reset lattice parameters (Ctrl+R)")
+        self.reset_action.setStatusTip("Reset lattice parameters")
+        self.toolbar.addAction(self.reset_action)
+
+        # Add separator
+        self.toolbar.addSeparator()
+
+        # Add other toolbar actions here if needed
+
+    def show_init_window(self):
+        """Show the initialization window."""
+        self.stacked_widget.setCurrentWidget(self.init_window)
+        self.statusBar().showMessage("Please initialize lattice parameters")
+
+    def show_main_tabs(self):
+        """Show the main tabs after initialization."""
+        # Load tabs from registry
+        self.load_tabs()
+        self.stacked_widget.setCurrentWidget(self.tab_widget)
+        self.statusBar().showMessage("Ready")
+
+    def set_lattice_parameters(self, params):
+        """Store lattice parameters globally."""
+        self.lattice_parameters = params
+        # Update all tabs with new parameters
+        for i in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(i)
+            if hasattr(tab, "set_lattice_parameters"):
+                tab.set_lattice_parameters(params)
+
+    def get_lattice_parameters(self):
+        """Get the current lattice parameters."""
+        return self.lattice_parameters
+
     def load_tabs(self):
         """Load tabs from the registry."""
         registry_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
                                     "config", "tab_registry.json")
+        print(f"Loading tabs from registry: {registry_path}")
 
         try:
             with open(registry_path, 'r') as f:
@@ -124,20 +193,16 @@ class MainWindow(QMainWindow):
 
             # Sort tabs by order
             tabs_info = sorted(registry.get("tabs", []), key=lambda x: x.get("order", 999))
+            print(f"Found {len(tabs_info)} tabs in registry")
 
             # Load each enabled tab
             for tab_info in tabs_info:
                 if tab_info.get("enabled", True):
+                    print(f"Loading tab: {tab_info['name']}")
                     self.load_tab(tab_info)
 
-            # Set default tab
-            default_tab = self.config.get("default_tab")
-            for i in range(self.tab_widget.count()):
-                if self.tab_widget.tabText(i) == default_tab:
-                    self.tab_widget.setCurrentIndex(i)
-                    break
-
         except Exception as e:
+            print(f"Error loading tabs: {str(e)}")
             self.statusBar().showMessage(f"Error loading tabs: {str(e)}")
             if self.config.get("debug_mode", False):
                 raise e
@@ -148,37 +213,46 @@ class MainWindow(QMainWindow):
             # Get tab info
             module_name = f"packages.{tab_info['module_package']}"
             tab_class_name = tab_info["tab_class"]
+            print(f"Attempting to load tab: {module_name}.{tab_class_name}")
 
             # Try to load the tab module
             try:
                 # First try to load from gui.tabs package
                 # Convert class name to lowercase and remove 'Tab' suffix for file name
-                file_name = tab_class_name.lower().replace("tab", "")
+                file_name = tab_class_name.lower()
+                print(f"Trying to load from gui.tabs: {file_name}")
                 module = importlib.import_module(f"packages.gui.tabs.{file_name}")
-            except ImportError:
+            except ImportError as e:
+                print(f"Failed to load from gui.tabs: {str(e)}")
                 # If not found, try loading directly from the module package
+                print(f"Trying to load from module package: {module_name}.gui")
                 module = importlib.import_module(f"{module_name}.gui")
 
             # Get tab class
             tab_class = getattr(module, tab_class_name)
+            print(f"Successfully loaded tab class: {tab_class_name}")
 
             # Create tab instance
             tab_instance = tab_class()
+            print(f"Created tab instance: {tab_instance}")
 
             # Add tab to widget
             icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
                                     "static", tab_info.get("icon", ""))
+            print(f"Loading icon from: {icon_path}")
 
             if os.path.exists(icon_path):
                 self.tab_widget.addTab(tab_instance, QIcon(icon_path), tab_info["name"])
             else:
                 self.tab_widget.addTab(tab_instance, tab_info["name"])
+            print(f"Added tab to widget: {tab_info['name']}")
 
             # Set tooltip
             index = self.tab_widget.count() - 1
             self.tab_widget.setTabToolTip(index, tab_info.get("description", ""))
 
         except Exception as e:
+            print(f"Error loading tab {tab_info.get('name')}: {str(e)}")
             self.statusBar().showMessage(f"Error loading tab {tab_info.get('name')}: {str(e)}")
             if self.config.get("debug_mode", False):
                 raise e
@@ -234,6 +308,17 @@ class MainWindow(QMainWindow):
             <p>A PyQt5-based application for X-ray spectroscopy preparation.</p>
             <p>Developed as a collaboration project.</p>"""
         )
+
+    def reset_parameters(self):
+        """Reset lattice parameters and return to initialization window."""
+        # Clear current parameters
+        self.lattice_parameters = None
+
+        # Show initialization window
+        self.show_init_window()
+
+        # Update status bar
+        self.statusBar().showMessage("Please initialize lattice parameters")
 
     def closeEvent(self, event):
         """Handle window close event."""

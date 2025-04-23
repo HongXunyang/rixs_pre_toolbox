@@ -16,12 +16,17 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QComboBox,
+    QVBoxLayout,
+    QHBoxLayout,
 )
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot, QMimeData
+from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 import sys
 import os
 import matplotlib
-matplotlib.use('Qt5Agg')
+
+# Tell matplotlib to render plots using the Qt5 framework with the Agg (Anti-Grain Geometry) backend for drawing
+matplotlib.use("Qt5Agg")
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -33,12 +38,37 @@ from packages.brillouin_calculator.interface import BrillouinCalculator
 
 class MatplotlibCanvas(FigureCanvas):
     """Matplotlib canvas for embedding in Qt applications."""
-    
+
     def __init__(self, width=6, height=5, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = self.fig.add_subplot(111, projection='3d')
+        self.axes = self.fig.add_subplot(111, projection="3d")
         super(MatplotlibCanvas, self).__init__(self.fig)
         self.fig.tight_layout()
+
+
+class DragDropLineEdit(QLineEdit):
+    """Custom QLineEdit that accepts drag and drop events."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.setPlaceholderText("Drag and drop CIF file here or click Browse...")
+        self.setReadOnly(True)
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            if urls and urls[0].toLocalFile().endswith(".cif"):
+                event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        urls = event.mimeData().urls()
+        if urls:
+            file_path = urls[0].toLocalFile()
+            if file_path.endswith(".cif"):
+                self.setText(file_path)
+                # Emit the textChanged signal to notify parent
+                self.textChanged.emit(file_path)
 
 
 class BrillouinCalculatorTab(TabInterface):
@@ -61,99 +91,36 @@ class BrillouinCalculatorTab(TabInterface):
         self.layout.addWidget(self.tab_widget, 0, 0)  # Add to grid at (0,0)
 
         # Create tabs for different functionalities
-        self.create_initialize_tab()
         self.create_angles_to_hkl_tab()
         self.create_hkl_to_angles_tab()
 
-        # Create visualization area
-        self.create_visualization_area()
+    def set_lattice_parameters(self, params):
+        """Set lattice parameters from global settings."""
+        try:
+            if params.get("cif_file"):
+                # Use CIF file
+                success = self.calculator.initialize_from_cif(
+                    params["cif_file"], params["energy"]
+                )
+            else:
+                # Use manual parameters
+                success = self.calculator.initialize(
+                    a=params["a"],
+                    b=params["b"],
+                    c=params["c"],
+                    alpha=params["alpha"],
+                    beta=params["beta"],
+                    gamma=params["gamma"],
+                    energy=params["energy"],
+                )
 
-    def create_initialize_tab(self):
-        """Create tab for initialization parameters."""
-        init_tab = QWidget()
-        init_layout = QGridLayout(init_tab)  # Changed to QGridLayout
+            if not success:
+                QMessageBox.warning(self, "Error", "Failed to initialize calculator!")
 
-        # Group box for lattice parameters
-        lattice_group = QGroupBox("Lattice Parameters")
-        lattice_layout = QFormLayout(lattice_group)
-
-        # Lattice constants
-        self.a_input = QDoubleSpinBox()
-        self.a_input.setRange(0.1, 100.0)
-        self.a_input.setValue(5.0)
-        self.a_input.setSuffix(" Å")
-        lattice_layout.addRow("a:", self.a_input)
-
-        self.b_input = QDoubleSpinBox()
-        self.b_input.setRange(0.1, 100.0)
-        self.b_input.setValue(5.0)
-        self.b_input.setSuffix(" Å")
-        lattice_layout.addRow("b:", self.b_input)
-
-        self.c_input = QDoubleSpinBox()
-        self.c_input.setRange(0.1, 100.0)
-        self.c_input.setValue(5.0)
-        self.c_input.setSuffix(" Å")
-        lattice_layout.addRow("c:", self.c_input)
-
-        # Lattice angles
-        self.alpha_input = QDoubleSpinBox()
-        self.alpha_input.setRange(1.0, 179.0)
-        self.alpha_input.setValue(90.0)
-        self.alpha_input.setSuffix(" °")
-        lattice_layout.addRow("α:", self.alpha_input)
-
-        self.beta_input = QDoubleSpinBox()
-        self.beta_input.setRange(1.0, 179.0)
-        self.beta_input.setValue(90.0)
-        self.beta_input.setSuffix(" °")
-        lattice_layout.addRow("β:", self.beta_input)
-
-        self.gamma_input = QDoubleSpinBox()
-        self.gamma_input.setRange(1.0, 179.0)
-        self.gamma_input.setValue(90.0)
-        self.gamma_input.setSuffix(" °")
-        lattice_layout.addRow("γ:", self.gamma_input)
-
-        init_layout.addWidget(lattice_group, 0, 0)  # Add to grid at (0,0)
-
-        # Group box for X-ray energy
-        energy_group = QGroupBox("X-ray Energy")
-        energy_layout = QFormLayout(energy_group)
-
-        self.energy_input = QDoubleSpinBox()
-        self.energy_input.setRange(100.0, 20000.0)
-        self.energy_input.setValue(10000.0)
-        self.energy_input.setSuffix(" eV")
-        energy_layout.addRow("Energy:", self.energy_input)
-
-        init_layout.addWidget(energy_group, 1, 0)  # Add to grid at (1,0)
-
-        # File input area
-        file_group = QGroupBox("Crystal Structure File")
-        file_layout = QGridLayout(file_group)  # Changed to QGridLayout
-
-        self.file_path_input = QLineEdit()
-        self.file_path_input.setPlaceholderText("No file selected")
-        self.file_path_input.setReadOnly(True)
-        file_layout.addWidget(self.file_path_input, 0, 0)  # Add to grid at (0,0)
-
-        browse_button = QPushButton("Browse...")
-        browse_button.clicked.connect(self.browse_cif_file)
-        file_layout.addWidget(browse_button, 0, 1)  # Add to grid at (0,1)
-
-        init_layout.addWidget(file_group, 2, 0)  # Add to grid at (2,0)
-
-        # Initialize button
-        initialize_button = QPushButton("Initialize Calculator")
-        initialize_button.clicked.connect(self.initialize_calculator)
-        init_layout.addWidget(initialize_button, 3, 0)  # Add to grid at (3,0)
-
-        # Add spacer
-        init_layout.addWidget(QWidget(), 4, 0)  # Add empty widget as spacer
-
-        # Add to tab widget
-        self.tab_widget.addTab(init_tab, "Initialize")
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Error initializing calculator: {str(e)}"
+            )
 
     def create_angles_to_hkl_tab(self):
         """Create tab for angles to HKL calculation."""
@@ -340,55 +307,14 @@ class BrillouinCalculatorTab(TabInterface):
             self.file_path_input.setText(file_path)
 
     @pyqtSlot()
-    def initialize_calculator(self):
-        """Initialize the Brillouin zone calculator."""
-        try:
-            # Check if using file or manual parameters
-            if self.file_path_input.text():
-                # Use CIF file
-                success = self.calculator.initialize_from_cif(
-                    self.file_path_input.text(),
-                    self.energy_input.value()
-                )
-
-                if success:
-                    # Update manual inputs with values from file
-                    lattice = self.calculator.get_lattice_parameters()
-                    self.a_input.setValue(lattice['a'])
-                    self.b_input.setValue(lattice['b'])
-                    self.c_input.setValue(lattice['c'])
-                    self.alpha_input.setValue(lattice['alpha'])
-                    self.beta_input.setValue(lattice['beta'])
-                    self.gamma_input.setValue(lattice['gamma'])
-            else:
-                # Use manual parameters
-                success = self.calculator.initialize(
-                    a=self.a_input.value(),
-                    b=self.b_input.value(),
-                    c=self.c_input.value(),
-                    alpha=self.alpha_input.value(),
-                    beta=self.beta_input.value(),
-                    gamma=self.gamma_input.value(),
-                    energy=self.energy_input.value()
-                )
-
-            if success:
-                QMessageBox.information(self, "Success", "Calculator initialized successfully!")
-                # Update visualization
-                self.update_visualization()
-            else:
-                QMessageBox.warning(self, "Error", "Failed to initialize calculator!")
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error initializing calculator: {str(e)}")
-
-    @pyqtSlot()
     def calculate_hkl(self):
         """Calculate HKL from angles."""
         try:
             # Check if calculator is initialized
             if not self.calculator.is_initialized():
-                QMessageBox.warning(self, "Warning", "Please initialize the calculator first!")
+                QMessageBox.warning(
+                    self, "Warning", "Please initialize the calculator first!"
+                )
                 self.tab_widget.setCurrentIndex(0)
                 return
 
@@ -397,7 +323,7 @@ class BrillouinCalculatorTab(TabInterface):
                 gamma=self.gamma_angle_input.value(),
                 theta=self.theta_angle_input.value(),
                 phi=self.phi_angle_input.value(),
-                chi=self.chi_angle_input.value()
+                chi=self.chi_angle_input.value(),
             )
 
             # Update results
@@ -418,7 +344,9 @@ class BrillouinCalculatorTab(TabInterface):
         try:
             # Check if calculator is initialized
             if not self.calculator.is_initialized():
-                QMessageBox.warning(self, "Warning", "Please initialize the calculator first!")
+                QMessageBox.warning(
+                    self, "Warning", "Please initialize the calculator first!"
+                )
                 self.tab_widget.setCurrentIndex(0)
                 return
 
@@ -433,7 +361,7 @@ class BrillouinCalculatorTab(TabInterface):
                 l=self.l_input.value(),
                 gamma_max=self.gamma_max_input.value(),
                 fixed_angle=fixed_angle,
-                fixed_value=fixed_value
+                fixed_value=fixed_value,
             )
 
             # Update results
@@ -442,7 +370,7 @@ class BrillouinCalculatorTab(TabInterface):
             self.phi_result.setText(f"{result['phi']:.4f}°")
             self.chi_result.setText(f"{result['chi']:.4f}°")
 
-            if 'energy_min' in result:
+            if "energy_min" in result:
                 self.energy_min_result.setText(f"{result['energy_min']:.1f} eV")
             else:
                 self.energy_min_result.setText("N/A")
@@ -480,40 +408,40 @@ class BrillouinCalculatorTab(TabInterface):
     def get_state(self):
         """Get the current state for session saving."""
         return {
-            'lattice': {
-                'a': self.a_input.value(),
-                'b': self.b_input.value(),
-                'c': self.c_input.value(),
-                'alpha': self.alpha_input.value(),
-                'beta': self.beta_input.value(),
-                'gamma': self.gamma_input.value()
+            "lattice": {
+                "a": self.a_input.value(),
+                "b": self.b_input.value(),
+                "c": self.c_input.value(),
+                "alpha": self.alpha_input.value(),
+                "beta": self.beta_input.value(),
+                "gamma": self.gamma_input.value(),
             },
-            'energy': self.energy_input.value(),
-            'file_path': self.file_path_input.text(),
-            'current_tab': self.tab_widget.currentIndex()
+            "energy": self.energy_input.value(),
+            "file_path": self.file_path_input.text(),
+            "current_tab": self.tab_widget.currentIndex(),
         }
 
     def set_state(self, state):
         """Restore tab state from saved session."""
         try:
-            if 'lattice' in state:
-                lattice = state['lattice']
-                self.a_input.setValue(lattice.get('a', 5.0))
-                self.b_input.setValue(lattice.get('b', 5.0))
-                self.c_input.setValue(lattice.get('c', 5.0))
-                self.alpha_input.setValue(lattice.get('alpha', 90.0))
-                self.beta_input.setValue(lattice.get('beta', 90.0))
-                self.gamma_input.setValue(lattice.get('gamma', 90.0))
+            if "lattice" in state:
+                lattice = state["lattice"]
+                self.a_input.setValue(lattice.get("a", 5.0))
+                self.b_input.setValue(lattice.get("b", 5.0))
+                self.c_input.setValue(lattice.get("c", 5.0))
+                self.alpha_input.setValue(lattice.get("alpha", 90.0))
+                self.beta_input.setValue(lattice.get("beta", 90.0))
+                self.gamma_input.setValue(lattice.get("gamma", 90.0))
 
-            if 'energy' in state:
-                self.energy_input.setValue(state['energy'])
+            if "energy" in state:
+                self.energy_input.setValue(state["energy"])
 
-            if 'file_path' in state and state['file_path']:
-                self.file_path_input.setText(state['file_path'])
+            if "file_path" in state and state["file_path"]:
+                self.file_path_input.setText(state["file_path"])
 
-            if 'current_tab' in state:
-                self.tab_widget.setCurrentIndex(state['current_tab'])
+            if "current_tab" in state:
+                self.tab_widget.setCurrentIndex(state["current_tab"])
 
             return True
         except Exception:
-            return False 
+            return False

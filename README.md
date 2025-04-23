@@ -1,25 +1,46 @@
 # RIXS Preparation Toolbox
 
-A PyQt5-based application for X-ray spectroscopy preparation with a modular, extensible interface.
+A PyQt5-based application for X-ray spectroscopy preparation, featuring various tools for calculating and visualizing Brillouin zones, scattering geometries, and more.
 
 ## Features
 
-- **Brillouin Zone Calculator**: Calculate and visualize H, K, L indices from angles and vice versa
-- **Brillouin Zone Visualizer**: Visualize the Brillouin zone for different crystal structures
-- **Trajectory Planner**: Plan measurement trajectories for RIXS experiments
-- More features can be added as modular tabs
+- **Global Lattice Parameters**: Initialize crystal structure parameters once and use them across all tools
+- **CIF File Support**: Import crystal structure from CIF files or enter parameters manually
+- **Brillouin Zone Calculator**: Calculate and visualize Brillouin zones
+- **Scattering Geometry Tools**: Convert between angles and HKL indices
+- **Modern UI**: Clean, intuitive interface with drag-and-drop support
 
-## Setup
+## Installation
 
-1. Clone this repository
+1. Clone the repository
 2. Install dependencies:
-   ```
+   ```bash
    pip install -r requirements.txt
    ```
-3. Run the application:
-   ```
-   python main.py
-   ```
+
+## Usage
+
+1. Launch the application
+2. Initialize the crystal structure:
+   - Enter lattice parameters manually (a, b, c, α, β, γ)
+   - Or drag and drop a CIF file
+   - Set the X-ray energy
+3. Use the various tools in the tabs:
+   - Brillouin Zone Calculator
+   - Angles to HKL converter
+   - HKL to Angles converter
+
+## Development
+
+The application is built with:
+- Python 3.8+
+- PyQt5
+- Matplotlib
+- NumPy
+
+## License
+
+MIT License
 
 ## Module-Tab Communication Architecture
 
