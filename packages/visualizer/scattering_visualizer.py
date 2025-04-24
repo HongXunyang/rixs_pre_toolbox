@@ -74,7 +74,7 @@ class ScatteringVisualizer(FigureCanvas):
         cube = np.array(
             [
                 ver[:, 0] * X + origin[0],
-                ver[:, 1] * Y + origin[1],
+                ver[:, 1] * Y + origin[1] + Y / 2,
                 ver[:, 2] * Z + origin[2],
             ]
         ).T
@@ -119,7 +119,7 @@ class ScatteringVisualizer(FigureCanvas):
         # Draw colored arrow on top
         self.axes.quiver(
             k_in_x,
-            k_in_y - 0.125,
+            k_in_y,
             0,
             -k_in_x,
             -k_in_y,
@@ -140,7 +140,7 @@ class ScatteringVisualizer(FigureCanvas):
         # Draw colored arrow on top
         self.axes.quiver(
             0,
-            -0.125,
+            0,
             0,
             k_out_x,
             k_out_y,

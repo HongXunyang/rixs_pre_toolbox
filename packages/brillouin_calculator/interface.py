@@ -10,7 +10,7 @@ from .visualization import BrillouinVisualizer
 
 class BrillouinCalculator:
     """Interface for the Brillouin zone calculator.
-    
+
     This class handles all the calculations required for the Brillouin zone
     calculator tab. It's a pure Python implementation without PyQt dependencies.
     """
@@ -132,9 +132,9 @@ class BrillouinCalculator:
 
         # In a real implementation, we would store the full reciprocal lattice vectors
         self.reciprocal_lattice = {
-            'a_star': self.a_star,
-            'b_star': self.b_star,
-            'c_star': self.c_star
+            "a_star": self.a_star,
+            "b_star": self.b_star,
+            "c_star": self.c_star,
         }
 
     def calculate_hkl(self, tth, theta, phi, chi):
@@ -191,11 +191,12 @@ class BrillouinCalculator:
         k = self.b * q_sample[1]
         l = self.c * q_sample[2]
 
+        Q_rlu = np.sqrt(h**2 + k**2 + l**2)
         return {
             "h": h,
             "k": k,
             "l": l,
-            "q": Q,
+            "q": Q_rlu,
             "tth": tth,
             "theta": theta,
             "phi": phi,
@@ -302,7 +303,7 @@ class BrillouinCalculator:
 
     def is_initialized(self):
         """Check if the calculator is initialized.
-        
+
         Returns:
             bool: True if the calculator is initialized
         """
@@ -310,38 +311,15 @@ class BrillouinCalculator:
 
     def get_lattice_parameters(self):
         """Get the current lattice parameters.
-        
+
         Returns:
             dict: Dictionary containing lattice parameters
         """
         return {
-            'a': self.a,
-            'b': self.b,
-            'c': self.c,
-            'alpha': self.alpha,
-            'beta': self.beta,
-            'gamma': self.gamma
+            "a": self.a,
+            "b": self.b,
+            "c": self.c,
+            "alpha": self.alpha,
+            "beta": self.beta,
+            "gamma": self.gamma,
         }
-
-    def visualize_brillouin_zone(self):
-        """Visualize the Brillouin zone.
-        
-        Returns:
-            Figure: Matplotlib figure with the visualization
-        """
-        if not self.is_initialized():
-            return None
-        return self.visualizer.visualize_brillouin_zone()
-
-    def visualize_scattering_geometry(self, data):
-        """Visualize the scattering geometry.
-        
-        Args:
-            data (dict): Data containing HKL indices and scattering angles
-            
-        Returns:
-            Figure: Matplotlib figure with the visualization
-        """
-        if not self.is_initialized():
-            return None
-        return self.visualizer.visualize_scattering_geometry(data)

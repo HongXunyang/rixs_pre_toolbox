@@ -3,7 +3,7 @@
     "app_version": "0.1.0",
     "window_size": {
         "width": 1000,
-        "height": 400
+        "height": 600
     },
     "theme": "default",
     "data_directory": "data",

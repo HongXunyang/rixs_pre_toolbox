@@ -89,7 +89,7 @@ class BrillouinCalculatorTab(TabInterface):
         self.create_hkl_to_angles_tab()
 
     def set_tip(self, widget, name):
-        """Set the tooltip and status tip for a widget."""
+        """Set the tooltip and status tip for a widget by the name"""
         set_tip(widget, self.tips.tip(name))
 
     def set_lattice_parameters(self, params):
