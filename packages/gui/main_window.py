@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+# pylint: disable=no-name-in-module, import-error
 import os
 import json
 import importlib

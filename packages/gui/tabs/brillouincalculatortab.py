@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+# pylint: disable=no-name-in-module, import-error
 from PyQt5.QtWidgets import (
     QWidget,
     QGridLayout,
@@ -34,17 +34,8 @@ from matplotlib.figure import Figure
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from packages.gui.tabs.tab_interface import TabInterface
 from packages.brillouin_calculator.interface import BrillouinCalculator
-
-
-class MatplotlibCanvas(FigureCanvas):
-    """Matplotlib canvas for embedding in Qt applications."""
-
-    def __init__(self, width=6, height=5, dpi=100):
-        self.fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = self.fig.add_subplot(111, projection="3d")
-        super(MatplotlibCanvas, self).__init__(self.fig)
-        self.fig.tight_layout()
-
+from packages.visualizer.scattering_visualizer import ScatteringVisualizer
+from packages.helpers.tips import Tips, set_tip
 
 class DragDropLineEdit(QLineEdit):
     """Custom QLineEdit that accepts drag and drop events."""
@@ -77,6 +68,8 @@ class BrillouinCalculatorTab(TabInterface):
     def __init__(self, main_window=None):
         # Create backend instance
         self.calculator = BrillouinCalculator()
+        self.visualizer = ScatteringVisualizer()
+        self.tips = Tips()
 
         # Initialize UI
         super().__init__(main_window)
@@ -94,6 +87,10 @@ class BrillouinCalculatorTab(TabInterface):
         # Create tabs for different functionalities
         self.create_angles_to_hkl_tab()
         self.create_hkl_to_angles_tab()
+
+    def set_tip(self, widget, name):
+        """Set the tooltip and status tip for a widget."""
+        set_tip(widget, self.tips.tip(name))
 
     def set_lattice_parameters(self, params):
         """Set lattice parameters from global settings."""
@@ -120,7 +117,7 @@ class BrillouinCalculatorTab(TabInterface):
     def create_angles_to_hkl_tab(self):
         """Create tab for angles to HKL calculation."""
         angles_tab = QWidget()
-        angles_layout = QVBoxLayout(angles_tab)
+        angles_layout = QGridLayout(angles_tab)
 
         # Input form
         form_group = QGroupBox("Scattering Angles")
@@ -128,14 +125,16 @@ class BrillouinCalculatorTab(TabInterface):
 
         self.tth_angle_input = QDoubleSpinBox()
         self.tth_angle_input.setRange(0.0, 180.0)
-        self.tth_angle_input.setValue(30.0)
+        self.tth_angle_input.setValue(150.0)
         self.tth_angle_input.setSuffix(" °")
-        form_layout.addRow("tth (scattering):", self.tth_angle_input)
+        self.set_tip(self.tth_angle_input, "TTH")
+        form_layout.addRow("tth:", self.tth_angle_input)
 
         self.theta_angle_input = QDoubleSpinBox()
         self.theta_angle_input.setRange(-180.0, 180.0)
-        self.theta_angle_input.setValue(0.0)
+        self.theta_angle_input.setValue(90.0)
         self.theta_angle_input.setSuffix(" °")
+        self.set_tip(self.theta_angle_input, "THETA")
         form_layout.addRow("θ:", self.theta_angle_input)
 
         self.phi_angle_input = QDoubleSpinBox()
@@ -150,12 +149,12 @@ class BrillouinCalculatorTab(TabInterface):
         self.chi_angle_input.setSuffix(" °")
         form_layout.addRow("χ:", self.chi_angle_input)
 
-        angles_layout.addWidget(form_group)
+        angles_layout.addWidget(form_group, 0, 0)
 
         # Calculate button
         calculate_button = QPushButton("Calculate HKL")
         calculate_button.clicked.connect(self.calculate_hkl)
-        angles_layout.addWidget(calculate_button)
+        angles_layout.addWidget(calculate_button, 1, 0)
 
         # Results group
         results_group = QGroupBox("Results")
@@ -175,12 +174,13 @@ class BrillouinCalculatorTab(TabInterface):
 
         self.q_result = QLineEdit()
         self.q_result.setReadOnly(True)
-        results_layout.addRow("Q (Å⁻¹):", self.q_result)
+        results_layout.addRow("Q (r.l.u.):", self.q_result)
 
-        angles_layout.addWidget(results_group)
+        angles_layout.addWidget(results_group, 2, 0)
 
-        # Add spacer
-        angles_layout.addStretch()
+        # Visualizer
+        self.visualizer = ScatteringVisualizer(width=4, height=4)
+        angles_layout.addWidget(self.visualizer, 0, 1, 2, 1)
 
         # Add to tab widget
         self.tab_widget.addTab(angles_tab, "Angles → HKL")
@@ -252,10 +252,12 @@ class BrillouinCalculatorTab(TabInterface):
         results_layout = QFormLayout(results_group)
 
         self.tth_result = QLineEdit()
+        self.set_tip(self.tth_result, "TTH")
         self.tth_result.setReadOnly(True)
-        results_layout.addRow("tth (scattering):", self.tth_result)
+        results_layout.addRow("tth:", self.tth_result)
 
         self.theta_result = QLineEdit()
+        self.set_tip(self.theta_result, "THETA")
         self.theta_result.setReadOnly(True)
         results_layout.addRow("θ:", self.theta_result)
 
@@ -278,18 +280,6 @@ class BrillouinCalculatorTab(TabInterface):
 
         # Add to tab widget
         self.tab_widget.addTab(hkl_tab, "HKL → Angles")
-
-    def create_visualization_area(self):
-        """Create area for visualization of results."""
-        vis_group = QGroupBox("Visualization")
-        vis_layout = QVBoxLayout(vis_group)
-
-        # Add matplotlib canvas
-        self.canvas = MatplotlibCanvas(width=6, height=5)
-        vis_layout.addWidget(self.canvas)
-
-        # Add to main layout
-        self.layout.addWidget(vis_group)
 
     @pyqtSlot()
     def browse_cif_file(self):
@@ -376,25 +366,9 @@ class BrillouinCalculatorTab(TabInterface):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
 
-    def update_visualization(self, data=None):
+    def update_visualization(self, scattering_angles):
         """Update the visualization with current data."""
-        # Call the calculator's visualization method
-        if data is None:
-            # Just draw the basic Brillouin zone
-            fig = self.calculator.visualize_brillouin_zone()
-        else:
-            # Draw with scattering geometry
-            fig = self.calculator.visualize_scattering_geometry(data)
-
-        if fig:
-            # Replace the current figure in the canvas
-            self.canvas.fig.clear()
-            for ax in fig.get_axes():
-                ax.get_figure().delaxes(ax)
-                ax.figure = self.canvas.fig
-                self.canvas.fig.add_axes(ax)
-
-            self.canvas.draw()
+        self.visualizer.visualize_scattering_geometry(scattering_angles)
 
     def get_module_instance(self):
         """Get the backend module instance."""
