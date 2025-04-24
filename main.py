@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+# pylint: disable=no-name-in-module, import-error
 import sys
 import os
 from PyQt5.QtWidgets import QApplication

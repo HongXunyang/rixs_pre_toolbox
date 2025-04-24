@@ -49,12 +49,12 @@ class MatplotlibCanvas(FigureCanvas):
 class BrillouinVisualizerTab(TabInterface):
     """Tab for visualizing Brillouin zones."""
 
-    def __init__(self):
+    def __init__(self, main_window=None):
         # Create backend instance
         self.visualizer = BrillouinVisualizer()
 
         # Initialize UI
-        super().__init__()
+        super().__init__(main_window)
 
         # Set window title
         self.setWindowTitle("Brillouin Zone Visualizer")

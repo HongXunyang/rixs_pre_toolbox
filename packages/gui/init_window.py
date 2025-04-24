@@ -143,9 +143,6 @@ class InitWindow(QWidget):
 
         # Initialize button
         initialize_button = QPushButton("Initialize")
-        initialize_button.setToolTip(
-            "Initialize before going on to the main functionality"
-        )
         initialize_button.clicked.connect(self.initialize)
         # Add initialize button at (2,0) spanning 2 columns
         layout.addWidget(initialize_button, 2, 0, 1, 2)

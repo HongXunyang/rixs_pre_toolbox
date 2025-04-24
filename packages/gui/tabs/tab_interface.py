@@ -11,8 +11,9 @@ class TabInterface(QWidget):
     the required methods to ensure consistent behavior across tabs.
     """
 
-    def __init__(self):
+    def __init__(self, main_window=None):
         super().__init__()
+        self.main_window = main_window
 
         # Create main layout
         self.layout = QGridLayout(self)

@@ -19,6 +19,11 @@ class BrillouinCalculator:
         """Initialize the calculator."""
         self._initialized = False
 
+        # Physical constants
+        self.hPlanck = 6.62607015e-34  # Planck's constant [J·s]
+        self.c_light = 299792458  # Speed of light [m/s]
+        self.e = 1.602176634e-19  # Elementary charge [C]
+
         # Default lattice parameters
         self.a = 5.0
         self.b = 5.0
@@ -31,8 +36,10 @@ class BrillouinCalculator:
         self.b_star = 2 * np.pi / self.b
         self.c_star = 2 * np.pi / self.c
 
-        # X-ray energy
+        # X-ray energy and derived quantities
         self.energy = 930  # eV
+        self.lambda_A = None  # wavelength in Angstroms
+        self.k_in = None  # wavevector magnitude
 
         # Reciprocal lattice vectors (calculated during initialization)
         self.reciprocal_lattice = None
@@ -62,6 +69,10 @@ class BrillouinCalculator:
             self.energy = energy
             self.lattice_type = lattice_type
 
+            # Calculate wavelength and wavevector
+            self.lambda_A = (self.hPlanck * self.c_light) / (energy * self.e) * 1e10
+            self.k_in = 1.0 / self.lambda_A
+
             # Calculate reciprocal lattice
             self._calculate_reciprocal_lattice()
 
@@ -76,11 +87,12 @@ class BrillouinCalculator:
 
     def initialize_from_cif(self, cif_file_path, energy):
         """Initialize from a CIF file.
-        
+        PROBABLY NOT NEEDED, CONSIDER TO REMOVE IT
+
         Args:
             cif_file_path (str): Path to the CIF file
             energy (float): X-ray energy in eV
-            
+
         Returns:
             bool: True if initialization was successful
         """
@@ -140,35 +152,50 @@ class BrillouinCalculator:
         if not self.is_initialized():
             raise ValueError("Calculator not initialized")
 
-        # This is a placeholder implementation
-        # In a real implementation, this would calculate the HKL indices
-        # based on the scattering geometry and reciprocal lattice
+        # Calculate Q magnitude
+        Q = 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
 
-        # Simulate a calculation - this is just a placeholder!
-        # A real implementation would use proper vector calculations and
-        # rotation matrices to convert from angles to reciprocal space coordinates
+        # Calculate delta = theta - (tth/2)
+        delta_deg = theta - (tth / 2.0)
 
-        # Convert angles to radians
-        tth_rad = np.radians(tth)
-        theta_rad = np.radians(theta)
-        phi_rad = np.radians(phi)
+        # Build rotation matrices for chi and phi
         chi_rad = np.radians(chi)
+        phi_rad = np.radians(phi)
 
-        # Placeholder calculation of scattering vector
-        # These are just placeholder formulas for demonstration
-        h = np.sin(tth_rad / 2) * np.cos(theta_rad) * np.cos(phi_rad) / self.a_star
-        k = np.sin(tth_rad / 2) * np.cos(theta_rad) * np.sin(phi_rad) / self.b_star
-        l = np.sin(tth_rad / 2) * np.sin(theta_rad) / self.c_star
+        chi_mat = np.array(
+            [
+                [1, 0, 0],
+                [0, np.cos(chi_rad), -np.sin(chi_rad)],
+                [0, np.sin(chi_rad), np.cos(chi_rad)],
+            ]
+        )
 
-        # Calculate Q magnitude (Å⁻¹)
-        wavelength = 12398.42 / self.energy  # eV to Å
-        q = 4 * np.pi * np.sin(tth_rad / 2) / wavelength
+        phi_mat = np.array(
+            [
+                [np.cos(phi_rad), -np.sin(phi_rad), 0],
+                [np.sin(phi_rad), np.cos(phi_rad), 0],
+                [0, 0, 1],
+            ]
+        )
+
+        # Q vector in "theta-2theta coordinates"
+        sin_delta = np.sin(np.radians(delta_deg))
+        cos_delta = np.cos(np.radians(delta_deg))
+        Q_th2th = np.array([Q * sin_delta, 0.0, -Q * cos_delta])
+
+        # Transform to sample coordinates
+        q_sample = phi_mat @ chi_mat @ Q_th2th
+
+        # Calculate hkl indices
+        h = self.a * q_sample[0]
+        k = self.b * q_sample[1]
+        l = self.c * q_sample[2]
 
         return {
             "h": h,
             "k": k,
             "l": l,
-            "q": q,
+            "q": Q,
             "tth": tth,
             "theta": theta,
             "phi": phi,

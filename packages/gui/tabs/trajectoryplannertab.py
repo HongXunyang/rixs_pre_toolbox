@@ -54,13 +54,13 @@ class MatplotlibCanvas(FigureCanvas):
 class TrajectoryPlannerTab(TabInterface):
     """Tab for planning RIXS measurement trajectories."""
 
-    def __init__(self):
+    def __init__(self, main_window=None):
         # Create backend instance
         self.planner = TrajectoryPlanner()
         self.planner.initialize()
 
         # Initialize UI
-        super().__init__()
+        super().__init__(main_window)
 
         # Set window title
         self.setWindowTitle("Trajectory Planner")

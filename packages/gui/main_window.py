@@ -35,6 +35,9 @@ class MainWindow(QMainWindow):
         # Initialize lattice parameters
         self.lattice_parameters = None
 
+        # Flag to track if tabs are loaded
+        self.tabs_loaded = False
+
         # Setup window properties
         self.setup_window()
 
@@ -139,7 +142,7 @@ class MainWindow(QMainWindow):
         self.toolbar.setMovable(False)
         self.toolbar.setIconSize(QSize(24, 24))
 
-        # Add reset parameters action (using the same action from menu)
+        # Add reset parameters action (reuse the same action from menu)
         reset_icon_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
             "static",
@@ -148,7 +151,6 @@ class MainWindow(QMainWindow):
         )
         self.reset_action.setIcon(QIcon(reset_icon_path))
         self.reset_action.setToolTip("Reset lattice parameters (Ctrl+R)")
-        self.reset_action.setStatusTip("Reset lattice parameters")
         self.toolbar.addAction(self.reset_action)
 
         # Add separator
@@ -163,8 +165,11 @@ class MainWindow(QMainWindow):
 
     def show_main_tabs(self):
         """Show the main tabs after initialization."""
-        # Load tabs from registry
-        self.load_tabs()
+        # Load tabs from registry if not already loaded
+        if not self.tabs_loaded:
+            self.load_tabs()
+            self.tabs_loaded = True
+
         self.stacked_widget.setCurrentWidget(self.tab_widget)
         self.statusBar().showMessage("Ready")
 
@@ -233,7 +238,7 @@ class MainWindow(QMainWindow):
             print(f"Successfully loaded tab class: {tab_class_name}")
 
             # Create tab instance
-            tab_instance = tab_class()
+            tab_instance = tab_class(main_window=self)
             print(f"Created tab instance: {tab_instance}")
 
             # Add tab to widget

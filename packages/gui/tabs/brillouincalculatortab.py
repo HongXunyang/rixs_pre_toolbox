@@ -74,13 +74,14 @@ class DragDropLineEdit(QLineEdit):
 class BrillouinCalculatorTab(TabInterface):
     """Tab for calculating Brillouin zone parameters."""
 
-    def __init__(self):
+    def __init__(self, main_window=None):
         # Create backend instance
         self.calculator = BrillouinCalculator()
 
         # Initialize UI
-        super().__init__()
-
+        super().__init__(main_window)
+        params = self.main_window.get_lattice_parameters()
+        self.set_lattice_parameters(params)
         # Set window title
         self.setWindowTitle("Brillouin Zone Calculator")
 
@@ -97,22 +98,16 @@ class BrillouinCalculatorTab(TabInterface):
     def set_lattice_parameters(self, params):
         """Set lattice parameters from global settings."""
         try:
-            if params.get("cif_file"):
-                # Use CIF file
-                success = self.calculator.initialize_from_cif(
-                    params["cif_file"], params["energy"]
-                )
-            else:
-                # Use manual parameters
-                success = self.calculator.initialize(
-                    a=params["a"],
-                    b=params["b"],
-                    c=params["c"],
-                    alpha=params["alpha"],
-                    beta=params["beta"],
-                    gamma=params["gamma"],
-                    energy=params["energy"],
-                )
+
+            success = self.calculator.initialize(
+                a=params["a"],
+                b=params["b"],
+                c=params["c"],
+                alpha=params["alpha"],
+                beta=params["beta"],
+                gamma=params["gamma"],
+                energy=params["energy"],
+            )
 
             if not success:
                 QMessageBox.warning(self, "Error", "Failed to initialize calculator!")
@@ -131,11 +126,11 @@ class BrillouinCalculatorTab(TabInterface):
         form_group = QGroupBox("Scattering Angles")
         form_layout = QFormLayout(form_group)
 
-        self.gamma_angle_input = QDoubleSpinBox()
-        self.gamma_angle_input.setRange(0.0, 180.0)
-        self.gamma_angle_input.setValue(30.0)
-        self.gamma_angle_input.setSuffix(" °")
-        form_layout.addRow("γ (scattering):", self.gamma_angle_input)
+        self.tth_angle_input = QDoubleSpinBox()
+        self.tth_angle_input.setRange(0.0, 180.0)
+        self.tth_angle_input.setValue(30.0)
+        self.tth_angle_input.setSuffix(" °")
+        form_layout.addRow("tth (scattering):", self.tth_angle_input)
 
         self.theta_angle_input = QDoubleSpinBox()
         self.theta_angle_input.setRange(-180.0, 180.0)
@@ -223,11 +218,11 @@ class BrillouinCalculatorTab(TabInterface):
         constraints_group = QGroupBox("Constraints")
         constraints_layout = QFormLayout(constraints_group)
 
-        self.gamma_max_input = QDoubleSpinBox()
-        self.gamma_max_input.setRange(0.0, 180.0)
-        self.gamma_max_input.setValue(120.0)
-        self.gamma_max_input.setSuffix(" °")
-        constraints_layout.addRow("γ max:", self.gamma_max_input)
+        self.tth_max_input = QDoubleSpinBox()
+        self.tth_max_input.setRange(0.0, 180.0)
+        self.tth_max_input.setValue(120.0)
+        self.tth_max_input.setSuffix(" °")
+        constraints_layout.addRow("tth max:", self.tth_max_input)
 
         # Fixed angle selection
         fixed_angle_layout = QHBoxLayout()
@@ -256,9 +251,9 @@ class BrillouinCalculatorTab(TabInterface):
         results_group = QGroupBox("Results")
         results_layout = QFormLayout(results_group)
 
-        self.gamma_result = QLineEdit()
-        self.gamma_result.setReadOnly(True)
-        results_layout.addRow("γ (scattering):", self.gamma_result)
+        self.tth_result = QLineEdit()
+        self.tth_result.setReadOnly(True)
+        results_layout.addRow("tth (scattering):", self.tth_result)
 
         self.theta_result = QLineEdit()
         self.theta_result.setReadOnly(True)
@@ -320,7 +315,7 @@ class BrillouinCalculatorTab(TabInterface):
 
             # Calculate HKL
             result = self.calculator.calculate_hkl(
-                gamma=self.gamma_angle_input.value(),
+                tth=self.tth_angle_input.value(),
                 theta=self.theta_angle_input.value(),
                 phi=self.phi_angle_input.value(),
                 chi=self.chi_angle_input.value(),
@@ -359,13 +354,13 @@ class BrillouinCalculatorTab(TabInterface):
                 h=self.h_input.value(),
                 k=self.k_input.value(),
                 l=self.l_input.value(),
-                gamma_max=self.gamma_max_input.value(),
+                tth_max=self.tth_max_input.value(),
                 fixed_angle=fixed_angle,
                 fixed_value=fixed_value,
             )
 
             # Update results
-            self.gamma_result.setText(f"{result['gamma']:.4f}°")
+            self.tth_result.setText(f"{result['tth']:.4f}°")
             self.theta_result.setText(f"{result['theta']:.4f}°")
             self.phi_result.setText(f"{result['phi']:.4f}°")
             self.chi_result.setText(f"{result['chi']:.4f}°")

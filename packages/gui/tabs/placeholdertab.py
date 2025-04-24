@@ -50,13 +50,13 @@ class MatplotlibCanvas(FigureCanvas):
 class PlaceholderTab(TabInterface):
     """Tab for demonstrating how to add new tabs to the application."""
 
-    def __init__(self):
+    def __init__(self, main_window=None):
         # Create backend instance
         self.module = PlaceholderModule()
         self.module.initialize()
 
         # Initialize UI
-        super().__init__()
+        super().__init__(main_window)
 
         # Set window title
         self.setWindowTitle("Placeholder Module")
