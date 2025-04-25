@@ -201,9 +201,11 @@ class BrillouinCalculator:
             "theta": theta,
             "phi": phi,
             "chi": chi,
+            "success": True,
+            "error": None,
         }
 
-    def calculate_angles(self, h, k, l, tth_max=155):
+    def calculate_angles(self, h, k, l, chi, tth_max=155):
         """Calculate scattering angles from HKL indices.
 
         CURRENTLY THE CHI IS FIXED TO 0, TO BE EXTENDED
@@ -218,46 +220,9 @@ class BrillouinCalculator:
         if not self.is_initialized():
             raise ValueError("Calculator not initialized")
 
-        # Convert h,k,l to numpy arrays if they aren't already
-        k_h = h / self.a  # k_h has a unit of 1/Å
-        k_k = k / self.b  # k_k has a unit of 1/Å
-        k_l = l / self.c  # k_l has a unit of 1/Å
-
-        Q_magnitude = np.sqrt(k_h**2 + k_k**2 + k_l**2)
-        if Q_magnitude > 2 * self.k_in:
-            return {
-                "success": False,
-                "error": "Energy too low for this momentum transfer. Try to tune down the momentum transfer.",
-            }
-
-        tth_rad = 2 * np.arcsin(Q_magnitude / (2 * self.k_in))
-        tth = np.degrees(tth_rad)
-        if tth > tth_max:
-            return {
-                "success": False,
-                "error": f"Scattering angle (tth) is beyond the maximum allowed value {tth_max}°. Try to tune down the momentum transfer.",
-            }
-
-        # calculate Q parallel
-        Q_parallel = np.sqrt(k_h**2 + k_k**2)
-        theta_rad = tth_rad / 2 - np.arcsin(Q_parallel / Q_magnitude)
-        theta = np.degrees(theta_rad)
-
-        # calculate phi
-        phi_rad = np.arctan2(k_k, k_h)
-        phi = np.degrees(phi_rad)
-
-        return {
-            "tth": tth,
-            "theta": theta,
-            "phi": phi,
-            "chi": 0,
-            "h": h,
-            "k": k,
-            "l": l,
-            "success": True,
-            "error": None,
-        }
+        return calculate_angles_chi_fixed(
+            self.a, self.b, self.c, self.k_in, h, k, l, chi, tth_max
+        )
 
     def is_initialized(self):
         """Check if the calculator is initialized.
@@ -281,3 +246,48 @@ class BrillouinCalculator:
             "beta": self.beta,
             "gamma": self.gamma,
         }
+
+
+def calculate_angles_chi_fixed(a, b, c, k_in, h, k, l, chi, tth_max=155):
+    """Calculate scattering angles from HKL indices."""
+
+    # Convert h,k,l to numpy arrays if they aren't already
+    chi = chi + 1e-5
+    k_h = h / a  # k_h has a unit of 1/Å
+    k_k = k / b  # k_k has a unit of 1/Å
+    k_l = l / c  # k_l has a unit of 1/Å
+    cos_chi = np.cos(np.radians(chi))
+    sin_chi = np.sin(np.radians(chi))
+    Q_magnitude = np.sqrt(k_h**2 + k_k**2 + k_l**2)
+    tth_rad = 2 * np.arcsin(Q_magnitude / (2 * k_in))
+    tth = np.degrees(tth_rad)
+
+    delta_rad = np.arccos(-k_l / (Q_magnitude * cos_chi))
+    theta_rad = delta_rad + tth_rad / 2
+    theta = np.degrees(theta_rad)
+    sin_delta = np.sin(delta_rad)
+    cos_delta = np.cos(delta_rad)
+
+    A = Q_magnitude * sin_delta
+    B = -Q_magnitude * cos_delta * sin_chi
+    C = Q_magnitude * cos_delta * sin_chi
+    D = Q_magnitude * sin_delta
+
+    mat = np.array([[A, B], [C, D]])
+    mat_inv = np.linalg.inv(mat)
+    vector = (k_h, k_k)
+    vector_rotated = mat_inv @ vector
+    phi_rad = np.arctan(vector_rotated[1] / vector_rotated[0])
+    phi = np.degrees(phi_rad)
+
+    return {
+        "tth": tth,
+        "theta": theta,
+        "phi": phi,
+        "chi": chi,
+        "h": h,
+        "k": k,
+        "l": l,
+        "success": True,
+        "error": None,
+    }

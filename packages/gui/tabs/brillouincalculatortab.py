@@ -197,19 +197,19 @@ class BrillouinCalculatorTab(TabInterface):
         self.h_input = QDoubleSpinBox()
         self.h_input.setRange(-10.0, 10.0)
         self.h_input.setDecimals(3)
-        self.h_input.setValue(1.0)
+        self.h_input.setValue(0.15)
         form_layout.addRow("H:", self.h_input)
 
         self.k_input = QDoubleSpinBox()
         self.k_input.setRange(-10.0, 10.0)
         self.k_input.setDecimals(3)
-        self.k_input.setValue(0.0)
+        self.k_input.setValue(0.1)
         form_layout.addRow("K:", self.k_input)
 
         self.l_input = QDoubleSpinBox()
         self.l_input.setRange(-10.0, 10.0)
         self.l_input.setDecimals(3)
-        self.l_input.setValue(0.0)
+        self.l_input.setValue(-0.5)
         form_layout.addRow("L:", self.l_input)
 
         hkl_layout.addWidget(form_group, 0, 0)
@@ -224,9 +224,12 @@ class BrillouinCalculatorTab(TabInterface):
         self.tth_max_input.setSuffix(" °")
         constraints_layout.addRow("tth max:", self.tth_max_input)
 
-        # CHI FIXED TO 0
-        self.chi_label = QLabel("0°")
-        constraints_layout.addRow("χ fixed to:", self.chi_label)
+        # constaint of chi
+        self.chi_input = QDoubleSpinBox()
+        self.chi_input.setRange(-180.0, 180.0)
+        self.chi_input.setValue(0.0)
+        self.chi_input.setSuffix(" °")
+        constraints_layout.addRow("χ:", self.chi_input)
 
         hkl_layout.addWidget(constraints_group, 1, 0)
 
@@ -330,6 +333,7 @@ class BrillouinCalculatorTab(TabInterface):
                 h=self.h_input.value(),
                 k=self.k_input.value(),
                 l=self.l_input.value(),
+                chi=self.chi_input.value(),
                 tth_max=self.tth_max_input.value(),
             )
             success = result.get("success", False)
