@@ -115,7 +115,6 @@ class ScatteringVisualizer(FigureCanvas):
         k_in_x = k_in_length * np.cos(np.radians(theta))
         k_in_y = -k_in_length * np.sin(np.radians(theta))
         k_in_z = 0
-        print(k_in_x, k_in_y)
         # Draw colored arrow on top
         self.axes.quiver(
             k_in_x,
