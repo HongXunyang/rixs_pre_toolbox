@@ -224,12 +224,39 @@ class BrillouinCalculatorTab(TabInterface):
         self.tth_max_input.setSuffix(" °")
         constraints_layout.addRow("tth max:", self.tth_max_input)
 
+        # Fix angle selection
+        fix_angle_group = QGroupBox("Fix Angle")
+        fix_angle_layout = QHBoxLayout(fix_angle_group)
+
+        self.fix_chi_radio = QRadioButton("Fix χ")
+        self.fix_phi_radio = QRadioButton("Fix φ")
+        self.fix_chi_radio.setChecked(True)  # Default to fixed chi
+
+        fix_angle_layout.addWidget(self.fix_chi_radio)
+        fix_angle_layout.addWidget(self.fix_phi_radio)
+
+        constraints_layout.addRow(fix_angle_group)
+
         # constaint of chi
         self.chi_input = QDoubleSpinBox()
         self.chi_input.setRange(-180.0, 180.0)
         self.chi_input.setValue(0.0)
         self.chi_input.setSuffix(" °")
         constraints_layout.addRow("χ:", self.chi_input)
+
+        # constraint of phi
+        self.phi_input = QDoubleSpinBox()
+        self.phi_input.setRange(-180.0, 180.0)
+        self.phi_input.setValue(0.0)
+        self.phi_input.setSuffix(" °")
+        constraints_layout.addRow("φ:", self.phi_input)
+
+        # Connect radio buttons to enable/disable corresponding inputs
+        self.fix_chi_radio.toggled.connect(self.update_fixed_angle_ui)
+        self.fix_phi_radio.toggled.connect(self.update_fixed_angle_ui)
+
+        # Initialize UI state
+        self.update_fixed_angle_ui()
 
         hkl_layout.addWidget(constraints_group, 1, 0)
 
@@ -317,6 +344,13 @@ class BrillouinCalculatorTab(TabInterface):
             QMessageBox.critical(self, "Error", f"Error calculating HKL: {str(e)}")
 
     @pyqtSlot()
+    def update_fixed_angle_ui(self):
+        """Update UI based on which angle is fixed."""
+        is_chi_fixed = self.fix_chi_radio.isChecked()
+        self.chi_input.setEnabled(is_chi_fixed)
+        self.phi_input.setEnabled(not is_chi_fixed)
+
+    @pyqtSlot()
     def calculate_angles(self):
         """Calculate angles from HKL."""
         try:
@@ -328,20 +362,31 @@ class BrillouinCalculatorTab(TabInterface):
                 self.tab_widget.setCurrentIndex(0)
                 return
 
+            # Determine which angle to fix based on radio button selection
+            fixed_angle_name = "chi" if self.fix_chi_radio.isChecked() else "phi"
+            fixed_angle_value = (
+                self.chi_input.value()
+                if self.fix_chi_radio.isChecked()
+                else self.phi_input.value()
+            )
+
             # Calculate angles
             result = self.calculator.calculate_angles(
                 h=self.h_input.value(),
                 k=self.k_input.value(),
                 l=self.l_input.value(),
-                chi=self.chi_input.value(),
+                fixed_angle=fixed_angle_value,
+                fixed_angle_name=fixed_angle_name,
                 tth_max=self.tth_max_input.value(),
             )
+
             success = result.get("success", False)
             if not success:
                 QMessageBox.warning(
                     self, "Warning", result.get("error", "Unknown error")
                 )
                 return
+
             # Update results
             self.tth_result.setText(f"{result['tth']:.4f}°")
             self.theta_result.setText(f"{result['theta']:.4f}°")

@@ -205,7 +205,9 @@ class BrillouinCalculator:
             "error": None,
         }
 
-    def calculate_angles(self, h, k, l, chi, tth_max=155):
+    def calculate_angles(
+        self, h, k, l, fixed_angle, tth_max=155, fixed_angle_name="chi"
+    ):
         """Calculate scattering angles from HKL indices.
 
         CURRENTLY THE CHI IS FIXED TO 0, TO BE EXTENDED
@@ -219,10 +221,14 @@ class BrillouinCalculator:
         """
         if not self.is_initialized():
             raise ValueError("Calculator not initialized")
-
-        return calculate_angles_chi_fixed(
-            self.a, self.b, self.c, self.k_in, h, k, l, chi, tth_max
-        )
+        if fixed_angle_name == "chi":
+            return calculate_angles_chi_fixed(
+                self.a, self.b, self.c, self.k_in, h, k, l, fixed_angle, tth_max
+            )
+        elif fixed_angle_name == "phi":
+            return calculate_angles_phi_fixed(
+                self.a, self.b, self.c, self.k_in, h, k, l, fixed_angle, tth_max
+            )
 
     def is_initialized(self):
         """Check if the calculator is initialized.
@@ -248,11 +254,10 @@ class BrillouinCalculator:
         }
 
 
-def calculate_angles_chi_fixed(a, b, c, k_in, h, k, l, chi, tth_max=155):
-    """Calculate scattering angles from HKL indices."""
+def calculate_angles_chi_fixed(a, b, c, k_in, h, k, l, chi, tth_max=152):
+    """Calculate scattering angles from HKL indices, with chi fixed."""
 
     # Convert h,k,l to numpy arrays if they aren't already
-    chi = chi + 1e-5
     k_h = h / a  # k_h has a unit of 1/Å
     k_k = k / b  # k_k has a unit of 1/Å
     k_l = l / c  # k_l has a unit of 1/Å
@@ -279,6 +284,47 @@ def calculate_angles_chi_fixed(a, b, c, k_in, h, k, l, chi, tth_max=155):
     vector_rotated = mat_inv @ vector
     phi_rad = np.arctan(vector_rotated[1] / vector_rotated[0])
     phi = np.degrees(phi_rad)
+
+    return {
+        "tth": tth,
+        "theta": theta,
+        "phi": phi,
+        "chi": chi,
+        "h": h,
+        "k": k,
+        "l": l,
+        "success": True,
+        "error": None,
+    }
+
+
+def calculate_angles_phi_fixed(a, b, c, k_in, h, k, l, phi, tth_max=152):
+    """Calculate scattering angles from HKL indices, with phi fixed."""
+    # Convert h,k,l to numpy arrays if they aren't already
+    k_h = h / a  # k_h has a unit of 1/Å
+    k_k = k / b  # k_k has a unit of 1/Å
+    k_l = l / c  # k_l has a unit of 1/Å
+    cos_phi = np.cos(np.radians(phi))
+    sin_phi = np.sin(np.radians(phi))
+
+    Q_magnitude = np.sqrt(k_h**2 + k_k**2 + k_l**2)
+    tth_rad = 2 * np.arcsin(Q_magnitude / (2 * k_in))
+    tth = np.degrees(tth_rad)
+
+    vector = (k_h / Q_magnitude, k_k / Q_magnitude)
+    mat = np.array([[cos_phi, -sin_phi], [sin_phi, cos_phi]])
+    mat_inv = np.linalg.inv(mat)
+    vector_rotated = mat_inv @ vector
+    v0, v1 = vector_rotated
+    v2 = -k_l / Q_magnitude
+
+    chi_rad = np.arctan(v1 / v2)
+    chi = np.degrees(chi_rad)
+
+    delta = np.arcsin(v0)
+
+    theta_rad = delta + tth_rad / 2
+    theta = np.degrees(theta_rad)
 
     return {
         "tth": tth,
