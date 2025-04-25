@@ -203,14 +203,14 @@ class BrillouinCalculator:
             "chi": chi,
         }
 
-    def calculate_angles(self, h, k, l, tth_max, fixed_angle, fixed_value):
+    def calculate_angles(self, h, k, l, tth_max=155):
         """Calculate scattering angles from HKL indices.
+
+        CURRENTLY THE CHI IS FIXED TO 0, TO BE EXTENDED
 
         Args:
             h, k, l (float): HKL indices
             tth_max (float): Maximum allowed scattering angle in degrees
-            fixed_angle (str): Which angle to fix ('phi' or 'chi')
-            fixed_value (float): Value of the fixed angle in degrees
 
         Returns:
             dict: Dictionary containing scattering angles and minimum energy
@@ -219,114 +219,45 @@ class BrillouinCalculator:
             raise ValueError("Calculator not initialized")
 
         # Convert h,k,l to numpy arrays if they aren't already
-        h = np.atleast_1d(h)
-        k = np.atleast_1d(k)
-        l = np.atleast_1d(l)
+        k_h = h / self.a  # k_h has a unit of 1/Å
+        k_k = k / self.b  # k_k has a unit of 1/Å
+        k_l = l / self.c  # k_l has a unit of 1/Å
 
-        # Initialize output arrays
-        n = len(h)
-        tth = np.zeros(n)
-        theta = np.zeros(n)
-        phi = np.zeros(n)
-        chi = np.zeros(n)  # Initialize chi array
-        delta = np.zeros(n)
-        theta_out = np.zeros(n)
-        flag = False  # Flag to indicate if Q is reachable
-
-        # First calculate phi from h and k
-        for i in range(n):
-            # Calculate phi for each pair of values
-            if h[i] != 0:
-                phi[i] = np.degrees(np.arctan(np.abs(k[i] / self.b / (h[i] / self.a))))
-            else:
-                # Handle Gamma point (h=0, k=0)
-                if k[i] == 0:
-                    # We're at Gamma point, phi is undefined
-                    # Use a small value or neighboring point as in MATLAB code
-                    if i > 0:
-                        haux = h[i - 1] / 1e5
-                        kaux = k[i - 1] / 1e5
-                    else:
-                        haux = h[i + 1] / 1e5 if i < n - 1 else 1e-5
-                        kaux = k[i + 1] / 1e5 if i < n - 1 else 1e-5
-
-                    phi[i] = np.degrees(np.arctan(np.abs(kaux / haux)))
-                else:
-                    # k is non-zero but h is zero
-                    phi[i] = 90.0
-
-            # Calculate total momentum transfer
-            q_hkl = np.sqrt(
-                (h[i] / self.a) ** 2 + (k[i] / self.b) ** 2 + (l / self.c) ** 2
-            )
-            q_parallel = np.sign(h[i] + 1e-15) * np.sqrt(
-                (h[i] / self.a) ** 2 + (k[i] / self.b) ** 2
-            )
-            q_perp = l / self.c
-
-            # Check if Q is reachable with current energy/max scattering angle
-            if q_hkl / (2 * self.k_in * np.sin(np.radians(tth_max / 2))) > 1:
-                # Q is not reachable
-                flag = True
-                continue
-            else:
-                # Q is reachable, calculate angles
-                tth[i] = 2 * np.degrees(np.arcsin(q_hkl / (2 * self.k_in)))
-                theta[i] = (
-                    np.degrees(np.arctan(q_parallel / np.abs(q_perp))) + tth[i] / 2
-                )
-                delta[i] = theta[i] - tth[i] / 2
-                theta_out[i] = tth[i] - theta[i]
-
-        # Apply fixed angle constraints (phi or chi fixed)
-        if fixed_angle == "phi":
-            if not flag:
-                # Q is reachable, enforce fixed phi value
-                phi = np.full_like(phi, fixed_value)
-                # Chi needs to be calculated based on fixed phi
-                # This is a simplification - in a real implementation,
-                # you'd calculate chi based on the fixed phi value
-        else:  # fixed_angle == "chi"
-            if not flag:
-                # Q is reachable, enforce fixed chi value
-                chi = np.full_like(phi, fixed_value)
-
-        # Calculate minimum energy needed for this Q
-        q_hkl_max = np.max(
-            np.sqrt((h / self.a) ** 2 + (k / self.b) ** 2 + (l / self.c) ** 2)
-        )
-        wavelength_max = 4 * np.pi * np.sin(np.radians(tth_max / 2)) / q_hkl_max
-        energy_min = 12398.42 / wavelength_max  # Convert wavelength to energy in eV
-
-        # Return as single values if input was scalar
-        if len(h) == 1:
+        Q_magnitude = np.sqrt(k_h**2 + k_k**2 + k_l**2)
+        if Q_magnitude > 2 * self.k_in:
             return {
-                "tth": tth[0],
-                "theta": theta[0],
-                "phi": phi[0],
-                "chi": chi[0],
-                "delta": delta[0],
-                "theta_out": theta_out[0],
-                "energy_min": energy_min,
-                "h": h[0],
-                "k": k[0],
-                "l": l,
-                "flag": flag,
+                "success": False,
+                "error": "Energy too low for this momentum transfer. Try to tune down the momentum transfer.",
             }
-        else:
+
+        tth_rad = 2 * np.arcsin(Q_magnitude / (2 * self.k_in))
+        tth = np.degrees(tth_rad)
+        if tth > tth_max:
             return {
-                "tth": tth,
-                "theta": theta,
-                "phi": phi,
-                "chi": chi,
-                "delta": delta,
-                "theta_out": theta_out,
-                "energy_min": energy_min,
-                "h": h,
-                "k": k,
-                "l": l,
-                "flag": flag,
+                "success": False,
+                "error": f"Scattering angle (tth) is beyond the maximum allowed value {tth_max}°. Try to tune down the momentum transfer.",
             }
+
+        # calculate Q parallel
+        Q_parallel = np.sqrt(k_h**2 + k_k**2)
+        theta_rad = tth_rad / 2 - np.arcsin(Q_parallel / Q_magnitude)
+        theta = np.degrees(theta_rad)
+
+        # calculate phi
+        phi_rad = np.arctan2(k_k, k_h)
+        phi = np.degrees(phi_rad)
+
+        return {
+            "tth": tth,
+            "theta": theta,
+            "phi": phi,
+            "chi": 0,
+            "h": h,
+            "k": k,
+            "l": l,
+            "success": True,
+            "error": None,
+        }
 
     def is_initialized(self):
         """Check if the calculator is initialized.

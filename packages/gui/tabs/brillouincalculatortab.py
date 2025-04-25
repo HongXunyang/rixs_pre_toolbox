@@ -188,7 +188,7 @@ class BrillouinCalculatorTab(TabInterface):
     def create_hkl_to_angles_tab(self):
         """Create tab for HKL to angles calculation."""
         hkl_tab = QWidget()
-        hkl_layout = QVBoxLayout(hkl_tab)
+        hkl_layout = QGridLayout(hkl_tab)
 
         # Input form
         form_group = QGroupBox("HKL Indices")
@@ -212,7 +212,7 @@ class BrillouinCalculatorTab(TabInterface):
         self.l_input.setValue(0.0)
         form_layout.addRow("L:", self.l_input)
 
-        hkl_layout.addWidget(form_group)
+        hkl_layout.addWidget(form_group, 0, 0)
 
         # Constraints group
         constraints_group = QGroupBox("Constraints")
@@ -220,32 +220,20 @@ class BrillouinCalculatorTab(TabInterface):
 
         self.tth_max_input = QDoubleSpinBox()
         self.tth_max_input.setRange(0.0, 180.0)
-        self.tth_max_input.setValue(120.0)
+        self.tth_max_input.setValue(152.0)
         self.tth_max_input.setSuffix(" °")
         constraints_layout.addRow("tth max:", self.tth_max_input)
 
-        # Fixed angle selection
-        fixed_angle_layout = QHBoxLayout()
-        self.fixed_phi_radio = QRadioButton("Fix φ")
-        self.fixed_chi_radio = QRadioButton("Fix χ")
-        self.fixed_phi_radio.setChecked(True)
-        fixed_angle_layout.addWidget(self.fixed_phi_radio)
-        fixed_angle_layout.addWidget(self.fixed_chi_radio)
-        constraints_layout.addRow("Fixed angle:", fixed_angle_layout)
+        # CHI FIXED TO 0
+        self.chi_label = QLabel("0°")
+        constraints_layout.addRow("χ fixed to:", self.chi_label)
 
-        # Fixed angle value
-        self.fixed_angle_value = QDoubleSpinBox()
-        self.fixed_angle_value.setRange(-180.0, 180.0)
-        self.fixed_angle_value.setValue(0.0)
-        self.fixed_angle_value.setSuffix(" °")
-        constraints_layout.addRow("Fixed value:", self.fixed_angle_value)
-
-        hkl_layout.addWidget(constraints_group)
+        hkl_layout.addWidget(constraints_group, 1, 0)
 
         # Calculate button
         calculate_button = QPushButton("Calculate Angles")
         calculate_button.clicked.connect(self.calculate_angles)
-        hkl_layout.addWidget(calculate_button)
+        hkl_layout.addWidget(calculate_button, 2, 0)
 
         # Results group
         results_group = QGroupBox("Results")
@@ -269,14 +257,11 @@ class BrillouinCalculatorTab(TabInterface):
         self.chi_result.setReadOnly(True)
         results_layout.addRow("χ:", self.chi_result)
 
-        self.energy_min_result = QLineEdit()
-        self.energy_min_result.setReadOnly(True)
-        results_layout.addRow("Min. Energy:", self.energy_min_result)
+        hkl_layout.addWidget(results_group, 3, 0)
 
-        hkl_layout.addWidget(results_group)
-
-        # Add spacer
-        hkl_layout.addStretch()
+        # Visualizer
+        self.hkl_visualizer = ScatteringVisualizer(width=4, height=4)
+        hkl_layout.addWidget(self.hkl_visualizer, 0, 1, 3, 1)
 
         # Add to tab widget
         self.tab_widget.addTab(hkl_tab, "HKL → Angles")
@@ -310,7 +295,12 @@ class BrillouinCalculatorTab(TabInterface):
                 phi=self.phi_angle_input.value(),
                 chi=self.chi_angle_input.value(),
             )
-
+            success = result.get("success", False)
+            if not success:
+                QMessageBox.warning(
+                    self, "Warning", result.get("error", "Unknown error")
+                )
+                return
             # Update results
             self.h_result.setText(f"{result['h']:.4f}")
             self.k_result.setText(f"{result['k']:.4f}")
@@ -335,33 +325,29 @@ class BrillouinCalculatorTab(TabInterface):
                 self.tab_widget.setCurrentIndex(0)
                 return
 
-            # Determine which angle is fixed
-            fixed_angle = "phi" if self.fixed_phi_radio.isChecked() else "chi"
-            fixed_value = self.fixed_angle_value.value()
-
             # Calculate angles
             result = self.calculator.calculate_angles(
                 h=self.h_input.value(),
                 k=self.k_input.value(),
                 l=self.l_input.value(),
                 tth_max=self.tth_max_input.value(),
-                fixed_angle=fixed_angle,
-                fixed_value=fixed_value,
             )
-
+            success = result.get("success", False)
+            if not success:
+                QMessageBox.warning(
+                    self, "Warning", result.get("error", "Unknown error")
+                )
+                return
             # Update results
             self.tth_result.setText(f"{result['tth']:.4f}°")
             self.theta_result.setText(f"{result['theta']:.4f}°")
             self.phi_result.setText(f"{result['phi']:.4f}°")
             self.chi_result.setText(f"{result['chi']:.4f}°")
 
-            if "energy_min" in result:
-                self.energy_min_result.setText(f"{result['energy_min']:.1f} eV")
-            else:
-                self.energy_min_result.setText("N/A")
-
             # Update visualization
             self.update_visualization(result)
+            # Update hkl tab visualization
+            self.hkl_visualizer.visualize_scattering_geometry(result)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
