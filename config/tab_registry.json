@@ -17,7 +17,7 @@
             "module_package": "brillouin_visualizer",
             "tab_class": "BrillouinVisualizerTab",
             "icon": "icons/visualizer.png",
-            "enabled": true,
+            "enabled": false,
             "order": 2
         },
         {
@@ -27,7 +27,7 @@
             "module_package": "trajectory_planner",
             "tab_class": "TrajectoryPlannerTab",
             "icon": "icons/planner.png",
-            "enabled": true,
+            "enabled": false,
             "order": 3
         },
         {
