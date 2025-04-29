@@ -104,6 +104,9 @@ class BrillouinCalculatorTab(TabInterface):
                 beta=params["beta"],
                 gamma=params["gamma"],
                 energy=params["energy"],
+                e_H=params["e_H"],
+                e_K=params["e_K"],
+                e_L=params["e_L"],
             )
 
             if not success:
@@ -160,21 +163,17 @@ class BrillouinCalculatorTab(TabInterface):
         results_group = QGroupBox("Results")
         results_layout = QFormLayout(results_group)
 
-        self.h_result = QLineEdit()
-        self.h_result.setReadOnly(True)
-        results_layout.addRow("H:", self.h_result)
+        self.H_result = QLineEdit()
+        self.H_result.setReadOnly(True)
+        results_layout.addRow("H:", self.H_result)
 
-        self.k_result = QLineEdit()
-        self.k_result.setReadOnly(True)
-        results_layout.addRow("K:", self.k_result)
+        self.K_result = QLineEdit()
+        self.K_result.setReadOnly(True)
+        results_layout.addRow("K:", self.K_result)
 
-        self.l_result = QLineEdit()
-        self.l_result.setReadOnly(True)
-        results_layout.addRow("L:", self.l_result)
-
-        self.q_result = QLineEdit()
-        self.q_result.setReadOnly(True)
-        results_layout.addRow("Q (r.l.u.):", self.q_result)
+        self.L_result = QLineEdit()
+        self.L_result.setReadOnly(True)
+        results_layout.addRow("L:", self.L_result)
 
         angles_layout.addWidget(results_group, 2, 0)
 
@@ -194,23 +193,23 @@ class BrillouinCalculatorTab(TabInterface):
         form_group = QGroupBox("HKL Indices")
         form_layout = QFormLayout(form_group)
 
-        self.h_input = QDoubleSpinBox()
-        self.h_input.setRange(-10.0, 10.0)
-        self.h_input.setDecimals(3)
-        self.h_input.setValue(0.15)
-        form_layout.addRow("H:", self.h_input)
+        self.H_input = QDoubleSpinBox()
+        self.H_input.setRange(-10.0, 10.0)
+        self.H_input.setDecimals(3)
+        self.H_input.setValue(0.15)
+        form_layout.addRow("H:", self.H_input)
 
-        self.k_input = QDoubleSpinBox()
-        self.k_input.setRange(-10.0, 10.0)
-        self.k_input.setDecimals(3)
-        self.k_input.setValue(0.1)
-        form_layout.addRow("K:", self.k_input)
+        self.K_input = QDoubleSpinBox()
+        self.K_input.setRange(-10.0, 10.0)
+        self.K_input.setDecimals(3)
+        self.K_input.setValue(0.1)
+        form_layout.addRow("K:", self.K_input)
 
-        self.l_input = QDoubleSpinBox()
-        self.l_input.setRange(-10.0, 10.0)
-        self.l_input.setDecimals(3)
-        self.l_input.setValue(-0.5)
-        form_layout.addRow("L:", self.l_input)
+        self.L_input = QDoubleSpinBox()
+        self.L_input.setRange(-10.0, 10.0)
+        self.L_input.setDecimals(3)
+        self.L_input.setValue(-0.5)
+        form_layout.addRow("L:", self.L_input)
 
         hkl_layout.addWidget(form_group, 0, 0)
 
@@ -362,10 +361,9 @@ class BrillouinCalculatorTab(TabInterface):
                 )
                 return
             # Update results
-            self.h_result.setText(f"{result['h']:.4f}")
-            self.k_result.setText(f"{result['k']:.4f}")
-            self.l_result.setText(f"{result['l']:.4f}")
-            self.q_result.setText(f"{result['q']:.4f}")
+            self.H_result.setText(f"{result['H']:.4f}")
+            self.K_result.setText(f"{result['K']:.4f}")
+            self.L_result.setText(f"{result['L']:.4f}")
 
             # Update visualization
             self.update_visualization(result)
@@ -402,9 +400,9 @@ class BrillouinCalculatorTab(TabInterface):
 
             # Calculate angles
             result = self.calculator.calculate_angles(
-                h=self.h_input.value(),
-                k=self.k_input.value(),
-                l=self.l_input.value(),
+                H_crystal=self.H_input.value(),
+                K_crystal=self.K_input.value(),
+                L_crystal=self.L_input.value(),
                 fixed_angle=fixed_angle_value,
                 fixed_angle_name=fixed_angle_name,
                 tth_max=self.tth_max_input.value(),

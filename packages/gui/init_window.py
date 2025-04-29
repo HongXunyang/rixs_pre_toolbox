@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, pyqtSlot, QMimeData
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
-
+import numpy as np
 
 class DragDropLineEdit(QLineEdit):
     """Custom QLineEdit that accepts drag and drop events."""
@@ -127,6 +127,34 @@ class InitWindow(QWidget):
         # Add energy group to main layout at (0,1)
         layout.addWidget(energy_group, 0, 1)
 
+        # Group box for coordinate system
+        coord_group = QGroupBox("Coordinate System")
+        coord_layout = QFormLayout(coord_group)
+
+        self.e_H_input = QLineEdit()
+        self.e_H_input.setPlaceholderText("1 0 0")
+        self.e_H_input.setToolTip(
+            "Enter three numbers separated by spaces (e.g. 0 -1 1)"
+        )
+        coord_layout.addRow("e_H:", self.e_H_input)
+
+        self.e_K_input = QLineEdit()
+        self.e_K_input.setPlaceholderText("0 1 0")
+        self.e_K_input.setToolTip(
+            "Enter three numbers separated by spaces (e.g. 0 -1 1)"
+        )
+        coord_layout.addRow("e_K:", self.e_K_input)
+
+        self.e_L_input = QLineEdit()
+        self.e_L_input.setPlaceholderText("0 0 1")
+        self.e_L_input.setToolTip(
+            "Enter three numbers separated by spaces (e.g. 0 -1 1)"
+        )
+        coord_layout.addRow("e_L:", self.e_L_input)
+
+        # Add coord group to main layout at (0,2)
+        layout.addWidget(coord_group, 0, 2)
+
         # File input area
         file_group = QGroupBox("Crystal Structure File")
         file_layout = QGridLayout(file_group)
@@ -176,6 +204,9 @@ class InitWindow(QWidget):
                 "cif_file": (
                     self.file_path_input.text() if self.file_path_input.text() else None
                 ),
+                "e_H": parse_vector(self.e_H_input.text(), default=[1, 0, 0]),
+                "e_K": parse_vector(self.e_K_input.text(), default=[0, 1, 0]),
+                "e_L": parse_vector(self.e_L_input.text(), default=[0, 0, 1]),
             }
 
             # Pass parameters to parent (MainWindow)
@@ -188,3 +219,14 @@ class InitWindow(QWidget):
             QMessageBox.critical(
                 self, "Error", f"Error initializing parameters: {str(e)}"
             )
+
+
+def parse_vector(input_str, default=[0, 0, 1]):
+    try:
+        # Split on whitespace and convert to float
+        components = [float(x) for x in input_str.strip().split()]
+        if len(components) != 3:
+            return np.array(default)
+        return np.array(components)
+    except:
+        return np.array(default)

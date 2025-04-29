@@ -35,6 +35,11 @@ class BrillouinCalculator:
         self.a_star = 2 * np.pi / self.a
         self.b_star = 2 * np.pi / self.b
         self.c_star = 2 * np.pi / self.c
+        self.e_H, self.e_K, self.e_L = (
+            np.array([1, 0, 0]),
+            np.array([0, 1, 0]),
+            np.array([0, 0, 1]),
+        )
 
         # X-ray energy and derived quantities
         self.energy = 930  # eV
@@ -46,7 +51,18 @@ class BrillouinCalculator:
         self.visualizer = None
 
     def initialize(
-        self, a, b, c, alpha, beta, gamma, energy, lattice_type: str = "cubic"
+        self,
+        a,
+        b,
+        c,
+        alpha,
+        beta,
+        gamma,
+        energy,
+        lattice_type: str = "cubic",
+        e_H=None,
+        e_K=None,
+        e_L=None,
     ):
         """Initialize with lattice parameters.
 
@@ -58,6 +74,10 @@ class BrillouinCalculator:
         Returns:
             bool: True if initialization was successful
         """
+        if e_H is None or e_K is None or e_L is None:
+            e_H = np.array([1, 0, 0])
+            e_K = np.array([0, 1, 0])
+            e_L = np.array([0, 0, 1])
         try:
             # Store parameters
             self.a = a
@@ -68,6 +88,7 @@ class BrillouinCalculator:
             self.gamma = gamma
             self.energy = energy
             self.lattice_type = lattice_type
+            self.e_H, self.e_K, self.e_L = e_H, e_K, e_L
 
             # Calculate wavelength and wavevector
             self.lambda_A = (self.hPlanck * self.c_light) / (energy * self.e) * 1e10
@@ -77,7 +98,7 @@ class BrillouinCalculator:
             self._calculate_reciprocal_lattice()
 
             # Initialize visualizer
-            self.visualizer = BrillouinVisualizer(self.reciprocal_lattice)
+            # self.visualizer = BrillouinVisualizer(self.reciprocal_lattice)
 
             self._initialized = True
             return True
@@ -136,7 +157,6 @@ class BrillouinCalculator:
             "b_star": self.b_star,
             "c_star": self.c_star,
         }
-
     def calculate_hkl(self, tth, theta, phi, chi):
         """Calculate HKL indices from scattering angles.
 
@@ -147,14 +167,13 @@ class BrillouinCalculator:
             chi (float): Sample chi rotation in degrees
 
         Returns:
-            dict: Dictionary containing H, K, L indices and Q magnitude
+            dict: Dictionary containing h, k, l (crystal coordinates) indices and Q magnitude
         """
         if not self.is_initialized():
             raise ValueError("Calculator not initialized")
 
         # Calculate Q magnitude
         Q = 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
-
         # Calculate delta = theta - (tth/2)
         delta_deg = theta - (tth / 2.0)
 
@@ -185,18 +204,21 @@ class BrillouinCalculator:
 
         # Transform to sample coordinates
         q_sample = phi_mat @ chi_mat @ Q_th2th
-
-        # Calculate hkl indices
-        h = self.a * q_sample[0]
-        k = self.b * q_sample[1]
-        l = self.c * q_sample[2]
-
-        Q_rlu = np.sqrt(h**2 + k**2 + l**2)
+        H_crystal, K_crystal, L_crystal = _lab_to_crystal_coordinate(
+            self.a,
+            self.b,
+            self.c,
+            q_sample[0],
+            q_sample[1],
+            q_sample[2],
+            self.e_H,
+            self.e_K,
+            self.e_L,
+        )
         return {
-            "h": h,
-            "k": k,
-            "l": l,
-            "q": Q_rlu,
+            "H": H_crystal,
+            "K": K_crystal,
+            "L": L_crystal,
             "tth": tth,
             "theta": theta,
             "phi": phi,
@@ -206,7 +228,13 @@ class BrillouinCalculator:
         }
 
     def calculate_angles(
-        self, h, k, l, fixed_angle, tth_max=155, fixed_angle_name="chi"
+        self,
+        H_crystal,
+        K_crystal,
+        L_crystal,
+        fixed_angle,
+        fixed_angle_name="chi",
+        tth_max=152,
     ):
         """Calculate scattering angles from HKL indices.
 
@@ -219,15 +247,39 @@ class BrillouinCalculator:
         Returns:
             dict: Dictionary containing scattering angles and minimum energy
         """
+
         if not self.is_initialized():
             raise ValueError("Calculator not initialized")
+
         if fixed_angle_name == "chi":
-            return calculate_angles_chi_fixed(
-                self.a, self.b, self.c, self.k_in, h, k, l, fixed_angle, tth_max
+            return _calculate_angles_chi_fixed(
+                self.a,
+                self.b,
+                self.c,
+                self.k_in,
+                H_crystal,
+                K_crystal,
+                L_crystal,
+                self.e_H,
+                self.e_K,
+                self.e_L,
+                fixed_angle,
+                tth_max,
             )
         elif fixed_angle_name == "phi":
-            return calculate_angles_phi_fixed(
-                self.a, self.b, self.c, self.k_in, h, k, l, fixed_angle, tth_max
+            return _calculate_angles_phi_fixed(
+                self.a,
+                self.b,
+                self.c,
+                self.k_in,
+                H_crystal,
+                K_crystal,
+                L_crystal,
+                self.e_H,
+                self.e_K,
+                self.e_L,
+                fixed_angle,
+                tth_max,
             )
 
     def is_initialized(self):
@@ -254,20 +306,26 @@ class BrillouinCalculator:
         }
 
 
-def calculate_angles_chi_fixed(a, b, c, k_in, h, k, l, chi, tth_max=152):
-    """Calculate scattering angles from HKL indices, with chi fixed."""
+def _calculate_angles_chi_fixed(
+    a, b, c, k_in, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L, chi, tth_max=152
+):
+    """Calculate scattering angles from HKL (crystal coordinates) indices, with chi fixed."""
 
-    # Convert h,k,l to numpy arrays if they aren't already
-    k_h = h / a  # k_h has a unit of 1/Å
-    k_k = k / b  # k_k has a unit of 1/Å
-    k_l = l / c  # k_l has a unit of 1/Å
+    # convert crystal coordinates to lab coordinates
+    h_lab, k_lab, l_lab = _crystal_to_lab_coordinate(
+        a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L
+    )
+
+    kh_lab = h_lab / a  # k_h has a unit of 1/Å
+    kk_lab = k_lab / b  # k_k has a unit of 1/Å
+    kl_lab = l_lab / c  # k_l has a unit of 1/Å
     cos_chi = np.cos(np.radians(chi))
     sin_chi = np.sin(np.radians(chi))
-    Q_magnitude = np.sqrt(k_h**2 + k_k**2 + k_l**2)
+    Q_magnitude = np.sqrt(kh_lab**2 + kk_lab**2 + kl_lab**2)
     tth_rad = 2 * np.arcsin(Q_magnitude / (2 * k_in))
     tth = np.degrees(tth_rad)
 
-    delta_rad = np.arccos(-k_l / (Q_magnitude * cos_chi))
+    delta_rad = np.arccos(-kl_lab / (Q_magnitude * cos_chi))
     theta_rad = delta_rad + tth_rad / 2
     theta = np.degrees(theta_rad)
     sin_delta = np.sin(delta_rad)
@@ -280,7 +338,7 @@ def calculate_angles_chi_fixed(a, b, c, k_in, h, k, l, chi, tth_max=152):
 
     mat = np.array([[A, B], [C, D]])
     mat_inv = np.linalg.inv(mat)
-    vector = (k_h, k_k)
+    vector = (kh_lab, kk_lab)
     vector_rotated = mat_inv @ vector
     phi_rad = np.arctan(vector_rotated[1] / vector_rotated[0])
     phi = np.degrees(phi_rad)
@@ -290,33 +348,39 @@ def calculate_angles_chi_fixed(a, b, c, k_in, h, k, l, chi, tth_max=152):
         "theta": theta,
         "phi": phi,
         "chi": chi,
-        "h": h,
-        "k": k,
-        "l": l,
+        "H": H_crystal,
+        "K": K_crystal,
+        "L": L_crystal,
         "success": True,
         "error": None,
     }
 
 
-def calculate_angles_phi_fixed(a, b, c, k_in, h, k, l, phi, tth_max=152):
+def _calculate_angles_phi_fixed(
+    a, b, c, k_in, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L, phi, tth_max=152
+):
     """Calculate scattering angles from HKL indices, with phi fixed."""
-    # Convert h,k,l to numpy arrays if they aren't already
-    k_h = h / a  # k_h has a unit of 1/Å
-    k_k = k / b  # k_k has a unit of 1/Å
-    k_l = l / c  # k_l has a unit of 1/Å
+
+    # convert crystal coordinates to lab coordinates
+    h_lab, k_lab, l_lab = _crystal_to_lab_coordinate(
+        a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L
+    )
+    kh_lab = h_lab / a  # k_h has a unit of 1/Å
+    kk_lab = k_lab / b  # k_k has a unit of 1/Å
+    kl_lab = l_lab / c  # k_l has a unit of 1/Å
     cos_phi = np.cos(np.radians(phi))
     sin_phi = np.sin(np.radians(phi))
 
-    Q_magnitude = np.sqrt(k_h**2 + k_k**2 + k_l**2)
+    Q_magnitude = np.sqrt(kh_lab**2 + kk_lab**2 + kl_lab**2)
     tth_rad = 2 * np.arcsin(Q_magnitude / (2 * k_in))
     tth = np.degrees(tth_rad)
 
-    vector = (k_h / Q_magnitude, k_k / Q_magnitude)
+    vector = (kh_lab / Q_magnitude, kk_lab / Q_magnitude)
     mat = np.array([[cos_phi, -sin_phi], [sin_phi, cos_phi]])
     mat_inv = np.linalg.inv(mat)
     vector_rotated = mat_inv @ vector
     v0, v1 = vector_rotated
-    v2 = -k_l / Q_magnitude
+    v2 = -kl_lab / Q_magnitude
 
     chi_rad = np.arctan(v1 / v2)
     chi = np.degrees(chi_rad)
@@ -331,9 +395,58 @@ def calculate_angles_phi_fixed(a, b, c, k_in, h, k, l, phi, tth_max=152):
         "theta": theta,
         "phi": phi,
         "chi": chi,
-        "h": h,
-        "k": k,
-        "l": l,
+        "H": H_crystal,
+        "K": K_crystal,
+        "L": L_crystal,
         "success": True,
         "error": None,
     }
+
+
+def _lab_to_crystal_coordinate(a, b, c, h_lab, k_lab, l_lab, e_H, e_K, e_L):
+    """Convert the momentum transfer from lab coordinates to crystal coordinates, in the unit of
+    r.l.u. Convention: variable name starting with `k` is in the unit of 1/Å, and variable name of
+    `h`, `k`, `l` is in the unit of r.l.u.
+
+    Args:
+        h_lab, k_lab, l_lab (float): Momentum transfer in lab coordinates, unit: r.l.u.
+        e_H, e_K, e_L (np.ndarray): Unit vectors of the crystal coordinates in the lab coordinates
+
+    Returns:
+        h_crystal, k_crystal, l_crystal (float): Momentum transfer in crystal coordinates, unit: r.l.u.
+
+    """
+    # convert momentum transfer to 1/Å
+    kh_lab = h_lab / a
+    kk_lab = k_lab / b
+    kl_lab = l_lab / c
+
+    rotation_matrix = np.array([e_H, e_K, e_L])
+    rotation_matrix_inv = np.linalg.inv(rotation_matrix)
+
+    k_lab = np.array([kh_lab, kk_lab, kl_lab])
+    k_crystal = rotation_matrix_inv @ k_lab
+    H_crystal = k_crystal[0] * a  # convert back to r.l.u.
+    K_crystal = k_crystal[1] * b  # unit: r.l.u.
+    L_crystal = k_crystal[2] * c  # unit: r.l.u.
+    return H_crystal, K_crystal, L_crystal
+
+
+def _crystal_to_lab_coordinate(a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L):
+    """Convert the momentum transfer from crystal coordinates to lab coordinates, in the unit of
+    r.l.u. Convention: variable name starting with `k` is in the unit of 1/Å, and variable name of
+    `h`, `k`, `l` is in the unit of r.l.u.
+    """
+    kh_crystal = H_crystal / a
+    kk_crystal = K_crystal / b
+    kl_crystal = L_crystal / c
+
+    rotation_matrix = np.array([e_H, e_K, e_L])
+    k_crystal = np.array([kh_crystal, kk_crystal, kl_crystal])
+    k_lab = rotation_matrix @ k_crystal
+
+    H_lab = k_lab[0] * a
+    K_lab = k_lab[1] * b
+    L_lab = k_lab[2] * c
+
+    return H_lab, K_lab, L_lab
