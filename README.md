@@ -1,3 +1,8 @@
+
+<strong style="color: red;"> See [This
+site](https://hongxunyang2.github.io/reports/rixs_pre_toolbox/rixs_pre_toolbox) for the REPORTS and the TODO of this project.</strong>
+
+
 # RIXS Preparation Toolbox
 
 A PyQt5-based application for X-ray spectroscopy preparation, featuring various tools for calculating and visualizing Brillouin zones, scattering geometries, and more.
