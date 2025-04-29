@@ -267,25 +267,55 @@ class BrillouinCalculatorTab(TabInterface):
 
         # Results group
         results_group = QGroupBox("Results")
-        results_layout = QFormLayout(results_group)
+        results_layout = QVBoxLayout(results_group)
 
+        # First row: tth and phi
+        first_row = QWidget()
+        first_row_layout = QHBoxLayout(first_row)
+        first_row_layout.setContentsMargins(0, 0, 0, 0)
+
+        tth_widget = QWidget()
+        tth_layout = QFormLayout(tth_widget)
+        tth_layout.setContentsMargins(0, 0, 0, 0)
         self.tth_result = QLineEdit()
         self.set_tip(self.tth_result, "TTH")
         self.tth_result.setReadOnly(True)
-        results_layout.addRow("tth:", self.tth_result)
+        tth_layout.addRow("tth:", self.tth_result)
+        first_row_layout.addWidget(tth_widget)
 
+        phi_widget = QWidget()
+        phi_layout = QFormLayout(phi_widget)
+        phi_layout.setContentsMargins(0, 0, 0, 0)
+        self.phi_result = QLineEdit()
+        self.phi_result.setReadOnly(True)
+        phi_layout.addRow("φ:", self.phi_result)
+        first_row_layout.addWidget(phi_widget)
+
+        results_layout.addWidget(first_row)
+
+        # Second row: theta and chi
+        second_row = QWidget()
+        second_row_layout = QHBoxLayout(second_row)
+        second_row_layout.setContentsMargins(0, 0, 0, 0)
+
+        theta_widget = QWidget()
+        theta_layout = QFormLayout(theta_widget)
+        theta_layout.setContentsMargins(0, 0, 0, 0)
         self.theta_result = QLineEdit()
         self.set_tip(self.theta_result, "THETA")
         self.theta_result.setReadOnly(True)
-        results_layout.addRow("θ:", self.theta_result)
+        theta_layout.addRow("θ:", self.theta_result)
+        second_row_layout.addWidget(theta_widget)
 
-        self.phi_result = QLineEdit()
-        self.phi_result.setReadOnly(True)
-        results_layout.addRow("φ:", self.phi_result)
-
+        chi_widget = QWidget()
+        chi_layout = QFormLayout(chi_widget)
+        chi_layout.setContentsMargins(0, 0, 0, 0)
         self.chi_result = QLineEdit()
         self.chi_result.setReadOnly(True)
-        results_layout.addRow("χ:", self.chi_result)
+        chi_layout.addRow("χ:", self.chi_result)
+        second_row_layout.addWidget(chi_widget)
+
+        results_layout.addWidget(second_row)
 
         hkl_layout.addWidget(results_group, 3, 0)
 

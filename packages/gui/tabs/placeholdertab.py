@@ -81,9 +81,9 @@ class PlaceholderTab(TabInterface):
         self.splitter.setSizes([400, 600])
 
         # Create panels
-        self.create_input_panel(left_layout)
-        self.create_processing_panel(left_layout)
-        self.create_visualization_panel(right_layout)
+        # self.create_input_panel(left_layout)
+        # self.create_processing_panel(left_layout)
+        # self.create_visualization_panel(right_layout)
 
     def create_input_panel(self, parent_layout):
         """Create the input panel for the tab."""
