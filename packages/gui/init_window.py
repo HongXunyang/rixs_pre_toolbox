@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # pylint: disable=no-name-in-module, import-error
+import sys
+from pathlib import Path
+
+# Add the root folder to the Python path
+root_folder = Path(__file__).parent.parent.parent
+sys.path.append(str(root_folder))
+
 from PyQt5.QtWidgets import (
     QWidget,
     QGridLayout,
@@ -17,6 +24,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSlot, QMimeData
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 import numpy as np
+from packages.visualizer.coordinate_visualizer import CoordinateVisualizer
 
 class DragDropLineEdit(QLineEdit):
     """Custom QLineEdit that accepts drag and drop events."""
@@ -136,6 +144,7 @@ class InitWindow(QWidget):
         self.e_H_input.setToolTip(
             "Enter three numbers separated by spaces (e.g. 0 -1 1)"
         )
+        self.e_H_input.textChanged.connect(self.update_visualization)
         coord_layout.addRow("e_H:", self.e_H_input)
 
         self.e_K_input = QLineEdit()
@@ -143,6 +152,7 @@ class InitWindow(QWidget):
         self.e_K_input.setToolTip(
             "Enter three numbers separated by spaces (e.g. 0 -1 1)"
         )
+        self.e_K_input.textChanged.connect(self.update_visualization)
         coord_layout.addRow("e_K:", self.e_K_input)
 
         self.e_L_input = QLineEdit()
@@ -150,10 +160,21 @@ class InitWindow(QWidget):
         self.e_L_input.setToolTip(
             "Enter three numbers separated by spaces (e.g. 0 -1 1)"
         )
+        self.e_L_input.textChanged.connect(self.update_visualization)
         coord_layout.addRow("e_L:", self.e_L_input)
 
         # Add coord group to main layout at (0,2)
         layout.addWidget(coord_group, 0, 2)
+
+        # Create and add the coordinate visualizer
+        self.visualizer = CoordinateVisualizer()
+        # initialize the visualizer
+        self.visualizer.visualize_lab_system(
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        )
+        layout.addWidget(self.visualizer, 1, 2)
 
         # File input area
         file_group = QGroupBox("Crystal Structure File")
@@ -187,6 +208,20 @@ class InitWindow(QWidget):
 
         if file_path:
             self.file_path_input.setText(file_path)
+
+    @pyqtSlot()
+    def update_visualization(self):
+        """Update the coordinate visualization when vectors change."""
+        try:
+            e_H = parse_vector(self.e_H_input.text(), default=[1, 0, 0])
+            e_K = parse_vector(self.e_K_input.text(), default=[0, 1, 0])
+            e_L = parse_vector(self.e_L_input.text(), default=[0, 0, 1])
+
+            # Update the visualization
+            self.visualizer.visualize_lab_system(e_H, e_K, e_L)
+        except Exception as e:
+            # If there's an error in parsing, just keep the current visualization
+            pass
 
     @pyqtSlot()
     def initialize(self):

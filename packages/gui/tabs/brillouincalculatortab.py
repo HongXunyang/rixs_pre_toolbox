@@ -69,10 +69,12 @@ class BrillouinCalculatorTab(TabInterface):
         # Create backend instance
         self.calculator = BrillouinCalculator()
         self.visualizer = ScatteringVisualizer()
+        self.hkl_visualizer = ScatteringVisualizer()
         self.tips = Tips()
 
         # Initialize UI
         super().__init__(main_window)
+        self.init_ui()
         params = self.main_window.get_lattice_parameters()
         self.set_lattice_parameters(params)
         # Set window title
@@ -96,7 +98,7 @@ class BrillouinCalculatorTab(TabInterface):
         """Set lattice parameters from global settings."""
         try:
 
-            success = self.calculator.initialize(
+            success_1 = self.calculator.initialize(
                 a=params["a"],
                 b=params["b"],
                 c=params["c"],
@@ -109,7 +111,17 @@ class BrillouinCalculatorTab(TabInterface):
                 e_L=params["e_L"],
             )
 
-            if not success:
+            self.visualizer.initialize(
+                e_H=params["e_H"],
+                e_K=params["e_K"],
+                e_L=params["e_L"],
+            )
+            self.hkl_visualizer.initialize(
+                e_H=params["e_H"],
+                e_K=params["e_K"],
+                e_L=params["e_L"],
+            )
+            if not success_1:
                 QMessageBox.warning(self, "Error", "Failed to initialize calculator!")
 
         except Exception as e:
@@ -135,7 +147,7 @@ class BrillouinCalculatorTab(TabInterface):
 
         self.theta_angle_input = QDoubleSpinBox()
         self.theta_angle_input.setRange(-180.0, 180.0)
-        self.theta_angle_input.setValue(90.0)
+        self.theta_angle_input.setValue(50.0)
         self.theta_angle_input.setSuffix(" °")
         self.set_tip(self.theta_angle_input, "THETA")
         form_layout.addRow("θ:", self.theta_angle_input)
@@ -178,7 +190,8 @@ class BrillouinCalculatorTab(TabInterface):
         angles_layout.addWidget(results_group, 2, 0)
 
         # Visualizer
-        self.visualizer = ScatteringVisualizer(width=4, height=4)
+        self.visualizer.visualize_lab_system(is_clear=True)
+        self.visualizer.visualize_scattering_geometry(is_clear=False)
         angles_layout.addWidget(self.visualizer, 0, 1, 2, 1)
 
         # Add to tab widget
@@ -319,7 +332,8 @@ class BrillouinCalculatorTab(TabInterface):
         hkl_layout.addWidget(results_group, 3, 0)
 
         # Visualizer
-        self.hkl_visualizer = ScatteringVisualizer(width=4, height=4)
+        self.hkl_visualizer.visualize_lab_system(is_clear=True)
+        self.hkl_visualizer.visualize_scattering_geometry(is_clear=False)
         hkl_layout.addWidget(self.hkl_visualizer, 0, 1, 3, 1)
 
         # Add to tab widget
@@ -366,7 +380,10 @@ class BrillouinCalculatorTab(TabInterface):
             self.L_result.setText(f"{result['L']:.4f}")
 
             # Update visualization
-            self.update_visualization(result)
+            self.visualizer.visualize_lab_system(is_clear=True)
+            self.visualizer.visualize_scattering_geometry(
+                scattering_angles=result, is_clear=False
+            )
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculating HKL: {str(e)}")
@@ -422,16 +439,15 @@ class BrillouinCalculatorTab(TabInterface):
             self.chi_result.setText(f"{result['chi']:.4f}°")
 
             # Update visualization
-            self.update_visualization(result)
+            # self.update_visualization(scattering_angles=result)
             # Update hkl tab visualization
-            self.hkl_visualizer.visualize_scattering_geometry(result)
+            self.hkl_visualizer.visualize_lab_system(is_clear=True)
+            self.hkl_visualizer.visualize_scattering_geometry(
+                scattering_angles=result, is_clear=False
+            )
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
-
-    def update_visualization(self, scattering_angles):
-        """Update the visualization with current data."""
-        self.visualizer.visualize_scattering_geometry(scattering_angles)
 
     def get_module_instance(self):
         """Get the backend module instance."""
