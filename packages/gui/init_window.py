@@ -258,10 +258,10 @@ class InitWindow(QWidget):
 
 def parse_vector(input_str, default=[0, 0, 1]):
     try:
-        # Split on whitespace and convert to float
+        # Split on whitespace and convert to float and normalize it
         components = [float(x) for x in input_str.strip().split()]
         if len(components) != 3:
             return np.array(default)
-        return np.array(components)
+        return np.array(components) / np.linalg.norm(components)
     except:
         return np.array(default)

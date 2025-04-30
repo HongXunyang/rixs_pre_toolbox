@@ -421,7 +421,7 @@ def _lab_to_crystal_coordinate(a, b, c, h_lab, k_lab, l_lab, e_H, e_K, e_L):
     kk_lab = k_lab / b
     kl_lab = l_lab / c
 
-    rotation_matrix = np.array([e_H, e_K, e_L])
+    rotation_matrix = np.array([e_H, e_K, e_L]).T
     rotation_matrix_inv = np.linalg.inv(rotation_matrix)
 
     k_lab = np.array([kh_lab, kk_lab, kl_lab])
@@ -441,7 +441,7 @@ def _crystal_to_lab_coordinate(a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_
     kk_crystal = K_crystal / b
     kl_crystal = L_crystal / c
 
-    rotation_matrix = np.array([e_H, e_K, e_L])
+    rotation_matrix = np.array([e_H, e_K, e_L]).T
     k_crystal = np.array([kh_crystal, kk_crystal, kl_crystal])
     k_lab = rotation_matrix @ k_crystal
 
