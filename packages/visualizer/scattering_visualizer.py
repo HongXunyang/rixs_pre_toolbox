@@ -160,6 +160,7 @@ class ScatteringVisualizer(FigureCanvas):
         self.axes.set_xticks([])
         self.axes.set_yticks([])
         self.axes.set_zticks([])
+
         self.draw()
 
     def visualize_scattering_geometry(self, scattering_angles=None, is_clear=True):

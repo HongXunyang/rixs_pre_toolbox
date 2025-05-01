@@ -230,12 +230,6 @@ class BrillouinCalculatorTab(TabInterface):
         constraints_group = QGroupBox("Constraints")
         constraints_layout = QFormLayout(constraints_group)
 
-        self.tth_max_input = QDoubleSpinBox()
-        self.tth_max_input.setRange(0.0, 180.0)
-        self.tth_max_input.setValue(152.0)
-        self.tth_max_input.setSuffix(" °")
-        constraints_layout.addRow("tth max:", self.tth_max_input)
-
         # Fix angle selection
         fix_angle_group = QGroupBox("Fix Angle")
         fix_angle_layout = QHBoxLayout(fix_angle_group)
@@ -426,7 +420,6 @@ class BrillouinCalculatorTab(TabInterface):
                 L_crystal=self.L_input.value(),
                 fixed_angle=fixed_angle_value,
                 fixed_angle_name=fixed_angle_name,
-                tth_max=self.tth_max_input.value(),
             )
 
             success = result.get("success", False)

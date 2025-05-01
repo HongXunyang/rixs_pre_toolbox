@@ -244,7 +244,6 @@ class BrillouinCalculator:
         L_crystal,
         fixed_angle,
         fixed_angle_name="chi",
-        tth_max=152,
     ):
         """Calculate scattering angles from HKL indices.
 
@@ -252,7 +251,8 @@ class BrillouinCalculator:
 
         Args:
             h, k, l (float): HKL indices
-            tth_max (float): Maximum allowed scattering angle in degrees
+            fixed_angle (float): Fixed angle in degrees
+            fixed_angle_name (str): Name of the fixed angle, one of "chi" or "phi"
 
         Returns:
             dict: Dictionary containing scattering angles and minimum energy
@@ -274,7 +274,6 @@ class BrillouinCalculator:
             self.e_K,
             self.e_L,
             fixed_angle,
-            tth_max,
         )
 
     def is_initialized(self):
@@ -309,7 +308,7 @@ def _calculate_angles_factory(fixed_angle_name):
 
 
 def _calculate_angles_chi_fixed(
-    a, b, c, k_in, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L, chi, tth_max=152
+    a, b, c, k_in, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L, chi
 ):
     """Calculate scattering angles from HKL (crystal coordinates) indices, with chi fixed."""
 
@@ -368,7 +367,7 @@ def _calculate_angles_chi_fixed(
 
 
 def _calculate_angles_phi_fixed(
-    a, b, c, k_in, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L, phi, tth_max=152
+    a, b, c, k_in, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L, phi
 ):
     """Calculate scattering angles from HKL indices, with phi fixed."""
 
