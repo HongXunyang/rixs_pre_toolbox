@@ -38,26 +38,6 @@ class ScatteringVisualizer(FigureCanvas):
             # Clear previous plot
             self.axes.clear()
 
-        # Plot the scattering plane
-        scatter_plane_vertices = np.array(
-            [
-                [0.75, 0, -0.25],  # bottom right
-                [-0.75, 0, -0.25],  # bottom left
-                [0.75, 0, 1.25],  # top right
-                [-0.75, 0, 1.25],  # top left
-            ]
-        )
-
-        scatter_plane_faces = np.array([[0, 1, 3, 2]])  # single face
-        self.axes.add_collection3d(
-            Poly3DCollection(
-                scatter_plane_vertices[scatter_plane_faces],
-                facecolors=[0.3010, 0.7450, 0.9330],  # light blue
-                edgecolors=[0.7, 0.7, 0.7],
-                alpha=0.15,
-            )
-        )
-
         # Define vertices of the sample
         vertices_sample = np.array(
             [
@@ -188,6 +168,27 @@ class ScatteringVisualizer(FigureCanvas):
             # Clear previous plot
             self.axes.clear()
 
+        # Plot the scattering plane
+        scatter_plane_vertices = np.array(
+            [
+                [0.75, 0, -0.25],  # bottom right
+                [-0.75, 0, -0.25],  # bottom left
+                [0.75, 0, 1.25],  # top right
+                [-0.75, 0, 1.25],  # top left
+            ]
+        )
+
+        scatter_plane_faces = np.array([[0, 1, 3, 2]])  # single face
+        self.axes.add_collection3d(
+            Poly3DCollection(
+                scatter_plane_vertices[scatter_plane_faces],
+                facecolors=[0.3010, 0.7450, 0.9330],  # light blue
+                edgecolors=[0.7, 0.7, 0.7],
+                alpha=0.15,
+            )
+        )
+
+        # Plot the x-ray beam
         if scattering_angles is None:
             scattering_angles = {
                 "theta": 50,
@@ -199,7 +200,7 @@ class ScatteringVisualizer(FigureCanvas):
         tth = scattering_angles.get("tth", 150)  # two theta angle
 
         # Plot incident beam (k_in)
-        offset = 0.1
+        offset = 0
         k_in_length = 1.3
         k_in_x = k_in_length * np.cos(np.radians(theta))
         k_in_z = k_in_length * np.sin(np.radians(theta))
