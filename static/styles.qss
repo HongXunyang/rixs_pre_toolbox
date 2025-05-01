@@ -39,6 +39,12 @@ QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {
     border: 1px solid #3D7AAF;
 }
 
+QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled {
+    background-color: #F5F5F5;
+    color: #9E9E9E;
+    border: 1px solid #E0E0E0;
+}
+
 QPushButton {
     border: 1px solid #C4C4C4;
     border-radius: 3px;
@@ -58,6 +64,40 @@ QPushButton:pressed {
 QPushButton:disabled {
     color: #888888;
     background-color: #F8F8F8;
+}
+
+/* Toggle button styles */
+QPushButton[text="De-activate"] {
+    min-width: 100px;
+    background-color: #FFFFFF;  /* White background */
+    color: #000000;  /* Black text */
+    border: 1px solid #9E9E9E;  /* Gray border */
+}
+
+QPushButton[text="De-activate"]:checked {
+    background-color: #F44336;
+    color: white;
+    border: none;
+}
+
+QPushButton[text="De-activate"]:hover {
+    background-color: #F5F5F5;  /* Slightly darker white on hover */
+    border: 1px solid #757575;  /* Darker gray border on hover */
+}
+
+QPushButton[text="De-activate"]:checked:hover {
+    background-color: #E53935;
+    border: none;
+}
+
+QPushButton[text="De-activate"]:pressed {
+    background-color: #EEEEEE;  /* Even darker white when pressed */
+    border: 1px solid #616161;  /* Even darker gray border when pressed */
+}
+
+QPushButton[text="De-activate"]:checked:pressed {
+    background-color: #C62828;
+    border: none;
 }
 
 /* Group boxes and panels */

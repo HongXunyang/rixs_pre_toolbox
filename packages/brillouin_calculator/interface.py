@@ -158,6 +158,10 @@ class BrillouinCalculator:
             "b_star": self.b_star,
             "c_star": self.c_star,
         }
+
+    def _Q_magnitude(self, tth):
+        return 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
+
     def calculate_hkl(self, tth, theta, phi, chi):
         """Calculate HKL indices from scattering angles.
 
@@ -174,7 +178,7 @@ class BrillouinCalculator:
             raise ValueError("Calculator not initialized")
 
         # Calculate Q magnitude
-        Q = 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
+        Q = self._Q_magnitude(tth)
         # Calculate delta = theta - (tth/2)
         delta = theta - (tth / 2.0)
 
@@ -251,8 +255,6 @@ class BrillouinCalculator:
 
         Args:
             h, k, l (float): HKL indices
-            fixed_angle (float): Fixed angle in degrees
-            fixed_angle_name (str): Name of the fixed angle, one of "chi" or "phi"
 
         Returns:
             dict: Dictionary containing scattering angles and minimum energy
@@ -275,6 +277,51 @@ class BrillouinCalculator:
             self.e_L,
             fixed_angle,
         )
+
+    def calculate_angles_tth_fixed(
+        self,
+        tth,
+        H_crystal=0.15,
+        K_crystal=0.1,
+        L_crystal=None,
+        fixed_angle_name="chi",
+        fixed_angle=0.0,
+    ):
+        """Calculate scattering angles from two of the three HKL indices, with tth fixed."""
+        if not self.is_initialized():
+            raise ValueError("Calculator not initialized")
+
+        e_H, e_K, e_L = self.e_H, self.e_K, self.e_L
+        a, b, c = self.a, self.b, self.c
+
+        H_crystal_temp = H_crystal if H_crystal is not None else 0.0
+        K_crystal_temp = K_crystal if K_crystal is not None else 0.0
+        L_crystal_temp = L_crystal if L_crystal is not None else 0.0
+
+        kh_crystal = H_crystal_temp / a
+        kk_crystal = K_crystal_temp / b
+        kl_crystal = L_crystal_temp / c
+
+        Q_magnitude = self._Q_magnitude(tth)
+        remainder = -np.sqrt(
+            Q_magnitude**2 - kh_crystal**2 - kk_crystal**2 - kl_crystal**2
+        )
+
+        kh_crystal = kh_crystal if H_crystal is not None else remainder
+        kk_crystal = kk_crystal if K_crystal is not None else remainder
+        kl_crystal = kl_crystal if L_crystal is not None else remainder
+
+        H_crystal, K_crystal, L_crystal = kh_crystal * a, kk_crystal * b, kl_crystal * c
+        H_lab, K_lab, L_lab = _crystal_to_lab_coordinate(
+            a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L
+        )
+        calculate_angles = _calculate_angles_factory(fixed_angle_name)
+        result = calculate_angles(
+            a, b, c, self.k_in, H_lab, K_lab, L_lab, e_H, e_K, e_L, fixed_angle
+        )
+        assert np.abs(result["tth"] - tth) < 1e-6
+        print(f"input tth: {tth}, output tth: {result['tth']}")
+        return result
 
     def is_initialized(self):
         """Check if the calculator is initialized.

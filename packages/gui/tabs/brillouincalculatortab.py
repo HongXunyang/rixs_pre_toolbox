@@ -89,6 +89,7 @@ class BrillouinCalculatorTab(TabInterface):
         # Create tabs for different functionalities
         self.create_angles_to_hkl_tab()
         self.create_hkl_to_angles_tab()
+        self.create_hk_to_angles_tth_fixed_tab()
 
     def set_tip(self, widget, name):
         """Set the tooltip and status tip for a widget by the name"""
@@ -243,19 +244,34 @@ class BrillouinCalculatorTab(TabInterface):
 
         constraints_layout.addRow(fix_angle_group)
 
-        # constaint of chi
+        # Create a horizontal layout for chi and phi inputs
+        angles_row = QWidget()
+        angles_layout = QHBoxLayout(angles_row)
+        angles_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Chi input
+        chi_widget = QWidget()
+        chi_layout = QFormLayout(chi_widget)
+        chi_layout.setContentsMargins(0, 0, 0, 0)
         self.chi_input = QDoubleSpinBox()
         self.chi_input.setRange(-180.0, 180.0)
         self.chi_input.setValue(0.0)
         self.chi_input.setSuffix(" °")
-        constraints_layout.addRow("χ:", self.chi_input)
+        chi_layout.addRow("χ:", self.chi_input)
+        angles_layout.addWidget(chi_widget)
 
-        # constraint of phi
+        # Phi input
+        phi_widget = QWidget()
+        phi_layout = QFormLayout(phi_widget)
+        phi_layout.setContentsMargins(0, 0, 0, 0)
         self.phi_input = QDoubleSpinBox()
         self.phi_input.setRange(-180.0, 180.0)
         self.phi_input.setValue(0.0)
         self.phi_input.setSuffix(" °")
-        constraints_layout.addRow("φ:", self.phi_input)
+        phi_layout.addRow("φ:", self.phi_input)
+        angles_layout.addWidget(phi_widget)
+
+        constraints_layout.addRow(angles_row)
 
         # Connect radio buttons to enable/disable corresponding inputs
         self.fix_chi_radio.toggled.connect(self.update_fixed_angle_ui)
@@ -332,6 +348,241 @@ class BrillouinCalculatorTab(TabInterface):
 
         # Add to tab widget
         self.tab_widget.addTab(hkl_tab, "HKL → Angles")
+
+    def create_hk_to_angles_tth_fixed_tab(self):
+        """Create tab for HK to angles calculation with fixed tth."""
+        hk_tab = QWidget()
+        hk_layout = QGridLayout(hk_tab)
+
+        # Constraints group
+        constraints_group = QGroupBox("Constraints")
+        constraints_layout = QFormLayout(constraints_group)
+
+        # tth input
+        self.tth_fixed_input = QDoubleSpinBox()
+        self.tth_fixed_input.setRange(0.0, 180.0)
+        self.tth_fixed_input.setValue(150.0)
+        self.tth_fixed_input.setSuffix(" °")
+        constraints_layout.addRow("tth:", self.tth_fixed_input)
+
+        # Create a vertical layout for chi and phi inputs
+        angles_widget = QWidget()
+        angles_layout = QVBoxLayout(angles_widget)
+        angles_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Chi input row
+        chi_row = QWidget()
+        chi_layout = QHBoxLayout(chi_row)
+        chi_layout.setContentsMargins(0, 0, 0, 0)
+        chi_form = QWidget()
+        chi_form_layout = QFormLayout(chi_form)
+        chi_form_layout.setContentsMargins(0, 0, 0, 0)
+        self.chi_input_tth = QDoubleSpinBox()
+        self.chi_input_tth.setRange(-180.0, 180.0)
+        self.chi_input_tth.setValue(0.0)
+        self.chi_input_tth.setSuffix(" °")
+        self.chi_input_tth.setEnabled(False)  # Default to disabled
+        chi_form_layout.addRow("χ:", self.chi_input_tth)
+        chi_layout.addWidget(chi_form)
+        self.chi_toggle = QPushButton("De-activate")
+        self.chi_toggle.setCheckable(True)
+        self.chi_toggle.setChecked(True)  # Default to deactivated
+        chi_layout.addWidget(self.chi_toggle)
+        angles_layout.addWidget(chi_row)
+
+        # Phi input row
+        phi_row = QWidget()
+        phi_layout = QHBoxLayout(phi_row)
+        phi_layout.setContentsMargins(0, 0, 0, 0)
+        phi_form = QWidget()
+        phi_form_layout = QFormLayout(phi_form)
+        phi_form_layout.setContentsMargins(0, 0, 0, 0)
+        self.phi_input_tth = QDoubleSpinBox()
+        self.phi_input_tth.setRange(-180.0, 180.0)
+        self.phi_input_tth.setValue(0.0)
+        self.phi_input_tth.setSuffix(" °")
+        self.phi_input_tth.setEnabled(True)  # Default to enabled
+        phi_form_layout.addRow("φ:", self.phi_input_tth)
+        phi_layout.addWidget(phi_form)
+        self.phi_toggle = QPushButton("De-activate")
+        self.phi_toggle.setCheckable(True)
+        self.phi_toggle.setChecked(False)  # Default to activated
+        phi_layout.addWidget(self.phi_toggle)
+        angles_layout.addWidget(phi_row)
+
+        constraints_layout.addRow(angles_widget)
+
+        # Connect toggle buttons to enable/disable corresponding inputs
+        self.chi_toggle.toggled.connect(self.update_fixed_angle_ui_tth)
+        self.phi_toggle.toggled.connect(self.update_fixed_angle_ui_tth)
+
+        # Ensure only one angle is deactivated at a time
+        self.chi_toggle.toggled.connect(
+            lambda checked: self.ensure_one_angle_deactivated("chi", checked)
+        )
+        self.phi_toggle.toggled.connect(
+            lambda checked: self.ensure_one_angle_deactivated("phi", checked)
+        )
+
+        # Initialize UI state
+        self.update_fixed_angle_ui_tth()
+
+        hk_layout.addWidget(constraints_group, 0, 0)
+
+        # HKL indices group
+        hkl_group = QGroupBox("HKL Indices")
+        hkl_layout = QFormLayout(hkl_group)
+
+        # Create a vertical layout for HKL inputs
+        hkl_row = QWidget()
+        hkl_input_layout = QVBoxLayout(hkl_row)
+        hkl_input_layout.setContentsMargins(0, 0, 0, 0)
+
+        # H input row
+        h_row = QWidget()
+        h_layout = QHBoxLayout(h_row)
+        h_layout.setContentsMargins(0, 0, 0, 0)
+        h_form = QWidget()
+        h_form_layout = QFormLayout(h_form)
+        h_form_layout.setContentsMargins(0, 0, 0, 0)
+        self.H_input_tth = QDoubleSpinBox()
+        self.H_input_tth.setRange(-10.0, 10.0)
+        self.H_input_tth.setDecimals(3)
+        self.H_input_tth.setValue(0.15)
+        h_form_layout.addRow("H:", self.H_input_tth)
+        h_layout.addWidget(h_form)
+        self.H_toggle = QPushButton("De-activate")
+        self.H_toggle.setCheckable(True)
+        self.H_toggle.setChecked(False)  # Default to active (gray)
+        h_layout.addWidget(self.H_toggle)
+        hkl_input_layout.addWidget(h_row)
+
+        # K input row
+        k_row = QWidget()
+        k_layout = QHBoxLayout(k_row)
+        k_layout.setContentsMargins(0, 0, 0, 0)
+        k_form = QWidget()
+        k_form_layout = QFormLayout(k_form)
+        k_form_layout.setContentsMargins(0, 0, 0, 0)
+        self.K_input_tth = QDoubleSpinBox()
+        self.K_input_tth.setRange(-10.0, 10.0)
+        self.K_input_tth.setDecimals(3)
+        self.K_input_tth.setValue(0.1)
+        k_form_layout.addRow("K:", self.K_input_tth)
+        k_layout.addWidget(k_form)
+        self.K_toggle = QPushButton("De-activate")
+        self.K_toggle.setCheckable(True)
+        self.K_toggle.setChecked(False)  # Default to active (gray)
+        k_layout.addWidget(self.K_toggle)
+        hkl_input_layout.addWidget(k_row)
+
+        # L input row
+        l_row = QWidget()
+        l_layout = QHBoxLayout(l_row)
+        l_layout.setContentsMargins(0, 0, 0, 0)
+        l_form = QWidget()
+        l_form_layout = QFormLayout(l_form)
+        l_form_layout.setContentsMargins(0, 0, 0, 0)
+        self.L_input_tth = QDoubleSpinBox()
+        self.L_input_tth.setRange(-10.0, 10.0)
+        self.L_input_tth.setDecimals(3)
+        self.L_input_tth.setValue(-0.5)
+        self.L_input_tth.setEnabled(False)  # Default to disabled (grayed out)
+        l_form_layout.addRow("L:", self.L_input_tth)
+        l_layout.addWidget(l_form)
+        self.L_toggle = QPushButton("De-activate")
+        self.L_toggle.setCheckable(True)
+        self.L_toggle.setChecked(True)  # Default to deactivated (red)
+        l_layout.addWidget(self.L_toggle)
+        hkl_input_layout.addWidget(l_row)
+
+        hkl_layout.addRow(hkl_row)
+
+        # Connect toggle buttons to enable/disable corresponding inputs
+        self.H_toggle.toggled.connect(self.update_free_index_ui)
+        self.K_toggle.toggled.connect(self.update_free_index_ui)
+        self.L_toggle.toggled.connect(self.update_free_index_ui)
+
+        # Ensure only one index is free at a time
+        self.H_toggle.toggled.connect(
+            lambda checked: self.ensure_one_free_index("H", checked)
+        )
+        self.K_toggle.toggled.connect(
+            lambda checked: self.ensure_one_free_index("K", checked)
+        )
+        self.L_toggle.toggled.connect(
+            lambda checked: self.ensure_one_free_index("L", checked)
+        )
+
+        hk_layout.addWidget(hkl_group, 1, 0)
+
+        # Calculate button
+        calculate_button = QPushButton("Calculate Angles")
+        calculate_button.clicked.connect(self.calculate_angles_tth_fixed)
+        hk_layout.addWidget(calculate_button, 2, 0)
+
+        # Results group
+        results_group = QGroupBox("Results")
+        results_layout = QVBoxLayout(results_group)
+
+        # First row: tth and phi
+        first_row = QWidget()
+        first_row_layout = QHBoxLayout(first_row)
+        first_row_layout.setContentsMargins(0, 0, 0, 0)
+
+        tth_widget = QWidget()
+        tth_layout = QFormLayout(tth_widget)
+        tth_layout.setContentsMargins(0, 0, 0, 0)
+        self.tth_result_tth = QLineEdit()
+        self.set_tip(self.tth_result_tth, "TTH")
+        self.tth_result_tth.setReadOnly(True)
+        tth_layout.addRow("tth:", self.tth_result_tth)
+        first_row_layout.addWidget(tth_widget)
+
+        phi_widget = QWidget()
+        phi_layout = QFormLayout(phi_widget)
+        phi_layout.setContentsMargins(0, 0, 0, 0)
+        self.phi_result_tth = QLineEdit()
+        self.phi_result_tth.setReadOnly(True)
+        phi_layout.addRow("φ:", self.phi_result_tth)
+        first_row_layout.addWidget(phi_widget)
+
+        results_layout.addWidget(first_row)
+
+        # Second row: theta and chi
+        second_row = QWidget()
+        second_row_layout = QHBoxLayout(second_row)
+        second_row_layout.setContentsMargins(0, 0, 0, 0)
+
+        theta_widget = QWidget()
+        theta_layout = QFormLayout(theta_widget)
+        theta_layout.setContentsMargins(0, 0, 0, 0)
+        self.theta_result_tth = QLineEdit()
+        self.set_tip(self.theta_result_tth, "THETA")
+        self.theta_result_tth.setReadOnly(True)
+        theta_layout.addRow("θ:", self.theta_result_tth)
+        second_row_layout.addWidget(theta_widget)
+
+        chi_widget = QWidget()
+        chi_layout = QFormLayout(chi_widget)
+        chi_layout.setContentsMargins(0, 0, 0, 0)
+        self.chi_result_tth = QLineEdit()
+        self.chi_result_tth.setReadOnly(True)
+        chi_layout.addRow("χ:", self.chi_result_tth)
+        second_row_layout.addWidget(chi_widget)
+
+        results_layout.addWidget(second_row)
+
+        hk_layout.addWidget(results_group, 3, 0)
+
+        # Visualizer
+        self.hk_visualizer = ScatteringVisualizer()
+        self.hk_visualizer.visualize_lab_system(is_clear=True)
+        self.hk_visualizer.visualize_scattering_geometry(is_clear=False)
+        hk_layout.addWidget(self.hk_visualizer, 0, 1, 3, 1)
+
+        # Add to tab widget
+        self.tab_widget.addTab(hk_tab, "HK to Angles | tth fixed")
 
     @pyqtSlot()
     def browse_cif_file(self):
@@ -449,6 +700,135 @@ class BrillouinCalculatorTab(TabInterface):
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
+
+    @pyqtSlot()
+    def update_fixed_angle_ui_tth(self):
+        """Update UI based on which angle is fixed."""
+        self.chi_input_tth.setEnabled(not self.chi_toggle.isChecked())
+        self.phi_input_tth.setEnabled(not self.phi_toggle.isChecked())
+
+    @pyqtSlot()
+    def update_free_index_ui(self):
+        """Update UI based on which index is free."""
+        self.H_input_tth.setEnabled(not self.H_toggle.isChecked())
+        self.K_input_tth.setEnabled(not self.K_toggle.isChecked())
+        self.L_input_tth.setEnabled(not self.L_toggle.isChecked())
+
+    @pyqtSlot()
+    def ensure_one_free_index(self, index, checked):
+        """Ensure only one index is free at a time."""
+        if checked:
+            # If this index is now free, uncheck the others
+            if index != "H":
+                self.H_toggle.setChecked(False)
+            if index != "K":
+                self.K_toggle.setChecked(False)
+            if index != "L":
+                self.L_toggle.setChecked(False)
+        else:
+            # If this index is now fixed, ensure at least one other is free
+            if not (
+                self.H_toggle.isChecked()
+                or self.K_toggle.isChecked()
+                or self.L_toggle.isChecked()
+            ):
+                # If no index is free, re-check this one
+                if index == "H":
+                    self.H_toggle.setChecked(True)
+                elif index == "K":
+                    self.K_toggle.setChecked(True)
+                else:
+                    self.L_toggle.setChecked(True)
+
+    @pyqtSlot()
+    def calculate_angles_tth_fixed(self):
+        """Calculate angles from HK with fixed tth."""
+        try:
+            # Check if calculator is initialized
+            if not self.calculator.is_initialized():
+                QMessageBox.warning(
+                    self, "Warning", "Please initialize the calculator first!"
+                )
+                self.tab_widget.setCurrentIndex(0)
+                return
+
+            # Determine which index to fix
+            fixed_index = None
+            if self.H_toggle.isChecked():
+                fixed_index = "H"
+            elif self.K_toggle.isChecked():
+                fixed_index = "K"
+            else:  # L_toggle is checked
+                fixed_index = "L"
+
+            # Determine which angle to fix
+            fixed_angle_name = "chi" if self.chi_toggle.isChecked() else "phi"
+            fixed_angle_value = (
+                self.chi_input_tth.value()
+                if self.chi_toggle.isChecked()
+                else self.phi_input_tth.value()
+            )
+
+            # Get input values
+            tth = self.tth_fixed_input.value()
+            H = self.H_input_tth.value() if fixed_index != "H" else None
+            K = self.K_input_tth.value() if fixed_index != "K" else None
+            L = self.L_input_tth.value() if fixed_index != "L" else None
+
+            # Calculate angles
+            result = self.calculator.calculate_angles_tth_fixed(
+                tth=tth,
+                H_crystal=H,
+                K_crystal=K,
+                L_crystal=L,
+                fixed_angle_name=fixed_angle_name,
+                fixed_angle=fixed_angle_value,
+            )
+
+            success = result.get("success", False)
+            if not success:
+                QMessageBox.warning(
+                    self, "Warning", result.get("error", "Unknown error")
+                )
+                return
+
+            # Update results
+            self.tth_result_tth.setText(f"{result['tth']:.4f}°")
+            self.theta_result_tth.setText(f"{result['theta']:.4f}°")
+            self.phi_result_tth.setText(f"{result['phi']:.4f}°")
+            self.chi_result_tth.setText(f"{result['chi']:.4f}°")
+            # update the H, K, L values
+            self.H_input_tth.setValue(result["H"])
+            self.K_input_tth.setValue(result["K"])
+            self.L_input_tth.setValue(result["L"])
+            # Update visualization
+            self.hk_visualizer.visualize_lab_system(
+                is_clear=True, chi=result["chi"], phi=result["phi"]
+            )
+            self.hk_visualizer.visualize_scattering_geometry(
+                scattering_angles=result, is_clear=False
+            )
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
+
+    @pyqtSlot()
+    def ensure_one_angle_deactivated(self, angle, checked):
+        """Ensure only one angle is deactivated at a time."""
+        if checked:
+            # If this angle is now deactivated, activate the other
+            if angle == "chi":
+                self.phi_toggle.setChecked(False)
+            else:
+                self.chi_toggle.setChecked(False)
+        else:
+            # If this angle is now activated, ensure at least one other is deactivated
+            if not (self.chi_toggle.isChecked() or self.phi_toggle.isChecked()):
+                # If no angle is deactivated, deactivate this one
+                if angle == "chi":
+                    self.chi_toggle.setChecked(True)
+                else:
+                    self.phi_toggle.setChecked(True)
 
     def get_module_instance(self):
         """Get the backend module instance."""
