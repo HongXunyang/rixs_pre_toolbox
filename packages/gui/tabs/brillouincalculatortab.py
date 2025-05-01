@@ -362,11 +362,15 @@ class BrillouinCalculatorTab(TabInterface):
                 return
 
             # Calculate HKL
+            tth = self.tth_angle_input.value()
+            theta = self.theta_angle_input.value()
+            phi = self.phi_angle_input.value()
+            chi = self.chi_angle_input.value()
             result = self.calculator.calculate_hkl(
-                tth=self.tth_angle_input.value(),
-                theta=self.theta_angle_input.value(),
-                phi=self.phi_angle_input.value(),
-                chi=self.chi_angle_input.value(),
+                tth=tth,
+                theta=theta,
+                phi=phi,
+                chi=chi,
             )
             success = result.get("success", False)
             if not success:
@@ -380,7 +384,7 @@ class BrillouinCalculatorTab(TabInterface):
             self.L_result.setText(f"{result['L']:.4f}")
 
             # Update visualization
-            self.visualizer.visualize_lab_system(is_clear=True)
+            self.visualizer.visualize_lab_system(is_clear=True, chi=chi, phi=phi)
             self.visualizer.visualize_scattering_geometry(
                 scattering_angles=result, is_clear=False
             )
@@ -433,15 +437,19 @@ class BrillouinCalculatorTab(TabInterface):
                 return
 
             # Update results
-            self.tth_result.setText(f"{result['tth']:.4f}°")
-            self.theta_result.setText(f"{result['theta']:.4f}°")
-            self.phi_result.setText(f"{result['phi']:.4f}°")
-            self.chi_result.setText(f"{result['chi']:.4f}°")
+            tth = result["tth"]
+            theta = result["theta"]
+            chi = result["chi"]
+            phi = result["phi"]
+            self.tth_result.setText(f"{tth:.4f}°")
+            self.theta_result.setText(f"{theta:.4f}°")
+            self.phi_result.setText(f"{phi:.4f}°")
+            self.chi_result.setText(f"{chi:.4f}°")
 
             # Update visualization
             # self.update_visualization(scattering_angles=result)
             # Update hkl tab visualization
-            self.hkl_visualizer.visualize_lab_system(is_clear=True)
+            self.hkl_visualizer.visualize_lab_system(is_clear=True, chi=chi, phi=phi)
             self.hkl_visualizer.visualize_scattering_geometry(
                 scattering_angles=result, is_clear=False
             )

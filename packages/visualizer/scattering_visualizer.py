@@ -32,7 +32,7 @@ class ScatteringVisualizer(FigureCanvas):
         self.e_L = e_L
         return True
 
-    def visualize_lab_system(self, is_clear=True):
+    def visualize_lab_system(self, chi=0, phi=0, is_clear=True):
         """Update the visualization with new crystal coordinates system."""
         if is_clear:
             # Clear previous plot
@@ -58,8 +58,8 @@ class ScatteringVisualizer(FigureCanvas):
             )
         )
 
-        # Define vertices of the cube
-        ver = np.array(
+        # Define vertices of the sample
+        vertices_sample = np.array(
             [
                 [0.5, 0.5, 0],  # top front right
                 [0.5, -0.5, 0],  # top front left
@@ -71,9 +71,9 @@ class ScatteringVisualizer(FigureCanvas):
                 [-0.5, 0.5, -0.25],  # bottom back right
             ]
         )
-
+        vertices_sample = _rotate_vertices(vertices_sample, phi, chi)
         # Define faces of the cube
-        fac = np.array(
+        faces_sample = np.array(
             [
                 [0, 1, 2, 3],  # top face
                 [4, 5, 6, 7],  # bottom face
@@ -87,7 +87,7 @@ class ScatteringVisualizer(FigureCanvas):
         # Plot the cube
         self.axes.add_collection3d(
             Poly3DCollection(
-                ver[fac],
+                vertices_sample[faces_sample],
                 facecolors=[0.3, 0.3, 0.3],
                 edgecolors=[0.55, 0.55, 0.55],
                 alpha=0.2,
@@ -101,6 +101,7 @@ class ScatteringVisualizer(FigureCanvas):
 
         # Plot the normalized vectors
         vectors = [e_H_norm, e_K_norm, e_L_norm]
+        vectors = _rotate_vertices(vectors, phi, chi)
         colors = ["r", "g", "b"]
         labels = ["$e_H$", "$e_K$", "$e_L$"]
 
@@ -138,6 +139,7 @@ class ScatteringVisualizer(FigureCanvas):
         e_Y = np.array([0, 1, 0]) / 0.65
         e_Z = np.array([0, 0, 1]) / 0.65
         vectors = [e_X, e_Y, e_Z]
+        vectors = _rotate_vertices(vectors, phi, chi)
         colors = ["r", "g", "b"]
         labels = ["$X$", "$Y$", "$Z$"]
 
@@ -248,3 +250,30 @@ class ScatteringVisualizer(FigureCanvas):
         self.axes.set_zticks([])
         # Update the canvas
         self.draw()
+
+
+def _rotate_vertices(vertices, phi, chi):
+    """Rotate the vertices of the cube by the given phi and chi angles."""
+    # Convert angles to radians
+    phi_rad = np.radians(phi)
+    chi_rad = np.radians(chi)
+
+    chi_mat_sample = np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(chi_rad), -np.sin(chi_rad)],
+            [0, np.sin(chi_rad), np.cos(chi_rad)],
+        ]
+    )
+    phi_mat_sample = np.array(
+        [
+            [np.cos(phi_rad), -np.sin(phi_rad), 0],
+            [np.sin(phi_rad), np.cos(phi_rad), 0],
+            [0, 0, 1],
+        ]
+    )
+    vertices = np.array(vertices)
+    for i, vertex in enumerate(vertices):
+        vertex_temp = chi_mat_sample @ phi_mat_sample @ vertex
+        vertices[i] = vertex_temp
+    return vertices
