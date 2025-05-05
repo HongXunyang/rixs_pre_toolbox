@@ -71,6 +71,12 @@ class BrillouinCalculatorTab(TabInterface):
         self.angles_to_hkl_visualizer = ScatteringVisualizer()  # first subtab
         self.hkl_to_angles_visualizer = ScatteringVisualizer()  # second subtab
         self.hk_fixed_tth_visualizer = ScatteringVisualizer()  # third subtab
+        self.funtional_objects = [
+            self.calculator,
+            self.angles_to_hkl_visualizer,
+            self.hkl_to_angles_visualizer,
+            self.hk_fixed_tth_visualizer,
+        ]
         self.tips = Tips()
 
         # Initialize UI
@@ -98,21 +104,8 @@ class BrillouinCalculatorTab(TabInterface):
 
     def set_lattice_parameters(self, params: dict):
         """Set lattice parameters from global settings."""
-        try:
-
-            success_1 = self.calculator.initialize(params=params)
-
-            self.angles_to_hkl_visualizer.initialize(params=params)
-            self.hkl_to_angles_visualizer.initialize(params=params)
-            self.hk_fixed_tth_visualizer.initialize(params=params)
-
-            if not success_1:
-                QMessageBox.warning(self, "Error", "Failed to initialize calculator!")
-
-        except Exception as e:
-            QMessageBox.critical(
-                self, "Error", f"Error initializing calculator: {str(e)}"
-            )
+        for obj in self.funtional_objects:
+            obj.initialize(params=params)
 
     def create_angles_to_hkl_tab(self):
         """Create tab for angles to HKL calculation."""
