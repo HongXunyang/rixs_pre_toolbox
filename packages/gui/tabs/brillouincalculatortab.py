@@ -96,38 +96,16 @@ class BrillouinCalculatorTab(TabInterface):
         """Set the tooltip and status tip for a widget by the name"""
         set_tip(widget, self.tips.tip(name))
 
-    def set_lattice_parameters(self, params):
+    def set_lattice_parameters(self, params: dict):
         """Set lattice parameters from global settings."""
         try:
 
-            success_1 = self.calculator.initialize(
-                a=params["a"],
-                b=params["b"],
-                c=params["c"],
-                alpha=params["alpha"],
-                beta=params["beta"],
-                gamma=params["gamma"],
-                energy=params["energy"],
-                e_H=params["e_H"],
-                e_K=params["e_K"],
-                e_L=params["e_L"],
-            )
+            success_1 = self.calculator.initialize(params=params)
 
-            self.angles_to_hkl_visualizer.initialize(
-                e_H=params["e_H"],
-                e_K=params["e_K"],
-                e_L=params["e_L"],
-            )
-            self.hkl_to_angles_visualizer.initialize(
-                e_H=params["e_H"],
-                e_K=params["e_K"],
-                e_L=params["e_L"],
-            )
-            self.hk_fixed_tth_visualizer.initialize(
-                e_H=params["e_H"],
-                e_K=params["e_K"],
-                e_L=params["e_L"],
-            )
+            self.angles_to_hkl_visualizer.initialize(params=params)
+            self.hkl_to_angles_visualizer.initialize(params=params)
+            self.hk_fixed_tth_visualizer.initialize(params=params)
+
             if not success_1:
                 QMessageBox.warning(self, "Error", "Failed to initialize calculator!")
 

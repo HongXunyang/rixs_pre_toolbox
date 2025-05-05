@@ -25,11 +25,11 @@ class ScatteringVisualizer(FigureCanvas):
         self.e_K = np.array([0, 1, 0])
         self.e_L = np.array([0, 0, 1])
 
-    def initialize(self, e_H, e_K, e_L):
+    def initialize(self, params: dict):
         """Initialize the visualizer with the given crystal coordinates system."""
-        self.e_H = e_H
-        self.e_K = e_K
-        self.e_L = e_L
+        self.e_H = params["e_H"]
+        self.e_K = params["e_K"]
+        self.e_L = params["e_L"]
         return True
 
     def visualize_lab_system(self, chi=0, phi=0, is_clear=True):

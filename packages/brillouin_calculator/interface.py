@@ -53,17 +53,7 @@ class BrillouinCalculator:
 
     def initialize(
         self,
-        a,
-        b,
-        c,
-        alpha,
-        beta,
-        gamma,
-        energy,
-        lattice_type: str = "cubic",
-        e_H=None,
-        e_K=None,
-        e_L=None,
+        params: dict,
     ):
         """Initialize with lattice parameters.
 
@@ -75,24 +65,25 @@ class BrillouinCalculator:
         Returns:
             bool: True if initialization was successful
         """
-        if e_H is None or e_K is None or e_L is None:
-            e_H = np.array([1, 0, 0])
-            e_K = np.array([0, 1, 0])
-            e_L = np.array([0, 0, 1])
+        if params["e_H"] is None or params["e_K"] is None or params["e_L"] is None:
+            params["e_H"] = np.array([1, 0, 0])
+            params["e_K"] = np.array([0, 1, 0])
+            params["e_L"] = np.array([0, 0, 1])
         try:
             # Store parameters
-            self.a = a
-            self.b = b
-            self.c = c
-            self.alpha = alpha
-            self.beta = beta
-            self.gamma = gamma
-            self.energy = energy
-            self.lattice_type = lattice_type
-            self.e_H, self.e_K, self.e_L = e_H, e_K, e_L
+            self.a = params["a"]
+            self.b = params["b"]
+            self.c = params["c"]
+            self.alpha = params["alpha"]
+            self.beta = params["beta"]
+            self.gamma = params["gamma"]
+            self.energy = params["energy"]
+            self.e_H, self.e_K, self.e_L = params["e_H"], params["e_K"], params["e_L"]
 
             # Calculate wavelength and wavevector
-            self.lambda_A = (self.hPlanck * self.c_light) / (energy * self.e) * 1e10
+            self.lambda_A = (
+                (self.hPlanck * self.c_light) / (self.energy * self.e) * 1e10
+            )
             self.k_in = 1.0 / self.lambda_A
 
             # Calculate reciprocal lattice
