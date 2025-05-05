@@ -70,34 +70,34 @@ QPushButton:disabled {
 QPushButton[text="De-activate"] {
     min-width: 100px;
     background-color: #FFFFFF;  /* White background */
-    color: #000000;  /* Black text */
-    border: 1px solid #9E9E9E;  /* Gray border */
+    color: #757575;  /* Dark gray text */
+    border: 1px solid #E0E0E0;  /* Light gray border */
 }
 
 QPushButton[text="De-activate"]:checked {
-    background-color: #F44336;
-    color: white;
-    border: none;
+    background-color: #FFEBEE;  /* Very light red background */
+    color: #C62828;  /* Darker red text */
+    border: 1px solid #FFCDD2;  /* Light red border */
 }
 
 QPushButton[text="De-activate"]:hover {
     background-color: #F5F5F5;  /* Slightly darker white on hover */
-    border: 1px solid #757575;  /* Darker gray border on hover */
+    border: 1px solid #BDBDBD;  /* Slightly darker gray border on hover */
 }
 
 QPushButton[text="De-activate"]:checked:hover {
-    background-color: #E53935;
-    border: none;
+    background-color: #FFCDD2;  /* Slightly darker light red on hover */
+    border: 1px solid #EF9A9A;  /* Slightly darker light red border on hover */
 }
 
 QPushButton[text="De-activate"]:pressed {
     background-color: #EEEEEE;  /* Even darker white when pressed */
-    border: 1px solid #616161;  /* Even darker gray border when pressed */
+    border: 1px solid #9E9E9E;  /* Even darker gray border when pressed */
 }
 
 QPushButton[text="De-activate"]:checked:pressed {
-    background-color: #C62828;
-    border: none;
+    background-color: #EF9A9A;  /* Even darker light red when pressed */
+    border: 1px solid #E57373;  /* Even darker light red border when pressed */
 }
 
 /* Group boxes and panels */
