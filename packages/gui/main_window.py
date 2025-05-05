@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.config = self._load_config()
 
         # Initialize lattice parameters
-        self.lattice_parameters = None
+        self.parameters = None
 
         # Flag to track if tabs are loaded
         self.tabs_loaded = False
@@ -173,18 +173,18 @@ class MainWindow(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.tab_widget)
         self.statusBar().showMessage("Ready")
 
-    def set_lattice_parameters(self, params):
-        """Store lattice parameters globally."""
-        self.lattice_parameters = params
+    def set_parameters(self, params: dict):
+        """Store parameters globally."""
+        self.parameters = params
         # Update all tabs with new parameters
         for i in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(i)
-            if hasattr(tab, "set_lattice_parameters"):
-                tab.set_lattice_parameters(params)
+            if hasattr(tab, "set_parameters"):
+                tab.set_parameters(params)
 
-    def get_lattice_parameters(self):
-        """Get the current lattice parameters."""
-        return self.lattice_parameters
+    def get_parameters(self):
+        """Get the current parameters."""
+        return self.parameters
 
     def load_tabs(self):
         """Load tabs from the registry."""
@@ -315,9 +315,9 @@ class MainWindow(QMainWindow):
         )
 
     def reset_parameters(self):
-        """Reset lattice parameters and return to initialization window."""
+        """Reset parameters and return to initialization window."""
         # Clear current parameters
-        self.lattice_parameters = None
+        self.parameters = None
 
         # Show initialization window
         self.show_init_window()

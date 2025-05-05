@@ -82,8 +82,8 @@ class BrillouinCalculatorTab(TabInterface):
         # Initialize UI
         super().__init__(main_window)
         self.init_ui()
-        params = self.main_window.get_lattice_parameters()
-        self.set_lattice_parameters(params)
+        params = self.main_window.get_parameters()
+        self.set_parameters(params)
         # Set window title
         self.setWindowTitle("Brillouin Zone Calculator")
 
@@ -102,8 +102,8 @@ class BrillouinCalculatorTab(TabInterface):
         """Set the tooltip and status tip for a widget by the name"""
         set_tip(widget, self.tips.tip(name))
 
-    def set_lattice_parameters(self, params: dict):
-        """Set lattice parameters from global settings."""
+    def set_parameters(self, params: dict):
+        """Set parameters from global settings."""
         for obj in self.funtional_objects:
             obj.initialize(params=params)
 

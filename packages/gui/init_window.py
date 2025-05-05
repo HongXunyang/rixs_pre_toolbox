@@ -246,7 +246,7 @@ class InitWindow(QWidget):
 
             # Pass parameters to parent (MainWindow)
             if self.parent:
-                self.parent.set_lattice_parameters(params)
+                self.parent.set_parameters(params)
                 self.parent.show_main_tabs()
                 self.hide()
 
