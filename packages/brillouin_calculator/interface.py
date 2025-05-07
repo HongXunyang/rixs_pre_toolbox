@@ -32,10 +32,15 @@ class BrillouinCalculator:
         self.alpha = 90.0
         self.beta = 90.0
         self.gamma = 90.0
+        self.a_vec, self.b_vec, self.c_vec = _get_real_space_vectors(
+            self.a, self.b, self.c, self.alpha, self.beta, self.gamma
+        )
         self.lattice_type = "cubic"
-        self.a_star = 2 * np.pi / self.a
-        self.b_star = 2 * np.pi / self.b
-        self.c_star = 2 * np.pi / self.c
+        self.a_star_vec, self.b_star_vec, self.c_star_vec = (
+            _get_reciprocal_space_vectors(
+                self.a, self.b, self.c, self.alpha, self.beta, self.gamma
+            )
+        )
         self.e_H, self.e_K, self.e_L = (
             np.array([1, 0, 0]),
             np.array([0, 1, 0]),
@@ -137,18 +142,14 @@ class BrillouinCalculator:
 
     def _calculate_reciprocal_lattice(self):
         """Calculate the reciprocal lattice vectors."""
-        lattice_type = self.lattice_type
-        if lattice_type == "cubic":
-            self.a_star = 2 * np.pi / self.a
-            self.b_star = 2 * np.pi / self.b
-            self.c_star = 2 * np.pi / self.c
-
-        # In a real implementation, we would store the full reciprocal lattice vectors
-        self.reciprocal_lattice = {
-            "a_star": self.a_star,
-            "b_star": self.b_star,
-            "c_star": self.c_star,
-        }
+        self.a_star_vec, self.b_star_vec, self.c_star_vec = (
+            _get_reciprocal_space_vectors(
+                self.a, self.b, self.c, self.alpha, self.beta, self.gamma
+            )
+        )
+        self.a_vec, self.b_vec, self.c_vec = _get_real_space_vectors(
+            self.a, self.b, self.c, self.alpha, self.beta, self.gamma
+        )
 
     def _Q_magnitude(self, tth):
         return 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
