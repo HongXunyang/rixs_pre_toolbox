@@ -572,3 +572,11 @@ def _get_momentum_transfer(h, k, l, a, b, c, alpha, beta, gamma):
     """Get the momentum transfer vector of the plane defined by the Miller indices (h, k, l)."""
     norm_vec = _get_norm_vector(h, k, l, a, b, c, alpha, beta, gamma)
     return 2 * np.pi * norm_vec
+
+
+def _get_HKL_from_momentum(momentum, a_vec, b_vec, c_vec):
+    """Get the HKL indices from the momentum transfer vector."""
+    H = np.dot(momentum, a_vec) / (2 * np.pi)
+    K = np.dot(momentum, b_vec) / (2 * np.pi)
+    L = np.dot(momentum, c_vec) / (2 * np.pi)
+    return H, K, L
