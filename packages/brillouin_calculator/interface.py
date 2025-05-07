@@ -92,6 +92,7 @@ class BrillouinCalculator:
             self.k_in = 1.0 / self.lambda_A
 
             # Calculate reciprocal lattice
+            self._calculate_real_lattice()
             self._calculate_reciprocal_lattice()
 
             # Initialize visualizer
@@ -129,6 +130,7 @@ class BrillouinCalculator:
             self.energy = energy
 
             # Calculate reciprocal lattice
+            self._calculate_real_lattice()
             self._calculate_reciprocal_lattice()
 
             # Initialize visualizer
@@ -140,15 +142,17 @@ class BrillouinCalculator:
             print(f"Error initializing from CIF file: {str(e)}")
             return False
 
+    def _calculate_real_lattice(self):
+        self.a_vec, self.b_vec, self.c_vec = _get_real_space_vectors(
+            self.a, self.b, self.c, self.alpha, self.beta, self.gamma
+        )
+
     def _calculate_reciprocal_lattice(self):
         """Calculate the reciprocal lattice vectors."""
         self.a_star_vec, self.b_star_vec, self.c_star_vec = (
             _get_reciprocal_space_vectors(
                 self.a, self.b, self.c, self.alpha, self.beta, self.gamma
             )
-        )
-        self.a_vec, self.b_vec, self.c_vec = _get_real_space_vectors(
-            self.a, self.b, self.c, self.alpha, self.beta, self.gamma
         )
 
     def _Q_magnitude(self, tth):
