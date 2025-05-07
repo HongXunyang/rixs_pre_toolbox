@@ -497,3 +497,73 @@ def _crystal_to_lab_coordinate(a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_
     K_lab = k_lab[1] * b
     L_lab = k_lab[2] * c
     return H_lab, K_lab, L_lab
+
+
+def _get_real_space_vectors(a, b, c, alpha, beta, gamma):
+    """Get the real space vectors a_vec, b_vec, c_vec from the lattice parameters.
+    - a_vec is by-default along x-axis (a, 0, 0)
+    - b_vec is by-default (b cos gamma, b sin gamma, 0) on the x-y plane,
+    - c_vec is then calculated
+    The above convention defines the crystal coordinate system.
+
+    Args:
+        a, b, c (float): Lattice constants in Angstroms
+        alpha, beta, gamma (float): Lattice angles in degrees
+
+    Returns:
+        a_vec, b_vec, c_vec (np.ndarray): Real space vectors
+    """
+    alpha_rad, beta_rad, gamma_rad = (
+        np.radians(alpha),
+        np.radians(beta),
+        np.radians(gamma),
+    )
+    a_vec = np.array([a, 0, 0])
+    b_vec = np.array([b * np.cos(gamma_rad), b * np.sin(gamma_rad), 0])
+    c_vec_x = c * np.cos(beta_rad)
+    c_vec_y = (
+        c
+        * (np.cos(alpha_rad) - np.cos(beta_rad) * np.cos(gamma_rad))
+        / np.sin(gamma_rad)
+    )
+    c_vec_z = np.sqrt(c**2 - c_vec_x**2 - c_vec_y**2)
+    c_vec = np.array([c_vec_x, c_vec_y, c_vec_z])
+    return a_vec, b_vec, c_vec
+
+
+def _get_reciprocal_space_vectors(a, b, c, alpha, beta, gamma):
+    """Get the reciprocal space vectors a_star_vec, b_star_vec, c_star_vec from the lattice
+    parameters, angles in degrees. These vectors are in the crystal coordinate system.
+    """
+    a_vec, b_vec, c_vec = _get_real_space_vectors(a, b, c, alpha, beta, gamma)
+    volumn = np.dot(a_vec, np.cross(b_vec, c_vec))
+    a_star_vec = 2 * np.pi * np.cross(b_vec, c_vec) / volumn
+    b_star_vec = 2 * np.pi * np.cross(c_vec, a_vec) / volumn
+    c_star_vec = 2 * np.pi * np.cross(a_vec, b_vec) / volumn
+    return a_star_vec, b_star_vec, c_star_vec
+
+
+def _get_norm_vector(h, k, l, a, b, c, alpha, beta, gamma):
+    """Get the norm vector of the plane defined by the Miller indices (h, k, l)."""
+    a_star_vec, b_star_vec, c_star_vec = _get_reciprocal_space_vectors(
+        a, b, c, alpha, beta, gamma
+    )
+    norm_vec = (
+        h * a_star_vec / (2 * np.pi)
+        + k * b_star_vec / (2 * np.pi)
+        + l * c_star_vec / (2 * np.pi)
+    )
+    return norm_vec
+
+
+def _get_d_spacing(h, k, l, a, b, c, alpha, beta, gamma):
+    """Get the d-spacing of the plane defined by the Miller indices (h, k, l)."""
+    norm_vec = _get_norm_vector(h, k, l, a, b, c, alpha, beta, gamma)
+    d_spacing = 1 / np.linalg.norm(norm_vec)
+    return d_spacing
+
+
+def _get_momentum_transfer(h, k, l, a, b, c, alpha, beta, gamma):
+    """Get the momentum transfer vector of the plane defined by the Miller indices (h, k, l)."""
+    norm_vec = _get_norm_vector(h, k, l, a, b, c, alpha, beta, gamma)
+    return 2 * np.pi * norm_vec
