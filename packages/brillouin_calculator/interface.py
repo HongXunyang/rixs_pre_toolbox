@@ -575,7 +575,7 @@ def _get_momentum_transfer(h, k, l, a, b, c, alpha, beta, gamma):
 
 
 def _get_HKL_from_momentum(momentum, a_vec, b_vec, c_vec):
-    """Get the HKL indices from the momentum transfer vector."""
+    """Get the HKL (r.l.u.) from the momentum transfer vector."""
     H = np.dot(momentum, a_vec) / (2 * np.pi)
     K = np.dot(momentum, b_vec) / (2 * np.pi)
     L = np.dot(momentum, c_vec) / (2 * np.pi)
