@@ -58,18 +58,31 @@ class BrillouinCalculator:
         Returns:
             bool: True if initialization was successful
         """
-        if params["e_H"] is None or params["e_K"] is None or params["e_L"] is None:
-            params["e_H"] = np.array([1, 0, 0])
-            params["e_K"] = np.array([0, 1, 0])
-            params["e_L"] = np.array([0, 0, 1])
+        roll = params.get("roll", 0.0)
+        pitch = params.get("pitch", 0.0)
+        yaw = params.get("yaw", 0.0)
+        a, b, c = params.get("a", 4), params.get("b", 4), params.get("c", 12)
+        alpha, beta, gamma = (
+            params.get("alpha", 90.0),
+            params.get("beta", 90.0),
+            params.get("gamma", 90.0),
+        )
         try:
             # Store parameters
             self.energy = params["energy"]
-            self.e_H, self.e_K, self.e_L = params["e_H"], params["e_K"], params["e_L"]
 
             # Initialize sample
-            self.sample.initialize(params, self._sample_to_lab_conversion)
-
+            self.sample.initialize(
+                a,
+                b,
+                c,
+                alpha,
+                beta,
+                gamma,
+                roll,
+                pitch,
+                yaw,
+            )
             # Calculate wavelength and wavevector
             self.lambda_A = (
                 (self.hPlanck * self.c_light) / (self.energy * self.e) * 1e10

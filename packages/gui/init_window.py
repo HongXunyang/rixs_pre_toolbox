@@ -135,36 +135,33 @@ class InitWindow(QWidget):
         # Add energy group to main layout at (0,1)
         layout.addWidget(energy_group, 0, 1)
 
-        # Group box for coordinate system
-        coord_group = QGroupBox("Coordinate System")
-        coord_layout = QFormLayout(coord_group)
+        # Group box for Euler angles
+        euler_group = QGroupBox("Euler Angles")
+        euler_layout = QFormLayout(euler_group)
 
-        self.e_H_input = QLineEdit()
-        self.e_H_input.setPlaceholderText("1 0 0")
-        self.e_H_input.setToolTip(
-            "Enter three numbers separated by spaces (e.g. 0 -1 1)"
-        )
-        self.e_H_input.textChanged.connect(self.update_visualization)
-        coord_layout.addRow("e_H:", self.e_H_input)
+        self.roll_input = QDoubleSpinBox()
+        self.roll_input.setRange(-180.0, 180.0)
+        self.roll_input.setValue(0.0)
+        self.roll_input.setSuffix(" °")
+        self.roll_input.setToolTip("Rotation about the new X axis")
+        euler_layout.addRow("Roll:", self.roll_input)
 
-        self.e_K_input = QLineEdit()
-        self.e_K_input.setPlaceholderText("0 1 0")
-        self.e_K_input.setToolTip(
-            "Enter three numbers separated by spaces (e.g. 0 -1 1)"
-        )
-        self.e_K_input.textChanged.connect(self.update_visualization)
-        coord_layout.addRow("e_K:", self.e_K_input)
+        self.pitch_input = QDoubleSpinBox()
+        self.pitch_input.setRange(-180.0, 180.0)
+        self.pitch_input.setValue(0.0)
+        self.pitch_input.setSuffix(" °")
+        self.pitch_input.setToolTip("Rotation about the new Y axis")
+        euler_layout.addRow("Pitch:", self.pitch_input)
 
-        self.e_L_input = QLineEdit()
-        self.e_L_input.setPlaceholderText("0 0 1")
-        self.e_L_input.setToolTip(
-            "Enter three numbers separated by spaces (e.g. 0 -1 1)"
-        )
-        self.e_L_input.textChanged.connect(self.update_visualization)
-        coord_layout.addRow("e_L:", self.e_L_input)
+        self.yaw_input = QDoubleSpinBox()
+        self.yaw_input.setRange(-180.0, 180.0)
+        self.yaw_input.setValue(0.0)
+        self.yaw_input.setSuffix(" °")
+        self.yaw_input.setToolTip("Rotation about the original Z axis")
+        euler_layout.addRow("Yaw:", self.yaw_input)
 
-        # Add coord group to main layout at (0,2)
-        layout.addWidget(coord_group, 0, 2)
+        # Add euler group to main layout at (0,2)
+        layout.addWidget(euler_group, 0, 2)
 
         # Create and add the coordinate visualizer
         self.visualizer = CoordinateVisualizer()
@@ -213,12 +210,11 @@ class InitWindow(QWidget):
     def update_visualization(self):
         """Update the coordinate visualization when vectors change."""
         try:
-            e_H = parse_vector(self.e_H_input.text(), default=[1, 0, 0])
-            e_K = parse_vector(self.e_K_input.text(), default=[0, 1, 0])
-            e_L = parse_vector(self.e_L_input.text(), default=[0, 0, 1])
-
-            # Update the visualization
-            self.visualizer.visualize_lab_system(e_H, e_K, e_L)
+            self.visualizer.visualize_lab_system(
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            )
         except Exception as e:
             # If there's an error in parsing, just keep the current visualization
             pass
@@ -239,9 +235,9 @@ class InitWindow(QWidget):
                 "cif_file": (
                     self.file_path_input.text() if self.file_path_input.text() else None
                 ),
-                "e_H": parse_vector(self.e_H_input.text(), default=[1, 0, 0]),
-                "e_K": parse_vector(self.e_K_input.text(), default=[0, 1, 0]),
-                "e_L": parse_vector(self.e_L_input.text(), default=[0, 0, 1]),
+                "roll": self.roll_input.value(),
+                "pitch": self.pitch_input.value(),
+                "yaw": self.yaw_input.value(),
             }
 
             # Pass parameters to parent (MainWindow)
@@ -254,14 +250,3 @@ class InitWindow(QWidget):
             QMessageBox.critical(
                 self, "Error", f"Error initializing parameters: {str(e)}"
             )
-
-
-def parse_vector(input_str, default=[0, 0, 1]):
-    try:
-        # Split on whitespace and convert to float and normalize it
-        components = [float(x) for x in input_str.strip().split()]
-        if len(components) != 3:
-            return np.array(default)
-        return np.array(components) / np.linalg.norm(components)
-    except:
-        return np.array(default)
