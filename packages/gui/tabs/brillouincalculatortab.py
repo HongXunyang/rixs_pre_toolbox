@@ -107,6 +107,8 @@ class BrillouinCalculatorTab(TabInterface):
         for obj in self.funtional_objects:
             obj.initialize(params=params)
 
+        print("params set!!!!!!!!")
+
     def create_angles_to_hkl_tab(self):
         """Create tab for angles to HKL calculation."""
         angles_tab = QWidget()

@@ -144,6 +144,7 @@ class InitWindow(QWidget):
         self.roll_input.setValue(0.0)
         self.roll_input.setSuffix(" °")
         self.roll_input.setToolTip("Rotation about the new X axis")
+        self.roll_input.valueChanged.connect(self.update_visualization)
         euler_layout.addRow("Roll:", self.roll_input)
 
         self.pitch_input = QDoubleSpinBox()
@@ -151,6 +152,7 @@ class InitWindow(QWidget):
         self.pitch_input.setValue(0.0)
         self.pitch_input.setSuffix(" °")
         self.pitch_input.setToolTip("Rotation about the new Y axis")
+        self.pitch_input.valueChanged.connect(self.update_visualization)
         euler_layout.addRow("Pitch:", self.pitch_input)
 
         self.yaw_input = QDoubleSpinBox()
@@ -158,6 +160,7 @@ class InitWindow(QWidget):
         self.yaw_input.setValue(0.0)
         self.yaw_input.setSuffix(" °")
         self.yaw_input.setToolTip("Rotation about the original Z axis")
+        self.yaw_input.valueChanged.connect(self.update_visualization)
         euler_layout.addRow("Yaw:", self.yaw_input)
 
         # Add euler group to main layout at (0,2)
@@ -166,11 +169,20 @@ class InitWindow(QWidget):
         # Create and add the coordinate visualizer
         self.visualizer = CoordinateVisualizer()
         # initialize the visualizer
-        self.visualizer.visualize_lab_system(
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
+        self.visualizer.initialize(
+            {
+                "a": self.a_input.value(),
+                "b": self.b_input.value(),
+                "c": self.c_input.value(),
+                "alpha": self.alpha_input.value(),
+                "beta": self.beta_input.value(),
+                "gamma": self.gamma_input.value(),
+                "roll": self.roll_input.value(),
+                "pitch": self.pitch_input.value(),
+                "yaw": self.yaw_input.value(),
+            }
         )
+        self.visualizer.visualize_lab_system()
         layout.addWidget(self.visualizer, 1, 2)
 
         # File input area
@@ -210,14 +222,38 @@ class InitWindow(QWidget):
     def update_visualization(self):
         """Update the coordinate visualization when vectors change."""
         try:
-            self.visualizer.visualize_lab_system(
-                [1, 0, 0],
-                [0, 1, 0],
-                [0, 0, 1],
+            # Get current values
+            roll = self.roll_input.value()
+            pitch = self.pitch_input.value()
+            yaw = self.yaw_input.value()
+
+            # Validate values are within range
+            if not (
+                -180 <= roll <= 180 and -180 <= pitch <= 180 and -180 <= yaw <= 180
+            ):
+                # Reset to default values if invalid
+                self.roll_input.setValue(0.0)
+                self.pitch_input.setValue(0.0)
+                self.yaw_input.setValue(0.0)
+                roll, pitch, yaw = 0.0, 0.0, 0.0
+
+            # Update the visualizer
+            self.visualizer.initialize(
+                {
+                    "a": self.a_input.value(),
+                    "b": self.b_input.value(),
+                    "c": self.c_input.value(),
+                    "alpha": self.alpha_input.value(),
+                    "beta": self.beta_input.value(),
+                    "gamma": self.gamma_input.value(),
+                    "roll": roll,
+                    "pitch": pitch,
+                    "yaw": yaw,
+                }
             )
+            self.visualizer.visualize_lab_system()
         except Exception as e:
-            # If there's an error in parsing, just keep the current visualization
-            pass
+            raise e
 
     @pyqtSlot()
     def initialize(self):

@@ -2,11 +2,18 @@
 specifically, it visualizes the relative position of of crystal coordinates with respect to the lab
 coordinate system.
 """
+import sys
+import os
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from packages.utils import (
+    get_reciprocal_space_vectors,
+    sample_to_lab_conversion,
+)
 
 
 class CoordinateVisualizer(FigureCanvas):
@@ -36,7 +43,31 @@ class CoordinateVisualizer(FigureCanvas):
         self.axes.set_ylim(-0.75, 0.75)
         self.axes.set_zlim(-0.75, 0.75)
 
-    def visualize_lab_system(self, e_H, e_K, e_L):
+        # Initialize reciprocal lattice vectors in lab frame
+        self.a_star_lab = np.array([1, 0, 0])
+        self.b_star_lab = np.array([0, 1, 0])
+        self.c_star_lab = np.array([0, 0, 1])
+        self.roll = 0
+        self.pitch = 0
+        self.yaw = 0
+
+    def initialize(self, params: dict):
+        """Initialize the visualizer with the given parameters."""
+        self.roll = params["roll"]
+        self.pitch = params["pitch"]
+        self.yaw = params["yaw"]
+        a, b, c = params["a"], params["b"], params["c"]
+        alpha, beta, gamma = params["alpha"], params["beta"], params["gamma"]
+        # calculate the corresponding a_star_lab, b_star_lab, c_star_lab
+        a_star_sample, b_star_sample, c_star_sample = get_reciprocal_space_vectors(
+            a, b, c, alpha, beta, gamma
+        )
+        self.a_star_lab, self.b_star_lab, self.c_star_lab = sample_to_lab_conversion(
+            a_star_sample, b_star_sample, c_star_sample, self.roll, self.pitch, self.yaw
+        )
+        return True
+
+    def visualize_lab_system(self):
         """Update the visualization with new crystal coordinates system."""
         # Clear previous plot
         self.axes.clear()
@@ -98,14 +129,14 @@ class CoordinateVisualizer(FigureCanvas):
         )
 
         # Normalize the vectors
-        e_H_norm = e_H / np.linalg.norm(e_H)
-        e_K_norm = e_K / np.linalg.norm(e_K)
-        e_L_norm = e_L / np.linalg.norm(e_L)
+        a_star_norm = self.a_star_lab / np.linalg.norm(self.a_star_lab)
+        b_star_norm = self.b_star_lab / np.linalg.norm(self.b_star_lab)
+        c_star_norm = self.c_star_lab / np.linalg.norm(self.c_star_lab)
 
         # Plot the normalized vectors
-        vectors = [e_H_norm, e_K_norm, e_L_norm]
-        colors = ["r", "g", "b"]
-        labels = ["$e_H$", "$e_K$", "$e_L$"]
+        vectors = [a_star_norm, b_star_norm, c_star_norm]
+        colors = ["r", "r", "r"]
+        labels = ["$a^*$", "$b^*$", "$c^*$"]
 
         for vec, color, label in zip(vectors, colors, labels):
             # Plot the vector
@@ -124,7 +155,7 @@ class CoordinateVisualizer(FigureCanvas):
 
             # Add text label at the tip of the vector
             # Add a small offset to prevent text from overlapping with the arrow
-            offset = 0.3
+            offset = 0.2
             self.axes.text(
                 vec[0] + offset,
                 vec[1] + offset,
