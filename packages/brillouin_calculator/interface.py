@@ -155,8 +155,87 @@ class BrillouinCalculator:
             )
         )
 
-    def _Q_magnitude(self, tth):
+    def get_Q_magnitude(self, tth):
         return 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
+
+    def calculate_hkl_cubic(self, tth, theta, phi, chi):
+        """Calculate HKL indices from scattering angles.
+
+        Args:
+            tth (float): Scattering angle in degrees
+            theta (float): Sample theta rotation in degrees
+            phi (float): Sample phi rotation in degrees
+            chi (float): Sample chi rotation in degrees
+
+        Returns:
+            dict: Dictionary containing h, k, l (crystal coordinates) indices and Q magnitude
+        """
+        if not self.is_initialized():
+            raise ValueError("Calculator not initialized")
+
+        # Calculate Q magnitude
+        Q = self.get_Q_magnitude(tth)
+        # Calculate delta = theta - (tth/2)
+        delta = theta - (tth / 2.0)
+
+        # Build rotation matrices for chi and phi
+        chi_rad = np.radians(chi)
+        phi_rad = np.radians(phi)
+
+        # the rotation of the sample is defined to be counter-clockwise
+        chi_mat_sample = np.array(
+            [
+                [1, 0, 0],
+                [0, np.cos(chi_rad), -np.sin(chi_rad)],
+                [0, np.sin(chi_rad), np.cos(chi_rad)],
+            ]
+        )
+        # the rotation of the beam relative to the sample is therefore clockwise
+        chi_mat_beam = chi_mat_sample.T
+
+        # the rotation of the sample is defined to be counter-clockwise
+        phi_mat_sample = np.array(
+            [
+                [np.cos(phi_rad), -np.sin(phi_rad), 0],
+                [np.sin(phi_rad), np.cos(phi_rad), 0],
+                [0, 0, 1],
+            ]
+        )
+        # the rotation of the beam relative to the sample is therefore clockwise
+        phi_mat_beam = phi_mat_sample.T
+
+        # Q vector in "theta-2theta coordinates"
+        sin_delta = np.sin(np.radians(delta))
+        cos_delta = np.cos(np.radians(delta))
+        Q_th2th = np.array([Q * sin_delta, 0.0, -Q * cos_delta])
+
+        # Transform to sample coordinates
+        q_sample = phi_mat_beam @ chi_mat_beam @ Q_th2th
+        H_lab = q_sample[0] * self.a
+        K_lab = q_sample[1] * self.b
+        L_lab = q_sample[2] * self.c
+        H_crystal, K_crystal, L_crystal = _lab_to_crystal_coordinate(
+            self.a,
+            self.b,
+            self.c,
+            H_lab,
+            K_lab,
+            L_lab,
+            self.e_H,
+            self.e_K,
+            self.e_L,
+        )
+        return {
+            "H": H_crystal,
+            "K": K_crystal,
+            "L": L_crystal,
+            "tth": tth,
+            "theta": theta,
+            "phi": phi,
+            "chi": chi,
+            "success": True,
+            "error": None,
+        }
 
     def calculate_hkl(self, tth, theta, phi, chi):
         """Calculate HKL indices from scattering angles.
@@ -174,7 +253,7 @@ class BrillouinCalculator:
             raise ValueError("Calculator not initialized")
 
         # Calculate Q magnitude
-        Q = self._Q_magnitude(tth)
+        Q = self.get_Q_magnitude(tth)
         # Calculate delta = theta - (tth/2)
         delta = theta - (tth / 2.0)
 
@@ -298,7 +377,7 @@ class BrillouinCalculator:
         kk_crystal = K_crystal_temp / b
         kl_crystal = L_crystal_temp / c
 
-        Q_magnitude = self._Q_magnitude(tth)
+        Q_magnitude = self.get_Q_magnitude(tth)
         remainder = -np.sqrt(
             Q_magnitude**2 - kh_crystal**2 - kk_crystal**2 - kl_crystal**2
         )
