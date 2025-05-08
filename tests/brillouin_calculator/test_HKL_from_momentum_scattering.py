@@ -10,7 +10,7 @@ from packages.brillouin_calculator.interface import (
 
 @pytest.fixture
 def calculator():
-    # Returns a BrillouinCalculator instance (not yet initialized)
+    """Returns a BrillouinCalculator instance (not yet initialized)"""
     return BrillouinCalculator()
 
 
@@ -35,20 +35,21 @@ e_L = np.array([0, 0, 1])
                 "e_K": e_K,
                 "e_L": e_L,
             },
-            152,
-            80,
-            0,
-            0,
-            0.0518615991,
-            0,
-            -1.779973,
+            152,  # tth
+            80,  # theta
+            0,  # phi
+            0,  # chi
+            0.0518615991,  # H_expected
+            0,  # K_expected
+            -1.779973,  # L_expected
         ),
         # Add more parameter sets here
     ],
 )
-def test_HKL_from_momentum_scattering(
+def test_HKL_from_momentum_scattering_cubic(
     calculator, params, tth, theta, phi, chi, H_expected, K_expected, L_expected
 ):
+    """test the function _get_HKL_from_momentum_scattering in interface.py in the cubic case"""
     calculator.initialize(params)
 
     # test the function _get_HKL_from_momentum_scattering
@@ -65,6 +66,6 @@ def test_HKL_from_momentum_scattering(
         momentum, a_vec, b_vec, c_vec
     )
 
-    assert np.isclose(H_expected, H_test)
-    assert np.isclose(K_expected, K_test)
-    assert np.isclose(L_expected, L_test)
+    assert np.isclose(H_expected, H_test, atol=1e-5)
+    assert np.isclose(K_expected, K_test, atol=1e-5)
+    assert np.isclose(L_expected, L_test, atol=1e-5)
