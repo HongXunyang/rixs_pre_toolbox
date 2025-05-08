@@ -541,7 +541,7 @@ def _get_reciprocal_space_vectors(a, b, c, alpha, beta, gamma):
     parameters, angles in degrees. These vectors are in the crystal coordinate system.
     """
     a_vec, b_vec, c_vec = _get_real_space_vectors(a, b, c, alpha, beta, gamma)
-    volumn = np.dot(a_vec, np.cross(b_vec, c_vec))
+    volumn = abs(np.dot(a_vec, np.cross(b_vec, c_vec)))
     a_star_vec = 2 * np.pi * np.cross(b_vec, c_vec) / volumn
     b_star_vec = 2 * np.pi * np.cross(c_vec, a_vec) / volumn
     c_star_vec = 2 * np.pi * np.cross(a_vec, b_vec) / volumn
@@ -568,13 +568,13 @@ def _get_d_spacing(h, k, l, a, b, c, alpha, beta, gamma):
     return d_spacing
 
 
-def _get_momentum_transfer(h, k, l, a, b, c, alpha, beta, gamma):
+def _get_momentum_diffraction(h, k, l, a, b, c, alpha, beta, gamma):
     """Get the momentum transfer vector of the plane defined by the Miller indices (h, k, l)."""
     norm_vec = _get_norm_vector(h, k, l, a, b, c, alpha, beta, gamma)
     return 2 * np.pi * norm_vec
 
 
-def _get_HKL_from_momentum(momentum, a_vec, b_vec, c_vec):
+def _get_HKL_from_momentum_scattering(momentum, a_vec, b_vec, c_vec):
     """Get the HKL (r.l.u.) from the momentum transfer vector."""
     H = np.dot(momentum, a_vec) / (2 * np.pi)
     K = np.dot(momentum, b_vec) / (2 * np.pi)
