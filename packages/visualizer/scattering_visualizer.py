@@ -2,12 +2,20 @@
 # -*- coding: utf-8 -*-
 
 """This is a class to visualize the X-ray scattering geometry"""
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
+from packages.sample.sample import Sample
+from packages.utils import (
+    get_reciprocal_space_vectors,
+    sample_to_lab_conversion,
+)
 
 class ScatteringVisualizer(FigureCanvas):
     """Visualizer for scattering geometry with 3D interactive canvas."""
@@ -21,15 +29,28 @@ class ScatteringVisualizer(FigureCanvas):
         # Set initial view
         self.axes.view_init(elev=39, azim=75)
 
-        self.e_H = np.array([1, 0, 0])
-        self.e_K = np.array([0, 1, 0])
-        self.e_L = np.array([0, 0, 1])
+        # Initialize reciprocal lattice vectors in lab frame
+        self.a_star_lab = np.array([1, 0, 0])
+        self.b_star_lab = np.array([0, 1, 0])
+        self.c_star_lab = np.array([0, 0, 1])
+        self.roll = 0
+        self.pitch = 0
+        self.yaw = 0
 
     def initialize(self, params: dict):
         """Initialize the visualizer with the given crystal coordinates system."""
-        self.e_H = params["e_H"]
-        self.e_K = params["e_K"]
-        self.e_L = params["e_L"]
+        self.roll = params["roll"]
+        self.pitch = params["pitch"]
+        self.yaw = params["yaw"]
+        a, b, c = params["a"], params["b"], params["c"]
+        alpha, beta, gamma = params["alpha"], params["beta"], params["gamma"]
+        # calculate the corresponding a_star_lab, b_star_lab, c_star_lab
+        a_star_sample, b_star_sample, c_star_sample = get_reciprocal_space_vectors(
+            a, b, c, alpha, beta, gamma
+        )
+        self.a_star_lab, self.b_star_lab, self.c_star_lab = sample_to_lab_conversion(
+            a_star_sample, b_star_sample, c_star_sample, self.roll, self.pitch, self.yaw
+        )
         return True
 
     def visualize_lab_system(self, chi=0, phi=0, is_clear=True):
@@ -75,15 +96,15 @@ class ScatteringVisualizer(FigureCanvas):
         )
 
         # Normalize the vectors
-        e_H_norm = self.e_H / np.linalg.norm(self.e_H)
-        e_K_norm = self.e_K / np.linalg.norm(self.e_K)
-        e_L_norm = self.e_L / np.linalg.norm(self.e_L)
+        a_star_norm = self.a_star_lab / np.linalg.norm(self.a_star_lab)
+        b_star_norm = self.b_star_lab / np.linalg.norm(self.b_star_lab)
+        c_star_norm = self.c_star_lab / np.linalg.norm(self.c_star_lab)
 
         # Plot the normalized vectors
-        vectors = [e_H_norm, e_K_norm, e_L_norm]
+        vectors = [a_star_norm, b_star_norm, c_star_norm]
         vectors = _rotate_vertices(vectors, phi, chi)
-        colors = ["r", "g", "b"]
-        labels = ["$e_H$", "$e_K$", "$e_L$"]
+        colors = ["r", "r", "r"]
+        labels = ["$a^*$", "$b^*$", "$c^*$"]
 
         for vec, color, label in zip(vectors, colors, labels):
             # Plot the vector
@@ -102,7 +123,7 @@ class ScatteringVisualizer(FigureCanvas):
 
             # Add text label at the tip of the vector
             # Add a small offset to prevent text from overlapping with the arrow
-            offset = 0.3
+            offset = 0.1
             self.axes.text(
                 vec[0] + offset,
                 vec[1] + offset,
@@ -111,7 +132,7 @@ class ScatteringVisualizer(FigureCanvas):
                 color=color,
                 fontsize=14,
                 ha="center",
-                alpha=0.25,
+                alpha=0.4,
             )
 
         # plot the vector of the lab coordinate system, by default it is the unit vectors
