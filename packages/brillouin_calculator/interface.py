@@ -4,6 +4,7 @@
 from functools import partial
 import numpy as np
 from .visualization import BrillouinVisualizer
+from packages.sample import Sample
 
 # This module would normally import functionality for crystallographic
 # calculations using libraries like numpy, scipy, etc.
@@ -25,22 +26,9 @@ class BrillouinCalculator:
         self.c_light = 299792458  # Speed of light [m/s]
         self.e = 1.602176634e-19  # Elementary charge [C]
 
-        # Default lattice parameters
-        self.a = 5.0
-        self.b = 5.0
-        self.c = 13
-        self.alpha = 90.0
-        self.beta = 90.0
-        self.gamma = 90.0
-        self.a_vec, self.b_vec, self.c_vec = _get_real_space_vectors(
-            self.a, self.b, self.c, self.alpha, self.beta, self.gamma
-        )
+        # Initialize sample
+        self.sample = Sample()
         self.lattice_type = "cubic"
-        self.a_star_vec, self.b_star_vec, self.c_star_vec = (
-            _get_reciprocal_space_vectors(
-                self.a, self.b, self.c, self.alpha, self.beta, self.gamma
-            )
-        )
         self.e_H, self.e_K, self.e_L = (
             np.array([1, 0, 0]),
             np.array([0, 1, 0]),
@@ -76,14 +64,11 @@ class BrillouinCalculator:
             params["e_L"] = np.array([0, 0, 1])
         try:
             # Store parameters
-            self.a = params["a"]
-            self.b = params["b"]
-            self.c = params["c"]
-            self.alpha = params["alpha"]
-            self.beta = params["beta"]
-            self.gamma = params["gamma"]
             self.energy = params["energy"]
             self.e_H, self.e_K, self.e_L = params["e_H"], params["e_K"], params["e_L"]
+
+            # Initialize sample
+            self.sample.initialize(params, self._sample_to_lab_conversion)
 
             # Calculate wavelength and wavevector
             self.lambda_A = (
@@ -91,69 +76,17 @@ class BrillouinCalculator:
             )
             self.k_in = 1.0 / self.lambda_A
 
-            # Calculate reciprocal lattice
-            self._calculate_real_lattice()
-            self._calculate_reciprocal_lattice()
-
-            # Initialize visualizer
-            # self.visualizer = BrillouinVisualizer(self.reciprocal_lattice)
-
             self._initialized = True
             return True
         except Exception as e:
             print(f"Error initializing calculator: {str(e)}")
             return False
 
-    def initialize_from_cif(self, cif_file_path, energy):
-        """Initialize from a CIF file.
-        PROBABLY NOT NEEDED, CONSIDER TO REMOVE IT
-
-        Args:
-            cif_file_path (str): Path to the CIF file
-            energy (float): X-ray energy in eV
-
-        Returns:
-            bool: True if initialization was successful
-        """
-        try:
-            # Simulate loading from CIF file
-            # In a real implementation, this would parse the CIF file
-            # and extract the lattice parameters
-
-            # For this template, just use default values as if loaded from CIF
-            self.a = 5.43  # Silicon lattice constant
-            self.b = 5.43
-            self.c = 5.43
-            self.alpha = 90.0
-            self.beta = 90.0
-            self.gamma = 90.0
-            self.energy = energy
-
-            # Calculate reciprocal lattice
-            self._calculate_real_lattice()
-            self._calculate_reciprocal_lattice()
-
-            # Initialize visualizer
-            self.visualizer = BrillouinVisualizer(self.reciprocal_lattice)
-
-            self._initialized = True
-            return True
-        except Exception as e:
-            print(f"Error initializing from CIF file: {str(e)}")
-            return False
-
-    def _calculate_real_lattice(self):
-        self.a_vec, self.b_vec, self.c_vec = _get_real_space_vectors(
-            self.a, self.b, self.c, self.alpha, self.beta, self.gamma
-        )
-
-    def _calculate_reciprocal_lattice(self):
-        """Calculate the reciprocal lattice vectors."""
-        self.a_star_vec, self.b_star_vec, self.c_star_vec = (
-            _get_reciprocal_space_vectors(
-                self.a, self.b, self.c, self.alpha, self.beta, self.gamma
-            )
-        )
+    def _sample_to_lab_conversion(self, a_vec, b_vec, c_vec):
+        """Convert vectors from sample coordinate system to lab coordinate system."""
+        # For now, just return the same vectors
+        # This should be implemented based on the actual coordinate system conversion
+        return a_vec, b_vec, c_vec
 
     def get_Q_magnitude(self, tth):
         return 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
@@ -211,13 +144,14 @@ class BrillouinCalculator:
 
         # Transform to sample coordinates
         q_sample = phi_mat_beam @ chi_mat_beam @ Q_th2th
-        H_lab = q_sample[0] * self.a
-        K_lab = q_sample[1] * self.b
-        L_lab = q_sample[2] * self.c
+        a, b, c, _, _, _ = self.sample.get_lattice_parameters()
+        H_lab = q_sample[0] * a
+        K_lab = q_sample[1] * b
+        L_lab = q_sample[2] * c
         H_crystal, K_crystal, L_crystal = _lab_to_crystal_coordinate(
-            self.a,
-            self.b,
-            self.c,
+            a,
+            b,
+            c,
             H_lab,
             K_lab,
             L_lab,
@@ -290,13 +224,14 @@ class BrillouinCalculator:
 
         # Transform to sample coordinates
         q_sample = phi_mat_beam @ chi_mat_beam @ Q_th2th
-        H_lab = q_sample[0] * self.a
-        K_lab = q_sample[1] * self.b
-        L_lab = q_sample[2] * self.c
+        a, b, c, _, _, _ = self.sample.get_lattice_parameters()
+        H_lab = q_sample[0] * a
+        K_lab = q_sample[1] * b
+        L_lab = q_sample[2] * c
         H_crystal, K_crystal, L_crystal = _lab_to_crystal_coordinate(
-            self.a,
-            self.b,
-            self.c,
+            a,
+            b,
+            c,
             H_lab,
             K_lab,
             L_lab,
@@ -339,10 +274,11 @@ class BrillouinCalculator:
             raise ValueError("Calculator not initialized")
 
         calculate_angles = _calculate_angles_factory(fixed_angle_name)
+        a, b, c, _, _, _ = self.sample.get_lattice_parameters()
         return calculate_angles(
-            self.a,
-            self.b,
-            self.c,
+            a,
+            b,
+            c,
             self.k_in,
             H_crystal,
             K_crystal,
@@ -367,7 +303,7 @@ class BrillouinCalculator:
             raise ValueError("Calculator not initialized")
 
         e_H, e_K, e_L = self.e_H, self.e_K, self.e_L
-        a, b, c = self.a, self.b, self.c
+        a, b, c, _, _, _ = self.sample.get_lattice_parameters()
 
         H_crystal_temp = H_crystal if H_crystal is not None else 0.0
         K_crystal_temp = K_crystal if K_crystal is not None else 0.0
@@ -412,14 +348,23 @@ class BrillouinCalculator:
         Returns:
             dict: Dictionary containing lattice parameters
         """
+        a, b, c, alpha, beta, gamma = self.sample.get_lattice_parameters()
         return {
-            "a": self.a,
-            "b": self.b,
-            "c": self.c,
-            "alpha": self.alpha,
-            "beta": self.beta,
-            "gamma": self.gamma,
+            "a": a,
+            "b": b,
+            "c": c,
+            "alpha": alpha,
+            "beta": beta,
+            "gamma": gamma,
         }
+
+    def get_real_space_vectors(self, frame="sample"):
+        """Get the real space vectors.
+
+        Args:
+            frame (str): "sample" or "lab"
+        """
+        return self.sample.get_real_space_vectors(frame)
 
 
 def _calculate_angles_factory(fixed_angle_name):

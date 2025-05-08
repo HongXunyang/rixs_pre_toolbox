@@ -61,7 +61,7 @@ def test_HKL_from_momentum_scattering_cubic(
         ]
     )
     print(f"momentum: {momentum}")
-    a_vec, b_vec, c_vec = calculator.a_vec, calculator.b_vec, calculator.c_vec
+    a_vec, b_vec, c_vec = calculator.get_real_space_vectors(frame="sample")
     H_test, K_test, L_test = _get_HKL_from_momentum_scattering(
         momentum, a_vec, b_vec, c_vec
     )
