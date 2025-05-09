@@ -157,9 +157,9 @@ class BrillouinCalculator:
 
     def calculate_angles(
         self,
-        H_crystal,
-        K_crystal,
-        L_crystal,
+        H,
+        K,
+        L,
         fixed_angle,
         fixed_angle_name="chi",
     ):
@@ -178,65 +178,46 @@ class BrillouinCalculator:
             raise ValueError("Calculator not initialized")
 
         calculate_angles = _calculate_angles_factory(fixed_angle_name)
-        a, b, c, _, _, _ = self.lab.get_lattice_parameters()
+        a_star_vec_lab, b_star_vec_lab, c_star_vec_lab = (
+            self.lab.get_reciprocal_space_vectors()
+        )
         return calculate_angles(
-            a,
-            b,
-            c,
             self.k_in,
-            H_crystal,
-            K_crystal,
-            L_crystal,
-            self.e_H,
-            self.e_K,
-            self.e_L,
+            H,
+            K,
+            L,
+            a_star_vec_lab,
+            b_star_vec_lab,
+            c_star_vec_lab,
             fixed_angle,
         )
 
     def calculate_angles_tth_fixed(
         self,
         tth,
-        H_crystal=0.15,
-        K_crystal=0.1,
-        L_crystal=None,
+        H=0.15,
+        K=0.1,
+        L=None,
         fixed_angle_name="chi",
         fixed_angle=0.0,
     ):
-        """Calculate scattering angles from two of the three HKL indices, with tth fixed."""
-        if not self.is_initialized():
-            raise ValueError("Calculator not initialized")
-
-        e_H, e_K, e_L = self.e_H, self.e_K, self.e_L
-        a, b, c, _, _, _ = self.sample.get_lattice_parameters()
-
-        H_crystal_temp = H_crystal if H_crystal is not None else 0.0
-        K_crystal_temp = K_crystal if K_crystal is not None else 0.0
-        L_crystal_temp = L_crystal if L_crystal is not None else 0.0
-
-        kh_crystal = H_crystal_temp / a
-        kk_crystal = K_crystal_temp / b
-        kl_crystal = L_crystal_temp / c
-
-        Q_magnitude = self.get_Q_magnitude(tth)
-        remainder = -np.sqrt(
-            Q_magnitude**2 - kh_crystal**2 - kk_crystal**2 - kl_crystal**2
+        calculate_angles = _calculate_angles_factory("tth")
+        a_star_vec_lab, b_star_vec_lab, c_star_vec_lab = (
+            self.lab.get_reciprocal_space_vectors()
         )
-
-        kh_crystal = kh_crystal if H_crystal is not None else remainder
-        kk_crystal = kk_crystal if K_crystal is not None else remainder
-        kl_crystal = kl_crystal if L_crystal is not None else remainder
-
-        H_crystal, K_crystal, L_crystal = kh_crystal * a, kk_crystal * b, kl_crystal * c
-        H_lab, K_lab, L_lab = _crystal_to_lab_coordinate(
-            a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L
+        results = calculate_angles(
+            self.k_in,
+            tth,
+            H,
+            K,
+            L,
+            a_star_vec_lab,
+            b_star_vec_lab,
+            c_star_vec_lab,
+            fixed_angle_name,
+            fixed_angle,
         )
-        calculate_angles = _calculate_angles_factory(fixed_angle_name)
-        result = calculate_angles(
-            a, b, c, self.k_in, H_lab, K_lab, L_lab, e_H, e_K, e_L, fixed_angle
-        )
-        assert np.abs(result["tth"] - tth) < 1e-6
-        print(f"input tth: {tth}, output tth: {result['tth']}")
-        return result
+        return results
 
     def is_initialized(self):
         """Check if the calculator is initialized.
@@ -276,50 +257,46 @@ def _calculate_angles_factory(fixed_angle_name):
         return _calculate_angles_chi_fixed
     elif fixed_angle_name == "phi":
         return _calculate_angles_phi_fixed
+    elif fixed_angle_name == "tth":
+        return _calculate_angles_tth_fixed
 
 
 def _calculate_angles_chi_fixed(
-    a, b, c, k_in, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L, chi
+    k_in, H, K, L, a_star_vec_lab, b_star_vec_lab, c_star_vec_lab, chi
 ):
-    """Calculate scattering angles from HKL (crystal coordinates) indices, with chi fixed."""
+    """Calculate scattering angles from HKL, with chi fixed."""
 
     # convert crystal coordinates to lab coordinates
     epsilon = 1e-10
-    H_lab, K_lab, L_lab = _crystal_to_lab_coordinate(
-        a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L
-    )
 
-    kh_lab = H_lab / a  # k_h has a unit of 1/Å
-    kk_lab = K_lab / b  # k_k has a unit of 1/Å
-    kl_lab = L_lab / c  # k_l has a unit of 1/Å
+    # get momentum transfer vector in lab coordinates
+    k_vec_lab = H * a_star_vec_lab + K * b_star_vec_lab + L * c_star_vec_lab
     cos_chi = np.cos(np.radians(chi))
     sin_chi = np.sin(np.radians(chi))
-    Q_magnitude = np.sqrt(kh_lab**2 + kk_lab**2 + kl_lab**2)
-    tth_rad = 2 * np.arcsin(Q_magnitude / (2 * k_in))
-    tth = np.degrees(tth_rad)
+    k_magnitude = np.linalg.norm(k_vec_lab)
+    tth_rad = 2 * np.arcsin(k_magnitude / (2 * k_in))
+    tth = np.degrees(tth_rad)  # tth is done calculating
 
-    delta_rad = np.arccos(-kl_lab / (Q_magnitude * cos_chi))
-
-    print(
-        f"-kl_lab: {kl_lab}, Q_magnitude: {Q_magnitude}, cos_chi: {cos_chi}, -kl/(Q*cos_chi): {-kl_lab/(Q_magnitude*cos_chi)}"
-    )
+    # delta == theta - (tth/2) is the angle between the momentum transfer vector and sample surface
+    delta_rad = np.arccos(-k_vec_lab[2] / (k_magnitude * cos_chi))
     theta_rad = delta_rad + tth_rad / 2
-    theta = np.degrees(theta_rad)
+    theta = np.degrees(theta_rad)  # theta is done calculating
+
     sin_delta = np.sin(delta_rad)
     cos_delta = np.cos(delta_rad)
-    if (np.abs(H_lab) < epsilon) and (np.abs(K_lab) < epsilon):
+    if (np.abs(k_vec_lab[0]) < epsilon) and (np.abs(k_vec_lab[1]) < epsilon):
         phi = 0
         chi = 0
     else:
-        A = Q_magnitude * sin_delta
-        B = -Q_magnitude * cos_delta * sin_chi
-        C = Q_magnitude * cos_delta * sin_chi
-        D = Q_magnitude * sin_delta
+        A = k_magnitude * sin_delta
+        B = -k_magnitude * cos_delta * sin_chi
+        C = k_magnitude * cos_delta * sin_chi
+        D = k_magnitude * sin_delta
 
         mat = np.array([[A, B], [C, D]])
         print(f"mat: {mat}")
         mat_inv = np.linalg.inv(mat)
-        vector = (kh_lab, kk_lab)
+        vector = (k_vec_lab[0], k_vec_lab[1])
         vector_rotated = mat_inv @ vector
         phi_rad = np.arctan(vector_rotated[1] / vector_rotated[0])
         phi = np.degrees(phi_rad)
@@ -329,39 +306,40 @@ def _calculate_angles_chi_fixed(
         "theta": theta,
         "phi": phi,
         "chi": chi,
-        "H": H_crystal,
-        "K": K_crystal,
-        "L": L_crystal,
+        "H": H,
+        "K": K,
+        "L": L,
         "success": True,
         "error": None,
     }
 
 
 def _calculate_angles_phi_fixed(
-    a, b, c, k_in, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L, phi
+    k_in,
+    H,
+    K,
+    L,
+    a_star_vec_lab,
+    b_star_vec_lab,
+    c_star_vec_lab,
+    phi,
 ):
     """Calculate scattering angles from HKL indices, with phi fixed."""
 
-    # convert crystal coordinates to lab coordinates
-    h_lab, k_lab, l_lab = _crystal_to_lab_coordinate(
-        a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L
-    )
-    kh_lab = h_lab / a  # k_h has a unit of 1/Å
-    kk_lab = k_lab / b  # k_k has a unit of 1/Å
-    kl_lab = l_lab / c  # k_l has a unit of 1/Å
+    # get momentum transfer vector in lab coordinates
+    k_vec_lab = H * a_star_vec_lab + K * b_star_vec_lab + L * c_star_vec_lab
+    k_magnitude = np.linalg.norm(k_vec_lab)
+    tth_rad = 2 * np.arcsin(k_magnitude / (2 * k_in))
+    tth = np.degrees(tth_rad)  # tth is done calculating
+
     cos_phi = np.cos(np.radians(phi))
     sin_phi = np.sin(np.radians(phi))
-
-    Q_magnitude = np.sqrt(kh_lab**2 + kk_lab**2 + kl_lab**2)
-    tth_rad = 2 * np.arcsin(Q_magnitude / (2 * k_in))
-    tth = np.degrees(tth_rad)
-
-    vector = (kh_lab / Q_magnitude, kk_lab / Q_magnitude)
+    vector = (k_vec_lab[0] / k_magnitude, k_vec_lab[1] / k_magnitude)
     mat = np.array([[cos_phi, -sin_phi], [sin_phi, cos_phi]])
     mat_inv = np.linalg.inv(mat)
     vector_rotated = mat_inv @ vector
     v0, v1 = vector_rotated
-    v2 = -kl_lab / Q_magnitude
+    v2 = -k_vec_lab[2] / k_magnitude
 
     chi_rad = np.arctan(v1 / v2)
     chi = np.degrees(chi_rad)
@@ -376,12 +354,50 @@ def _calculate_angles_phi_fixed(
         "theta": theta,
         "phi": phi,
         "chi": chi,
-        "H": H_crystal,
-        "K": K_crystal,
-        "L": L_crystal,
+        "H": H,
+        "K": K,
+        "L": L,
         "success": True,
         "error": None,
     }
+
+
+def _calculate_angles_tth_fixed(
+    k_in,
+    tth,
+    H=0.15,
+    K=0.1,
+    L=None,
+    a_star_vec_lab=None,
+    b_star_vec_lab=None,
+    c_star_vec_lab=None,
+    fixed_angle_name="chi",
+    fixed_angle=0.0,
+):
+    """Calculate scattering angles from two of the three HKL indices, with tth fixed."""
+
+    H_temp = H if H is not None else 0.0
+    K_temp = K if K is not None else 0.0
+    L_temp = L if L is not None else 0.0
+
+    k_vec_lab_temp = (
+        H_temp * a_star_vec_lab + K_temp * b_star_vec_lab + L_temp * c_star_vec_lab
+    )
+    k_vec_lab = np.copy(k_vec_lab_temp)
+    k_magnitude_temp = np.linalg.norm(k_vec_lab_temp)
+    k_magnitude = calculate_k_magnitude(k_in, tth)
+    remainder = -np.sqrt(k_magnitude**2 - k_magnitude_temp**2)
+
+    k_vec_lab[0] = k_vec_lab[0] if H is not None else remainder
+    k_vec_lab[1] = k_vec_lab[1] if K is not None else remainder
+    k_vec_lab[2] = k_vec_lab[2] if L is not None else remainder
+
+    calculate_angles = _calculate_angles_factory(fixed_angle_name)
+    result = calculate_angles(
+        k_in, H, K, L, a_star_vec_lab, b_star_vec_lab, c_star_vec_lab, fixed_angle
+    )
+    assert np.abs(result["tth"] - tth) < 1e-6
+    return result
 
 
 def _lab_to_crystal_coordinate(a, b, c, H_lab, K_lab, L_lab, e_H, e_K, e_L):
@@ -508,3 +524,8 @@ def _get_HKL_from_momentum_scattering(momentum, a_vec, b_vec, c_vec):
     K = np.dot(momentum, b_vec) / (2 * np.pi)
     L = np.dot(momentum, c_vec) / (2 * np.pi)
     return H, K, L
+
+
+def calculate_k_magnitude(k_in, tth):
+    """Calculate the momentum transfer magnitude from the scattering angle."""
+    return 2 * k_in * np.sin(np.radians(tth / 2.0))
