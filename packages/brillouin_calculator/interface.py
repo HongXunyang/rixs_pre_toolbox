@@ -281,7 +281,9 @@ def _calculate_angles_chi_fixed(
     tth = np.degrees(tth_rad)  # tth is done calculating
 
     # delta == theta - (tth/2) is the angle between the momentum transfer vector and sample surface
-    delta_rad = np.arccos(-k_vec_lab[2] / (k_magnitude * cos_chi))
+    delta_rad = np.sign(k_vec_lab[0]) * np.arccos(
+        -k_vec_lab[2] / (k_magnitude * cos_chi)
+    )
     theta_rad = delta_rad + tth_rad / 2
     theta = np.degrees(theta_rad)  # theta is done calculating
 
@@ -297,7 +299,6 @@ def _calculate_angles_chi_fixed(
         D = k_magnitude * sin_delta
 
         mat = np.array([[A, B], [C, D]])
-        print(f"mat: {mat}")
         mat_inv = np.linalg.inv(mat)
         vector = (k_vec_lab[0], k_vec_lab[1])
         vector_rotated = mat_inv @ vector
@@ -401,54 +402,6 @@ def _calculate_angles_tth_fixed(
     )
     assert np.abs(result["tth"] - tth) < 1e-6
     return result
-
-
-def _lab_to_crystal_coordinate(a, b, c, H_lab, K_lab, L_lab, e_H, e_K, e_L):
-    """Convert the momentum transfer from lab coordinates to crystal coordinates, in the unit of
-    r.l.u. Convention: variable name starting with `k` is in the unit of 1/Å, and variable name of
-    `h`, `k`, `l` is in the unit of r.l.u.
-
-    Args:
-        h_lab, k_lab, l_lab (float): Momentum transfer in lab coordinates, unit: r.l.u.
-        e_H, e_K, e_L (np.ndarray): Unit vectors of the crystal coordinates in the lab coordinates
-
-    Returns:
-        h_crystal, k_crystal, l_crystal (float): Momentum transfer in crystal coordinates, unit: r.l.u.
-
-    """
-    # convert momentum transfer to 1/Å
-    kh_lab = H_lab / a
-    kk_lab = K_lab / b
-    kl_lab = L_lab / c
-
-    rotation_matrix = np.array([e_H, e_K, e_L]).T
-    rotation_matrix_inv = np.linalg.inv(rotation_matrix)
-
-    k_lab = np.array([kh_lab, kk_lab, kl_lab])
-    k_crystal = rotation_matrix_inv @ k_lab
-    H_crystal = k_crystal[0] * a  # convert back to r.l.u.
-    K_crystal = k_crystal[1] * b  # unit: r.l.u.
-    L_crystal = k_crystal[2] * c  # unit: r.l.u.
-    return H_crystal, K_crystal, L_crystal
-
-
-def _crystal_to_lab_coordinate(a, b, c, H_crystal, K_crystal, L_crystal, e_H, e_K, e_L):
-    """Convert the momentum transfer from crystal coordinates to lab coordinates, in the unit of
-    r.l.u. Convention: variable name starting with `k` is in the unit of 1/Å, and variable name of
-    `h`, `k`, `l` is in the unit of r.l.u.
-    """
-    kh_crystal = H_crystal / a
-    kk_crystal = K_crystal / b
-    kl_crystal = L_crystal / c
-
-    rotation_matrix = np.array([e_H, e_K, e_L]).T
-    k_crystal = np.array([kh_crystal, kk_crystal, kl_crystal])
-    k_lab = rotation_matrix @ k_crystal
-
-    H_lab = k_lab[0] * a
-    K_lab = k_lab[1] * b
-    L_lab = k_lab[2] * c
-    return H_lab, K_lab, L_lab
 
 
 def _get_real_space_vectors(a, b, c, alpha, beta, gamma):

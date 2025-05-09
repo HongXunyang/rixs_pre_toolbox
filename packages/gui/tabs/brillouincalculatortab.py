@@ -647,9 +647,9 @@ class BrillouinCalculatorTab(TabInterface):
 
             # Calculate angles
             result = self.calculator.calculate_angles(
-                H_crystal=self.H_input.value(),
-                K_crystal=self.K_input.value(),
-                L_crystal=self.L_input.value(),
+                H=self.H_input.value(),
+                K=self.K_input.value(),
+                L=self.L_input.value(),
                 fixed_angle=fixed_angle_value,
                 fixed_angle_name=fixed_angle_name,
             )
@@ -761,9 +761,9 @@ class BrillouinCalculatorTab(TabInterface):
             # Calculate angles
             result = self.calculator.calculate_angles_tth_fixed(
                 tth=tth,
-                H_crystal=H,
-                K_crystal=K,
-                L_crystal=L,
+                H=H,
+                K=K,
+                L=L,
                 fixed_angle_name=fixed_angle_name,
                 fixed_angle=fixed_angle_value,
             )
