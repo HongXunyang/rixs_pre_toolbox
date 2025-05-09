@@ -51,6 +51,7 @@ def get_reciprocal_space_vectors(a, b, c, alpha, beta, gamma):
 
 def euler_to_matrix(roll, pitch, yaw):
     """Convert Euler angles to rotation matrix. We follows the ZYX convention.
+    Remember we are using a right-hand rule.
 
     Args:
         roll (float): rotation about the new X axis in degrees
@@ -72,7 +73,7 @@ def euler_to_matrix(roll, pitch, yaw):
             [0, np.sin(roll_rad), np.cos(roll_rad)],
         ]
     )
-
+    # remember this is a right-hand rule
     Ry = np.array(
         [
             [np.cos(pitch_rad), 0, np.sin(pitch_rad)],
@@ -93,7 +94,18 @@ def euler_to_matrix(roll, pitch, yaw):
 
 
 def angle_to_matrix(theta, phi, chi):
-    """Convert angles to rotation matrix."""
+    """Convert angles theta, phi, chi to rotation matrix.
+    Pay attention to the direction of the rotation. Theta rotation doesn't follow the right-hand
+    rule. but chi and phi do!
+
+    Args:
+        theta (float): rotation about the y-axis in degrees, left-hand rule
+        phi (float): rotation about the z-axis in degrees, right-hand rule
+        chi (float): rotation about the x-axis in degrees, right-hand rule
+
+    Returns:
+        rotation_matrix (np.ndarray): Rotation matrix
+    """
     theta_rad, phi_rad, chi_rad = (np.radians(theta), np.radians(phi), np.radians(chi))
 
     # theta rotation around the y-axis

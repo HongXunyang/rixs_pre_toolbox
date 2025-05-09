@@ -4,15 +4,10 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import numpy as np
 from packages.utils import (
-    get_real_space_vectors,
-    get_reciprocal_space_vectors,
     euler_to_matrix,
-    sample_to_lab_conversion,
-    lab_to_sample_conversion,
 )
-from packages.classes import Lattice
+from packages.classes.lattice import Lattice
 
 class Sample:
     """This is a class for the sample."""
