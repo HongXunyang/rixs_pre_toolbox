@@ -11,11 +11,11 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from packages.classes import Sample
 from packages.utils import (
     get_reciprocal_space_vectors,
     sample_to_lab_conversion,
 )
+from packages.classes.lab import Lab
 
 class ScatteringVisualizer(FigureCanvas):
     """Visualizer for scattering geometry with 3D interactive canvas."""
@@ -44,13 +44,15 @@ class ScatteringVisualizer(FigureCanvas):
         self.yaw = params["yaw"]
         a, b, c = params["a"], params["b"], params["c"]
         alpha, beta, gamma = params["alpha"], params["beta"], params["gamma"]
+        lab = Lab()
+        lab.initialize(
+            a, b, c, alpha, beta, gamma, self.roll, self.pitch, self.yaw, 0, 0, 0
+        )
         # calculate the corresponding a_star_lab, b_star_lab, c_star_lab
-        a_star_sample, b_star_sample, c_star_sample = get_reciprocal_space_vectors(
-            a, b, c, alpha, beta, gamma
+        self.a_star_lab, self.b_star_lab, self.c_star_lab = (
+            lab.get_reciprocal_space_vectors()
         )
-        self.a_star_lab, self.b_star_lab, self.c_star_lab = sample_to_lab_conversion(
-            a_star_sample, b_star_sample, c_star_sample, self.roll, self.pitch, self.yaw
-        )
+        self.visualize_lab_system()
         return True
 
     def visualize_lab_system(self, chi=0, phi=0, is_clear=True):
