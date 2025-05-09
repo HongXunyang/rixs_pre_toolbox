@@ -5,24 +5,12 @@ here includes the translation functions
 import numpy as np
 
 
-def get_reciprocal_space_vectors(a, b, c, alpha, beta, gamma):
-    """Get the reciprocal space vectors a_star_vec, b_star_vec, c_star_vec from the lattice
-    parameters, angles in degrees. These vectors are in the crystal coordinate system.
-    """
-    a_vec, b_vec, c_vec = get_real_space_vectors(a, b, c, alpha, beta, gamma)
-    volumn = abs(np.dot(a_vec, np.cross(b_vec, c_vec)))
-    a_star_vec = 2 * np.pi * np.cross(b_vec, c_vec) / volumn
-    b_star_vec = 2 * np.pi * np.cross(c_vec, a_vec) / volumn
-    c_star_vec = 2 * np.pi * np.cross(a_vec, b_vec) / volumn
-    return a_star_vec, b_star_vec, c_star_vec
-
-
 def get_real_space_vectors(a, b, c, alpha, beta, gamma):
     """Get the real space vectors a_vec, b_vec, c_vec from the lattice parameters.
     - a_vec is by-default along x-axis (a, 0, 0)
     - b_vec is by-default (b cos gamma, b sin gamma, 0) on the x-y plane,
     - c_vec is then calculated
-    The above convention defines the crystal coordinate system.
+    The above convention defines the lattice coordinate system.
 
     Args:
         a, b, c (float): Lattice constants in Angstroms
@@ -47,6 +35,18 @@ def get_real_space_vectors(a, b, c, alpha, beta, gamma):
     c_vec_z = np.sqrt(c**2 - c_vec_x**2 - c_vec_y**2)
     c_vec = np.array([c_vec_x, c_vec_y, c_vec_z])
     return a_vec, b_vec, c_vec
+
+
+def get_reciprocal_space_vectors(a, b, c, alpha, beta, gamma):
+    """Get the reciprocal space vectors a_star_vec, b_star_vec, c_star_vec from the lattice
+    parameters, angles in degrees. These vectors are in the crystal coordinate system.
+    """
+    a_vec, b_vec, c_vec = get_real_space_vectors(a, b, c, alpha, beta, gamma)
+    volumn = abs(np.dot(a_vec, np.cross(b_vec, c_vec)))
+    a_star_vec = 2 * np.pi * np.cross(b_vec, c_vec) / volumn
+    b_star_vec = 2 * np.pi * np.cross(c_vec, a_vec) / volumn
+    c_star_vec = 2 * np.pi * np.cross(a_vec, b_vec) / volumn
+    return a_star_vec, b_star_vec, c_star_vec
 
 
 def euler_to_matrix(roll, pitch, yaw):

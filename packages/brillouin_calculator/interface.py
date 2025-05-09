@@ -4,7 +4,7 @@
 from functools import partial
 import numpy as np
 from .visualization import BrillouinVisualizer
-from packages.sample import Sample
+from packages.classes import Sample
 
 # This module would normally import functionality for crystallographic
 # calculations using libraries like numpy, scipy, etc.

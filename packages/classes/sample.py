@@ -1,4 +1,5 @@
 """This is a module for the sample class."""
+
 import sys
 import os
 
@@ -11,6 +12,7 @@ from packages.utils import (
     sample_to_lab_conversion,
     lab_to_sample_conversion,
 )
+
 
 class Sample:
     """This is a class for the sample."""

@@ -11,7 +11,7 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from packages.sample.sample import Sample
+from packages.classes import Sample
 from packages.utils import (
     get_reciprocal_space_vectors,
     sample_to_lab_conversion,
