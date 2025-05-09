@@ -33,7 +33,7 @@ class Lattice:
         self.b_star_vec_lattice = None
         self.c_star_vec_lattice = None
 
-    def initialize(self, a, b, c, alpha, beta, gamma, roll, pitch, yaw):
+    def initialize(self, a, b, c, alpha, beta, gamma):
         """Initialize the sample.
 
         Args:

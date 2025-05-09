@@ -92,6 +92,39 @@ def euler_to_matrix(roll, pitch, yaw):
     return Rz @ Ry @ Rx  # ZYX order
 
 
+def angle_to_matrix(theta, phi, chi):
+    """Convert angles to rotation matrix."""
+    theta_rad, phi_rad, chi_rad = (np.radians(theta), np.radians(phi), np.radians(chi))
+
+    # theta rotation around the y-axis
+    theta_mat = np.array(
+        [
+            [np.cos(theta_rad), 0, -np.sin(theta_rad)],
+            [0, 1, 0],
+            [np.sin(theta_rad), 0, np.cos(theta_rad)],
+        ]
+    )
+    # chi rotation around the x-axis
+    chi_mat = np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(chi_rad), -np.sin(chi_rad)],
+            [0, np.sin(chi_rad), np.cos(chi_rad)],
+        ]
+    )
+
+    # phi rotation around the z-axis
+    phi_mat = np.array(
+        [
+            [np.cos(phi_rad), -np.sin(phi_rad), 0],
+            [np.sin(phi_rad), np.cos(phi_rad), 0],
+            [0, 0, 1],
+        ]
+    )
+
+    return theta_mat @ chi_mat @ phi_mat
+
+
 def sample_to_lab_conversion(
     a_vec_sample, b_vec_sample, c_vec_sample, roll, pitch, yaw
 ):
