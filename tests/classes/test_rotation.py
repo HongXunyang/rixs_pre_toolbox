@@ -1,6 +1,5 @@
 """Tests for the sample and lab rotation functionality."""
 
-import pytest
 import numpy as np
 import sys
 import os

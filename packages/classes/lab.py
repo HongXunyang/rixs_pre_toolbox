@@ -47,6 +47,14 @@ class Lab:
         """Get the reciprocal space vectors in the lab frame."""
         return self.a_star_vec_lab, self.b_star_vec_lab, self.c_star_vec_lab
 
+    def rotate_sample(self, theta, phi, chi):
+        """Rotate the sample."""
+        self.theta = theta
+        self.phi = phi
+        self.chi = chi
+        self.calculate_real_space_vectors()
+        self.calculate_reciprocal_space_vectors()
+
     def calculate_real_space_vectors(self):
         """Get the real space vectors in the lab frame."""
         a_vec_sample, b_vec_sample, c_vec_sample = self.sample.get_real_space_vectors()

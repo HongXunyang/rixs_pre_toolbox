@@ -4,7 +4,6 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import numpy as np
 from packages.utils import (
     get_real_space_vectors,
     get_reciprocal_space_vectors,

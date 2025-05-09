@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # import partial
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from functools import partial
 import numpy as np
 from .visualization import BrillouinVisualizer
-from packages.classes import Sample
+from packages.classes import Lab
+from packages.utils import angle_to_matrix
 
 # This module would normally import functionality for crystallographic
 # calculations using libraries like numpy, scipy, etc.
@@ -27,13 +32,10 @@ class BrillouinCalculator:
         self.e = 1.602176634e-19  # Elementary charge [C]
 
         # Initialize sample
-        self.sample = Sample()
-        self.lattice_type = "cubic"
-        self.e_H, self.e_K, self.e_L = (
-            np.array([1, 0, 0]),
-            np.array([0, 1, 0]),
-            np.array([0, 0, 1]),
-        )
+        self.lab = Lab()
+        self.roll = 0.0
+        self.pitch = 0.0
+        self.yaw = 0.0
 
         # X-ray energy and derived quantities
         self.energy = 930  # eV
@@ -67,12 +69,13 @@ class BrillouinCalculator:
             params.get("beta", 90.0),
             params.get("gamma", 90.0),
         )
+        theta, phi, chi = 0.0, 0.0, 0.0
         try:
             # Store parameters
             self.energy = params["energy"]
 
             # Initialize sample
-            self.sample.initialize(
+            self.lab.initialize(
                 a,
                 b,
                 c,
@@ -82,6 +85,9 @@ class BrillouinCalculator:
                 roll,
                 pitch,
                 yaw,
+                theta,
+                phi,
+                chi,
             )
             # Calculate wavelength and wavevector
             self.lambda_A = (
@@ -101,91 +107,11 @@ class BrillouinCalculator:
         # This should be implemented based on the actual coordinate system conversion
         return a_vec, b_vec, c_vec
 
-    def get_Q_magnitude(self, tth):
+    def get_k_magnitude(self, tth):
         return 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
 
-    def calculate_hkl_cubic(self, tth, theta, phi, chi):
-        """Calculate HKL indices from scattering angles.
-
-        Args:
-            tth (float): Scattering angle in degrees
-            theta (float): Sample theta rotation in degrees
-            phi (float): Sample phi rotation in degrees
-            chi (float): Sample chi rotation in degrees
-
-        Returns:
-            dict: Dictionary containing h, k, l (crystal coordinates) indices and Q magnitude
-        """
-        if not self.is_initialized():
-            raise ValueError("Calculator not initialized")
-
-        # Calculate Q magnitude
-        Q = self.get_Q_magnitude(tth)
-        # Calculate delta = theta - (tth/2)
-        delta = theta - (tth / 2.0)
-
-        # Build rotation matrices for chi and phi
-        chi_rad = np.radians(chi)
-        phi_rad = np.radians(phi)
-
-        # the rotation of the sample is defined to be counter-clockwise
-        chi_mat_sample = np.array(
-            [
-                [1, 0, 0],
-                [0, np.cos(chi_rad), -np.sin(chi_rad)],
-                [0, np.sin(chi_rad), np.cos(chi_rad)],
-            ]
-        )
-        # the rotation of the beam relative to the sample is therefore clockwise
-        chi_mat_beam = chi_mat_sample.T
-
-        # the rotation of the sample is defined to be counter-clockwise
-        phi_mat_sample = np.array(
-            [
-                [np.cos(phi_rad), -np.sin(phi_rad), 0],
-                [np.sin(phi_rad), np.cos(phi_rad), 0],
-                [0, 0, 1],
-            ]
-        )
-        # the rotation of the beam relative to the sample is therefore clockwise
-        phi_mat_beam = phi_mat_sample.T
-
-        # Q vector in "theta-2theta coordinates"
-        sin_delta = np.sin(np.radians(delta))
-        cos_delta = np.cos(np.radians(delta))
-        Q_th2th = np.array([Q * sin_delta, 0.0, -Q * cos_delta])
-
-        # Transform to sample coordinates
-        q_sample = phi_mat_beam @ chi_mat_beam @ Q_th2th
-        a, b, c, _, _, _ = self.sample.get_lattice_parameters()
-        H_lab = q_sample[0] * a
-        K_lab = q_sample[1] * b
-        L_lab = q_sample[2] * c
-        H_crystal, K_crystal, L_crystal = _lab_to_crystal_coordinate(
-            a,
-            b,
-            c,
-            H_lab,
-            K_lab,
-            L_lab,
-            self.e_H,
-            self.e_K,
-            self.e_L,
-        )
-        return {
-            "H": H_crystal,
-            "K": K_crystal,
-            "L": L_crystal,
-            "tth": tth,
-            "theta": theta,
-            "phi": phi,
-            "chi": chi,
-            "success": True,
-            "error": None,
-        }
-
     def calculate_hkl(self, tth, theta, phi, chi):
-        """Calculate HKL indices from scattering angles.
+        """Calculate HKL from scattering angles.
 
         Args:
             tth (float): Scattering angle in degrees
@@ -193,69 +119,34 @@ class BrillouinCalculator:
             phi (float): Sample phi rotation in degrees
             chi (float): Sample chi rotation in degrees
 
-        Returns:
-            dict: Dictionary containing h, k, l (crystal coordinates) indices and Q magnitude
         """
         if not self.is_initialized():
             raise ValueError("Calculator not initialized")
 
-        # Calculate Q magnitude
-        Q = self.get_Q_magnitude(tth)
+        # Calculate momentum transfer magnitude
+        k_magnitude = self.get_k_magnitude(tth)
         # Calculate delta = theta - (tth/2)
-        delta = theta - (tth / 2.0)
-
-        # Build rotation matrices for chi and phi
-        chi_rad = np.radians(chi)
-        phi_rad = np.radians(phi)
-
-        # the rotation of the sample is defined to be counter-clockwise
-        chi_mat_sample = np.array(
-            [
-                [1, 0, 0],
-                [0, np.cos(chi_rad), -np.sin(chi_rad)],
-                [0, np.sin(chi_rad), np.cos(chi_rad)],
-            ]
-        )
-        # the rotation of the beam relative to the sample is therefore clockwise
-        chi_mat_beam = chi_mat_sample.T
-
-        # the rotation of the sample is defined to be counter-clockwise
-        phi_mat_sample = np.array(
-            [
-                [np.cos(phi_rad), -np.sin(phi_rad), 0],
-                [np.sin(phi_rad), np.cos(phi_rad), 0],
-                [0, 0, 1],
-            ]
-        )
-        # the rotation of the beam relative to the sample is therefore clockwise
-        phi_mat_beam = phi_mat_sample.T
-
-        # Q vector in "theta-2theta coordinates"
+        delta = -(tth / 2.0)
         sin_delta = np.sin(np.radians(delta))
         cos_delta = np.cos(np.radians(delta))
-        Q_th2th = np.array([Q * sin_delta, 0.0, -Q * cos_delta])
-
-        # Transform to sample coordinates
-        q_sample = phi_mat_beam @ chi_mat_beam @ Q_th2th
-        a, b, c, _, _, _ = self.sample.get_lattice_parameters()
-        H_lab = q_sample[0] * a
-        K_lab = q_sample[1] * b
-        L_lab = q_sample[2] * c
-        H_crystal, K_crystal, L_crystal = _lab_to_crystal_coordinate(
-            a,
-            b,
-            c,
-            H_lab,
-            K_lab,
-            L_lab,
-            self.e_H,
-            self.e_K,
-            self.e_L,
+        # momentum transfer at theta, phi, chi = 0
+        k_vec_initial = np.array(
+            [k_magnitude * sin_delta, 0.0, -k_magnitude * cos_delta]
         )
+        # rotation of the beam is the reverse rotation of the sample, thus the transpose
+        rotation_matrix = angle_to_matrix(theta, phi, chi).T
+        # momentum transfer at non-zero theta, phi, chi
+        k_vec_lab = rotation_matrix @ k_vec_initial
+        a_vec_lab, b_vec_lab, c_vec_lab = self.lab.get_real_space_vectors()
+
+        # calculate HKL
+        H = np.dot(k_vec_lab, a_vec_lab) / (2 * np.pi)
+        K = np.dot(k_vec_lab, b_vec_lab) / (2 * np.pi)
+        L = np.dot(k_vec_lab, c_vec_lab) / (2 * np.pi)
         return {
-            "H": H_crystal,
-            "K": K_crystal,
-            "L": L_crystal,
+            "H": H,
+            "K": K,
+            "L": L,
             "tth": tth,
             "theta": theta,
             "phi": phi,
@@ -287,7 +178,7 @@ class BrillouinCalculator:
             raise ValueError("Calculator not initialized")
 
         calculate_angles = _calculate_angles_factory(fixed_angle_name)
-        a, b, c, _, _, _ = self.sample.get_lattice_parameters()
+        a, b, c, _, _, _ = self.lab.get_lattice_parameters()
         return calculate_angles(
             a,
             b,
