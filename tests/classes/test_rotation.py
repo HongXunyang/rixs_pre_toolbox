@@ -87,7 +87,7 @@ def test_lab_with_rotation():
     """Test lab with rotation."""
     lab = Lab()
     # Orthorhombic cell, no sample rotation, but with lab rotation in y-axis (theta)
-    lab.initialize(1.0, 2.0, 3.0, 90.0, 90.0, 90.0, 0.0, 0.0, 0.0, 90, 0.0, 0)
+    lab.initialize(1.0, 2.0, 3.0, 90.0, 90.0, 90.0, 0.0, 0.0, 0.0, -90, 0.0, 0)
 
     a_vec_lab, b_vec_lab, c_vec_lab = lab.get_real_space_vectors()
 
@@ -130,7 +130,7 @@ def test_rotation_matrix_consistency():
     np.testing.assert_almost_equal(rotated_vec, a_vec)
 
     # Test for angle_to_matrix
-    theta, phi, chi = 30.0, 45.0, 60.0
+    theta, phi, chi = -30.0, 45.0, 60.0
     lab_rotation = angle_to_matrix(theta, phi, chi)
 
     lab_rotated_vec = lab_rotation @ vec

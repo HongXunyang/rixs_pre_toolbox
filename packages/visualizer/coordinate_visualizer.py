@@ -14,7 +14,7 @@ from packages.utils import (
     get_reciprocal_space_vectors,
     sample_to_lab_conversion,
 )
-
+from packages.classes.lab import Lab
 
 class CoordinateVisualizer(FigureCanvas):
     """Visualizer for coordinate system with 3D interactive canvas."""
@@ -58,12 +58,14 @@ class CoordinateVisualizer(FigureCanvas):
         self.yaw = params["yaw"]
         a, b, c = params["a"], params["b"], params["c"]
         alpha, beta, gamma = params["alpha"], params["beta"], params["gamma"]
-        # calculate the corresponding a_star_lab, b_star_lab, c_star_lab
-        a_star_sample, b_star_sample, c_star_sample = get_reciprocal_space_vectors(
-            a, b, c, alpha, beta, gamma
+
+        lab = Lab()
+        lab.initialize(
+            a, b, c, alpha, beta, gamma, self.roll, self.pitch, self.yaw, 0, 0, 0
         )
-        self.a_star_lab, self.b_star_lab, self.c_star_lab = sample_to_lab_conversion(
-            a_star_sample, b_star_sample, c_star_sample, self.roll, self.pitch, self.yaw
+        # calculate the corresponding a_star_lab, b_star_lab, c_star_lab
+        self.a_star_lab, self.b_star_lab, self.c_star_lab = (
+            lab.get_reciprocal_space_vectors()
         )
         return True
 

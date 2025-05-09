@@ -95,11 +95,10 @@ def euler_to_matrix(roll, pitch, yaw):
 
 def angle_to_matrix(theta, phi, chi):
     """Convert angles theta, phi, chi to rotation matrix.
-    Pay attention to the direction of the rotation. Theta rotation doesn't follow the right-hand
-    rule. but chi and phi do!
+    Pay attention to the direction of the rotation.
 
     Args:
-        theta (float): rotation about the y-axis in degrees, left-hand rule
+        theta (float): rotation about the y-axis in degrees, right-hand rule
         phi (float): rotation about the z-axis in degrees, right-hand rule
         chi (float): rotation about the x-axis in degrees, right-hand rule
 
@@ -111,9 +110,9 @@ def angle_to_matrix(theta, phi, chi):
     # theta rotation around the y-axis
     theta_mat = np.array(
         [
-            [np.cos(theta_rad), 0, -np.sin(theta_rad)],
+            [np.cos(theta_rad), 0, np.sin(theta_rad)],
             [0, 1, 0],
-            [np.sin(theta_rad), 0, np.cos(theta_rad)],
+            [-np.sin(theta_rad), 0, np.cos(theta_rad)],
         ]
     )
     # chi rotation around the x-axis

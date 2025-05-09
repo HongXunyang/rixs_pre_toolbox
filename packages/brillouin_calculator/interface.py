@@ -56,7 +56,9 @@ class BrillouinCalculator:
             a, b, c (float): Lattice constants in Angstroms
             alpha, beta, gamma (float): Lattice angles in degrees
             energy (float): X-ray energy in eV
-            lattice_type (str): Lattice type, one of "cubic"... (MARKED: TO BE EXTENDED)
+            yaw, pitch, roll (float): lattice rotation in degrees
+            theta, phi, chi (float): sample rotation in degrees
+
         Returns:
             bool: True if initialization was successful
         """
@@ -69,6 +71,7 @@ class BrillouinCalculator:
             params.get("beta", 90.0),
             params.get("gamma", 90.0),
         )
+        # the default sample rotation position
         theta, phi, chi = 0.0, 0.0, 0.0
         try:
             # Store parameters
@@ -93,7 +96,7 @@ class BrillouinCalculator:
             self.lambda_A = (
                 (self.hPlanck * self.c_light) / (self.energy * self.e) * 1e10
             )
-            self.k_in = 1.0 / self.lambda_A
+            self.k_in = 2 * np.pi / self.lambda_A
 
             self._initialized = True
             return True
@@ -233,7 +236,7 @@ class BrillouinCalculator:
         Returns:
             dict: Dictionary containing lattice parameters
         """
-        a, b, c, alpha, beta, gamma = self.sample.get_lattice_parameters()
+        a, b, c, alpha, beta, gamma = self.lab.get_lattice_parameters()
         return {
             "a": a,
             "b": b,
@@ -243,13 +246,13 @@ class BrillouinCalculator:
             "gamma": gamma,
         }
 
-    def get_real_space_vectors(self, frame="sample"):
+    def get_real_space_vectors(self):
         """Get the real space vectors.
 
         Args:
             frame (str): "sample" or "lab"
         """
-        return self.sample.get_real_space_vectors(frame)
+        return self.lab.get_real_space_vectors()
 
 
 def _calculate_angles_factory(fixed_angle_name):
