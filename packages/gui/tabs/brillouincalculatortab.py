@@ -76,7 +76,7 @@ class BrillouinCalculatorTab(TabInterface):
             self.angles_to_hkl_visualizer,
             self.hkl_to_angles_visualizer,
             self.hk_fixed_tth_visualizer,
-        ]
+        ]  # group up the funtional objects and initailize them later on
         self.tips = Tips()
 
         # Initialize UI

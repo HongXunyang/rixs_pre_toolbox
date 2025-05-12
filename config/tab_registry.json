@@ -11,6 +11,16 @@
             "order": 1
         },
         {
+            "id": "structure_factor",
+            "name": "Structure Factor Calculator",
+            "description": "Calculate structure factors for different HKL indices",
+            "module_package": "structure_factor_calculator",
+            "tab_class": "StructureFactorTab",
+            "icon": "icons/structure.png",
+            "enabled": true,
+            "order": 2
+        },
+        {
             "id": "placeholder",
             "name": "Place Holder Tab",
             "description": "Placeholder for future functionality",
@@ -18,7 +28,7 @@
             "tab_class": "PlaceholderTab",
             "icon": "icons/placeholder.png",
             "enabled": true,
-            "order": 2
+            "order": 3
         }
     ]
 } 

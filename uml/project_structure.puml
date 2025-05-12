@@ -9,32 +9,37 @@ package "RIXS Preparation Toolbox" {
     
     package "Tabs" {
       [BrillouinCalculatorTab]
-      [FutureTab1]
-      [FutureTab2]
+      [StructureFactorTab]
+      [FutureTab]
     }
   }
   
   package "Backend" {
     package "Calculators" {
       [BrillouinCalculator]
-      [FutureCalculator1]
-      [FutureCalculator2]
+      [StructureFactorCalculator]
+      [FutureCalculator]
     }
     
     package "Visualizers" {
       [ScatteringVisualizer]
-      [CoordinateVisualizer]
       [FutureVisualizer]
     }
     
     package "Helpers" {
       [Tips]
     }
+
+    package "Core Classes" {
+      [Lab]
+      [Sample]
+      [Lattice]
+    }
   }
   
   [TabInterface] <|-- [BrillouinCalculatorTab]
-  [TabInterface] <|-- [FutureTab1]
-  [TabInterface] <|-- [FutureTab2]
+  [TabInterface] <|-- [StructureFactorTab]
+  [TabInterface] <|-- [FutureTab]
   
   [MainWindow] --> [TabInterface]
   [MainWindow] --> [InitWindow]
@@ -42,8 +47,16 @@ package "RIXS Preparation Toolbox" {
   [BrillouinCalculatorTab] --> [BrillouinCalculator] : uses
   [BrillouinCalculatorTab] --> [ScatteringVisualizer] : uses
   
-  [FutureTab1] --> [FutureCalculator1] : uses
-  [FutureTab2] --> [FutureCalculator2] : uses
+
+  [StructureFactorTab] --> [StructureFactorCalculator] : uses
+  
+  [BrillouinCalculator] --> [Lab] : uses
+  [StructureFactorCalculator] --> [Lab] : uses
+  
+  [FutureTab] --> [FutureCalculator] : uses
+
+  [Lab] *-- [Sample] 
+  [Sample] *-- [Lattice]
 }
 
 @enduml 

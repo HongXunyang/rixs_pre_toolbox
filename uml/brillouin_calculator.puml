@@ -4,7 +4,7 @@ package "Backend" {
   class BrillouinCalculator {
     - params: dict
     - initialized: bool
-    - crystal: object
+    - lab: Lab
     + initialize(params: dict): bool
     + is_initialized(): bool
     + calculate_hkl(tth: float, theta: float, phi: float, chi: float): dict
@@ -22,6 +22,17 @@ package "Backend" {
     + is_initialized(): bool
     + visualize_lab_system(is_clear: bool, chi: float, phi: float): Axes
     + visualize_scattering_geometry(scattering_angles: dict, is_clear: bool): Axes
+  }
+  
+  class Lab {
+    - lattice_parameters: dict
+    - real_space_vectors: tuple
+    - reciprocal_space_vectors: tuple
+    + __init__()
+    + initialize(a, b, c, alpha, beta, gamma, roll, pitch, yaw, theta, phi, chi)
+    + get_lattice_parameters(): dict
+    + get_real_space_vectors(): tuple
+    + get_reciprocal_space_vectors(): tuple
   }
 }
 
@@ -50,8 +61,9 @@ package "Frontend" {
 }
 
 TabInterface <|-- BrillouinCalculatorTab
-BrillouinCalculatorTab *-- BrillouinCalculator : uses
-BrillouinCalculatorTab *-- ScatteringVisualizer : uses
+BrillouinCalculatorTab --> BrillouinCalculator : uses
+BrillouinCalculatorTab --> ScatteringVisualizer : uses
+BrillouinCalculator --> Lab : uses
 
 note bottom of BrillouinCalculator
   Core calculation engine:
@@ -65,6 +77,13 @@ note bottom of ScatteringVisualizer
   - Renders laboratory coordinate system
   - Plots scattering geometry
   - Updates in real-time with calculations
+end note
+
+note bottom of Lab
+  Core geometry class:
+  - Handles coordinate transformations
+  - Manages real and reciprocal space vectors
+  - Provides basis for crystallographic calculations
 end note
 
 note bottom of BrillouinCalculatorTab
@@ -81,6 +100,7 @@ end note
 actor User
 participant "BrillouinCalculatorTab\n(Frontend)" as UI
 participant "BrillouinCalculator\n(Backend)" as Calc
+participant "Lab\n(Backend)" as Lab
 participant "ScatteringVisualizer\n(Backend)" as Vis
 
 == Initialization Phase ==
@@ -107,7 +127,11 @@ User -> UI: Main window provides lattice parameters
 activate UI
 UI -> Calc: initialize(params)
 activate Calc
-Calc -> Calc: Store params and create crystal
+Calc -> Lab: initialize(a, b, c, alpha, beta, gamma, roll, pitch, yaw, theta, phi, chi)
+activate Lab
+Lab -> Lab: Create real/reciprocal space vectors
+Lab --> Calc: Success status
+deactivate Lab
 Calc --> UI: Success status
 deactivate Calc
 
@@ -124,7 +148,11 @@ User -> UI: Input angles and click "Calculate HKL"
 activate UI
 UI -> Calc: calculate_hkl(tth, theta, phi, chi)
 activate Calc
-Calc -> Calc: Perform internal calculations
+Calc -> Lab: get_real_space_vectors()
+activate Lab
+Lab --> Calc: Real space vectors
+deactivate Lab
+Calc -> Calc: Perform momentum transfer calculations
 Calc --> UI: Return HKL result dictionary
 deactivate Calc
 
@@ -150,7 +178,11 @@ User -> UI: Input HKL values and fixed angle
 activate UI
 UI -> Calc: calculate_angles(H, K, L, fixed_angle, fixed_angle_name)
 activate Calc
-Calc -> Calc: Perform internal calculations
+Calc -> Lab: get_reciprocal_space_vectors()
+activate Lab
+Lab --> Calc: Reciprocal space vectors
+deactivate Lab
+Calc -> Calc: Perform angle calculations
 Calc --> UI: Return angles result dictionary
 deactivate Calc
 
@@ -173,6 +205,10 @@ User -> UI: Input constraints and click "Calculate"
 activate UI
 UI -> Calc: calculate_angles_tth_fixed(...)
 activate Calc
+Calc -> Lab: get_reciprocal_space_vectors()
+activate Lab
+Lab --> Calc: Reciprocal space vectors
+deactivate Lab
 Calc -> Calc: Perform internal calculations
 Calc --> UI: Return result dictionary
 deactivate Calc

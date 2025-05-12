@@ -55,6 +55,20 @@ class BrillouinCalculatorTab {
   + create_hk_to_angles_tth_fixed_tab()
 }
 
+class StructureFactorTab {
+  - calculator: StructureFactorCalculator
+  - figure: Figure
+  - canvas: FigureCanvas
+  - results_table: QTableWidget
+  + __init__(main_window)
+  + init_ui()
+  + set_parameters(params: dict)
+  - _create_structure_factors_ui()
+  + calculate_structure_factors()
+  - update_visualization(hkl_list, sf_values)
+  - update_results_table(hkl_list, sf_values)
+}
+
 class Tips {
   - tips_dict: dict
   + tip(name: str): str
@@ -79,10 +93,12 @@ QMainWindow <|-- MainWindow
 QWidget <|-- InitWindow
 QWidget <|-- TabInterface
 TabInterface <|-- BrillouinCalculatorTab
+TabInterface <|-- StructureFactorTab
 
 MainWindow *-- InitWindow
 MainWindow *-- TabInterface
 BrillouinCalculatorTab *-- Tips
+StructureFactorTab *-- Tips
 
 MainWindow *-- QTabWidget
 MainWindow *-- QStackedWidget
@@ -108,6 +124,11 @@ end note
 note right of BrillouinCalculatorTab
   Tab for Brillouin zone
   calculations
+end note
+
+note right of StructureFactorTab
+  Tab for calculating structure
+  factors for different HKL indices
 end note
 
 @enduml 
