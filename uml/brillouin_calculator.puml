@@ -1,82 +1,194 @@
-@startuml Brillouin Calculator
+@startuml Brillouin Calculator - Class Diagram
 
-class BrillouinCalculator {
-  - params: dict
-  - initialized: bool
-  - crystal: object
-  + initialize(params: dict): bool
-  + is_initialized(): bool
-  + calculate_hkl(tth: float, theta: float, phi: float, chi: float): dict
-  + calculate_angles(H: float, K: float, L: float, fixed_angle: float, fixed_angle_name: str): dict
-  + calculate_angles_tth_fixed(tth: float, H: float, K: float, L: float, fixed_angle_name: str, fixed_angle: float): dict
+package "Backend" {
+  class BrillouinCalculator {
+    - params: dict
+    - initialized: bool
+    - crystal: object
+    + initialize(params: dict): bool
+    + is_initialized(): bool
+    + calculate_hkl(tth: float, theta: float, phi: float, chi: float): dict
+    + calculate_angles(H: float, K: float, L: float, fixed_angle: float, fixed_angle_name: str): dict
+    + calculate_angles_tth_fixed(tth: float, H: float, K: float, L: float, fixed_angle_name: str, fixed_angle: float): dict
+  }
+
+  class ScatteringVisualizer {
+    - fig: Figure
+    - canvas: FigureCanvas
+    - ax: Axes
+    - params: dict
+    - initialized: bool
+    + initialize(params: dict): bool
+    + is_initialized(): bool
+    + visualize_lab_system(is_clear: bool, chi: float, phi: float): Axes
+    + visualize_scattering_geometry(scattering_angles: dict, is_clear: bool): Axes
+  }
 }
 
-class TabInterface {
-  # main_window: MainWindow
-  # layout: QGridLayout
-  + __init__(main_window)
-  + init_ui()
-  + set_parameters(params: dict)
-}
+package "Frontend" {
+  class TabInterface {
+    # main_window: MainWindow
+    # layout: QGridLayout
+    + __init__(main_window)
+    + init_ui()
+    + set_parameters(params: dict)
+  }
 
-class BrillouinCalculatorTab {
-  - calculator: BrillouinCalculator
-  - angles_to_hkl_visualizer: ScatteringVisualizer
-  - hkl_to_angles_visualizer: ScatteringVisualizer
-  - hk_fixed_tth_visualizer: ScatteringVisualizer
-  - tips: Tips
-  + __init__(main_window)
-  + init_ui()
-  + set_parameters(params: dict)
-  - _create_angles_to_hkl_tab()
-  - _create_hkl_to_angles_tab()
-  - _create_hk_to_angles_tth_fixed_tab()
-  + calculate_hkl()
-  + calculate_angles()
-  + calculate_angles_tth_fixed()
-  + update_fixed_angle_ui()
-  + update_free_index_ui()
-  + ensure_one_free_index(index, checked)
-  + ensure_one_angle_deactivated(angle, checked)
-}
-
-class ScatteringVisualizer {
-  - fig: Figure
-  - canvas: FigureCanvas
-  - ax: Axes
-  - params: dict
-  - initialized: bool
-  + initialize(params: dict): bool
-  + is_initialized(): bool
-  + visualize_lab_system(is_clear: bool, chi: float, phi: float): Axes
-  + visualize_scattering_geometry(scattering_angles: dict, is_clear: bool): Axes
-}
-
-class DragDropLineEdit {
-  + dragEnterEvent(event: QDragEnterEvent)
-  + dropEvent(event: QDropEvent)
+  class BrillouinCalculatorTab {
+    - calculator: BrillouinCalculator
+    - angles_to_hkl_visualizer: ScatteringVisualizer
+    - hkl_to_angles_visualizer: ScatteringVisualizer
+    - hk_fixed_tth_visualizer: ScatteringVisualizer
+    - tips: Tips
+    + __init__(main_window)
+    + init_ui()
+    + set_parameters(params: dict)
+    + calculate_hkl()
+    + calculate_angles()
+    + calculate_angles_tth_fixed()
+  }
 }
 
 TabInterface <|-- BrillouinCalculatorTab
-BrillouinCalculatorTab *-- BrillouinCalculator
-BrillouinCalculatorTab *-- ScatteringVisualizer
-QLineEdit <|-- DragDropLineEdit
+BrillouinCalculatorTab *-- BrillouinCalculator : uses
+BrillouinCalculatorTab *-- ScatteringVisualizer : uses
 
-note right of BrillouinCalculator::calculate_hkl
-  Calculates HKL indices from
-  scattering angles
+note bottom of BrillouinCalculator
+  Core calculation engine:
+  - Converts between scattering angles and HKL indices
+  - Handles fixed-angle constraints
+  - Manages crystal geometry calculations
 end note
 
-note right of BrillouinCalculator::calculate_angles
-  Calculates scattering angles
-  from HKL indices with one
-  angle fixed
+note bottom of ScatteringVisualizer
+  Visualization engine:
+  - Renders laboratory coordinate system
+  - Plots scattering geometry
+  - Updates in real-time with calculations
 end note
 
-note right of BrillouinCalculator::calculate_angles_tth_fixed
-  Calculates scattering angles
-  from HK indices with fixed
-  tth angle
+note bottom of BrillouinCalculatorTab
+  User interface:
+  - Manages three calculation modes
+  - Coordinates between calculator and visualizer
+  - Handles user input validation
 end note
+
+@enduml
+
+@startuml Brillouin Calculator - Interaction Sequence
+
+actor User
+participant "BrillouinCalculatorTab\n(Frontend)" as UI
+participant "BrillouinCalculator\n(Backend)" as Calc
+participant "ScatteringVisualizer\n(Backend)" as Vis
+
+== Initialization Phase ==
+User -> UI: Opens the tab
+activate UI
+UI -> Calc: new BrillouinCalculator()
+activate Calc
+Calc --> UI: calculator instance
+deactivate Calc
+
+UI -> Vis: new ScatteringVisualizer() (3 instances)
+activate Vis
+Vis --> UI: visualizer instances
+deactivate Vis
+
+UI -> UI: _create_angles_to_hkl_tab()
+UI -> UI: _create_hkl_to_angles_tab()
+UI -> UI: _create_hk_to_angles_tth_fixed_tab()
+UI --> User: Display tab interface
+deactivate UI
+
+== Parameter Configuration ==
+User -> UI: Main window provides lattice parameters
+activate UI
+UI -> Calc: initialize(params)
+activate Calc
+Calc -> Calc: Store params and create crystal
+Calc --> UI: Success status
+deactivate Calc
+
+UI -> Vis: initialize(params) (for each visualizer)
+activate Vis
+Vis -> Vis: Store params
+Vis --> UI: Success status
+deactivate Vis
+UI --> User: Ready for calculations
+deactivate UI
+
+== Calculation Flow: Angles to HKL ==
+User -> UI: Input angles and click "Calculate HKL"
+activate UI
+UI -> Calc: calculate_hkl(tth, theta, phi, chi)
+activate Calc
+Calc -> Calc: Perform internal calculations
+Calc --> UI: Return HKL result dictionary
+deactivate Calc
+
+UI -> UI: Update HKL result fields
+UI -> Vis: visualize_lab_system(chi, phi)
+activate Vis
+Vis -> Vis: Draw lab coordinates
+Vis -> Vis: Draw beam path
+Vis --> UI: Updated visualization
+deactivate Vis
+
+UI -> Vis: visualize_scattering_geometry(result)
+activate Vis
+Vis -> Vis: Draw scattering vector
+Vis --> UI: Updated visualization
+deactivate Vis
+
+UI --> User: Display results and visualization
+deactivate UI
+
+== Calculation Flow: HKL to Angles ==
+User -> UI: Input HKL values and fixed angle
+activate UI
+UI -> Calc: calculate_angles(H, K, L, fixed_angle, fixed_angle_name)
+activate Calc
+Calc -> Calc: Perform internal calculations
+Calc --> UI: Return angles result dictionary
+deactivate Calc
+
+UI -> UI: Update angle result fields
+UI -> Vis: visualize_lab_system(...)
+activate Vis
+Vis --> UI: Updated visualization
+deactivate Vis
+
+UI -> Vis: visualize_scattering_geometry(...)
+activate Vis
+Vis --> UI: Updated visualization
+deactivate Vis
+
+UI --> User: Display results and visualization
+deactivate UI
+
+== Calculation Flow: Fixed TTH ==
+User -> UI: Input constraints and click "Calculate"
+activate UI
+UI -> Calc: calculate_angles_tth_fixed(...)
+activate Calc
+Calc -> Calc: Perform internal calculations
+Calc --> UI: Return result dictionary
+deactivate Calc
+
+UI -> UI: Update result fields
+UI -> Vis: visualize_lab_system(...)
+activate Vis
+Vis --> UI: Updated visualization
+deactivate Vis
+
+UI -> Vis: visualize_scattering_geometry(...)
+activate Vis
+Vis --> UI: Updated visualization
+deactivate Vis
+
+UI --> User: Display results and visualization
+deactivate UI
 
 @enduml 

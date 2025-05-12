@@ -94,13 +94,9 @@ class BrillouinCalculatorTab(TabInterface):
         self.layout.addWidget(self.tab_widget, 0, 0)  # Add to grid at (0,0)
 
         # Create tabs for different functionalities
-        self.create_angles_to_hkl_tab()
-        self.create_hkl_to_angles_tab()
-        self.create_hk_to_angles_tth_fixed_tab()
-
-    def set_tip(self, widget, name):
-        """Set the tooltip and status tip for a widget by the name"""
-        set_tip(widget, self.tips.tip(name))
+        self._create_angles_to_hkl_tab()
+        self._create_hkl_to_angles_tab()
+        self._create_hk_to_angles_tth_fixed_tab()
 
     def set_parameters(self, params: dict):
         """Set parameters from global settings."""
@@ -109,7 +105,11 @@ class BrillouinCalculatorTab(TabInterface):
 
         print("params set!!!!!!!!")
 
-    def create_angles_to_hkl_tab(self):
+    def _set_tip(self, widget, name):
+        """Set the tooltip and status tip for a widget by the name"""
+        set_tip(widget, self.tips.tip(name))
+
+    def _create_angles_to_hkl_tab(self):
         """Create tab for angles to HKL calculation."""
         angles_tab = QWidget()
         angles_layout = QGridLayout(angles_tab)
@@ -122,14 +122,14 @@ class BrillouinCalculatorTab(TabInterface):
         self.tth_angle_input.setRange(0.0, 180.0)
         self.tth_angle_input.setValue(150.0)
         self.tth_angle_input.setSuffix(" °")
-        self.set_tip(self.tth_angle_input, "TTH")
+        self._set_tip(self.tth_angle_input, "TTH")
         form_layout.addRow("tth:", self.tth_angle_input)
 
         self.theta_angle_input = QDoubleSpinBox()
         self.theta_angle_input.setRange(-180.0, 180.0)
         self.theta_angle_input.setValue(50.0)
         self.theta_angle_input.setSuffix(" °")
-        self.set_tip(self.theta_angle_input, "THETA")
+        self._set_tip(self.theta_angle_input, "THETA")
         form_layout.addRow("θ:", self.theta_angle_input)
 
         self.phi_angle_input = QDoubleSpinBox()
@@ -177,7 +177,7 @@ class BrillouinCalculatorTab(TabInterface):
         # Add to tab widget
         self.tab_widget.addTab(angles_tab, "Angles → HKL")
 
-    def create_hkl_to_angles_tab(self):
+    def _create_hkl_to_angles_tab(self):
         """Create tab for HKL to angles calculation."""
         hkl_tab = QWidget()
         hkl_layout = QGridLayout(hkl_tab)
@@ -253,11 +253,11 @@ class BrillouinCalculatorTab(TabInterface):
         constraints_layout.addRow(angles_row)
 
         # Connect radio buttons to enable/disable corresponding inputs
-        self.fix_chi_radio.toggled.connect(self.update_fixed_angle_ui)
-        self.fix_phi_radio.toggled.connect(self.update_fixed_angle_ui)
+        self.fix_chi_radio.toggled.connect(self._update_fixed_angle_ui)
+        self.fix_phi_radio.toggled.connect(self._update_fixed_angle_ui)
 
         # Initialize UI state
-        self.update_fixed_angle_ui()
+        self._update_fixed_angle_ui()
 
         hkl_layout.addWidget(constraints_group, 1, 0)
 
@@ -279,7 +279,7 @@ class BrillouinCalculatorTab(TabInterface):
         tth_layout = QFormLayout(tth_widget)
         tth_layout.setContentsMargins(0, 0, 0, 0)
         self.tth_result = QLineEdit()
-        self.set_tip(self.tth_result, "TTH")
+        self._set_tip(self.tth_result, "TTH")
         self.tth_result.setReadOnly(True)
         tth_layout.addRow("tth:", self.tth_result)
         first_row_layout.addWidget(tth_widget)
@@ -303,7 +303,7 @@ class BrillouinCalculatorTab(TabInterface):
         theta_layout = QFormLayout(theta_widget)
         theta_layout.setContentsMargins(0, 0, 0, 0)
         self.theta_result = QLineEdit()
-        self.set_tip(self.theta_result, "THETA")
+        self._set_tip(self.theta_result, "THETA")
         self.theta_result.setReadOnly(True)
         theta_layout.addRow("θ:", self.theta_result)
         second_row_layout.addWidget(theta_widget)
@@ -328,7 +328,7 @@ class BrillouinCalculatorTab(TabInterface):
         # Add to tab widget
         self.tab_widget.addTab(hkl_tab, "HKL → Angles")
 
-    def create_hk_to_angles_tth_fixed_tab(self):
+    def _create_hk_to_angles_tth_fixed_tab(self):
         """Create tab for HK to angles calculation with fixed tth."""
         hk_tab = QWidget()
         hk_layout = QGridLayout(hk_tab)
@@ -392,19 +392,19 @@ class BrillouinCalculatorTab(TabInterface):
         constraints_layout.addRow(angles_widget)
 
         # Connect toggle buttons to enable/disable corresponding inputs
-        self.chi_toggle.toggled.connect(self.update_fixed_angle_ui_tth)
-        self.phi_toggle.toggled.connect(self.update_fixed_angle_ui_tth)
+        self.chi_toggle.toggled.connect(self._update_fixed_angle_ui_tth)
+        self.phi_toggle.toggled.connect(self._update_fixed_angle_ui_tth)
 
         # Ensure only one angle is deactivated at a time
         self.chi_toggle.toggled.connect(
-            lambda checked: self.ensure_one_angle_deactivated("chi", checked)
+            lambda checked: self._ensure_one_angle_deactivated("chi", checked)
         )
         self.phi_toggle.toggled.connect(
-            lambda checked: self.ensure_one_angle_deactivated("phi", checked)
+            lambda checked: self._ensure_one_angle_deactivated("phi", checked)
         )
 
         # Initialize UI state
-        self.update_fixed_angle_ui_tth()
+        self._update_fixed_angle_ui_tth()
 
         hk_layout.addWidget(constraints_group, 0, 0)
 
@@ -478,19 +478,19 @@ class BrillouinCalculatorTab(TabInterface):
         hkl_layout.addRow(hkl_row)
 
         # Connect toggle buttons to enable/disable corresponding inputs
-        self.H_toggle.toggled.connect(self.update_free_index_ui)
-        self.K_toggle.toggled.connect(self.update_free_index_ui)
-        self.L_toggle.toggled.connect(self.update_free_index_ui)
+        self.H_toggle.toggled.connect(self._update_free_index_ui)
+        self.K_toggle.toggled.connect(self._update_free_index_ui)
+        self.L_toggle.toggled.connect(self._update_free_index_ui)
 
         # Ensure only one index is free at a time
         self.H_toggle.toggled.connect(
-            lambda checked: self.ensure_one_free_index("H", checked)
+            lambda checked: self._ensure_one_free_index("H", checked)
         )
         self.K_toggle.toggled.connect(
-            lambda checked: self.ensure_one_free_index("K", checked)
+            lambda checked: self._ensure_one_free_index("K", checked)
         )
         self.L_toggle.toggled.connect(
-            lambda checked: self.ensure_one_free_index("L", checked)
+            lambda checked: self._ensure_one_free_index("L", checked)
         )
 
         hk_layout.addWidget(hkl_group, 1, 0)
@@ -513,7 +513,7 @@ class BrillouinCalculatorTab(TabInterface):
         tth_layout = QFormLayout(tth_widget)
         tth_layout.setContentsMargins(0, 0, 0, 0)
         self.tth_result_tth = QLineEdit()
-        self.set_tip(self.tth_result_tth, "TTH")
+        self._set_tip(self.tth_result_tth, "TTH")
         self.tth_result_tth.setReadOnly(True)
         tth_layout.addRow("tth:", self.tth_result_tth)
         first_row_layout.addWidget(tth_widget)
@@ -537,7 +537,7 @@ class BrillouinCalculatorTab(TabInterface):
         theta_layout = QFormLayout(theta_widget)
         theta_layout.setContentsMargins(0, 0, 0, 0)
         self.theta_result_tth = QLineEdit()
-        self.set_tip(self.theta_result_tth, "THETA")
+        self._set_tip(self.theta_result_tth, "THETA")
         self.theta_result_tth.setReadOnly(True)
         theta_layout.addRow("θ:", self.theta_result_tth)
         second_row_layout.addWidget(theta_widget)
@@ -619,7 +619,7 @@ class BrillouinCalculatorTab(TabInterface):
             QMessageBox.critical(self, "Error", f"Error calculating HKL: {str(e)}")
 
     @pyqtSlot()
-    def update_fixed_angle_ui(self):
+    def _update_fixed_angle_ui(self):
         """Update UI based on which angle is fixed."""
         is_chi_fixed = self.fix_chi_radio.isChecked()
         self.chi_input.setEnabled(is_chi_fixed)
@@ -685,20 +685,20 @@ class BrillouinCalculatorTab(TabInterface):
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
 
     @pyqtSlot()
-    def update_fixed_angle_ui_tth(self):
+    def _update_fixed_angle_ui_tth(self):
         """Update UI based on which angle is fixed."""
         self.chi_input_tth.setEnabled(not self.chi_toggle.isChecked())
         self.phi_input_tth.setEnabled(not self.phi_toggle.isChecked())
 
     @pyqtSlot()
-    def update_free_index_ui(self):
+    def _update_free_index_ui(self):
         """Update UI based on which index is free."""
         self.H_input_tth.setEnabled(not self.H_toggle.isChecked())
         self.K_input_tth.setEnabled(not self.K_toggle.isChecked())
         self.L_input_tth.setEnabled(not self.L_toggle.isChecked())
 
     @pyqtSlot()
-    def ensure_one_free_index(self, index, checked):
+    def _ensure_one_free_index(self, index, checked):
         """Ensure only one index is free at a time."""
         if checked:
             # If this index is now free, uncheck the others
@@ -796,7 +796,7 @@ class BrillouinCalculatorTab(TabInterface):
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
 
     @pyqtSlot()
-    def ensure_one_angle_deactivated(self, angle, checked):
+    def _ensure_one_angle_deactivated(self, angle, checked):
         """Ensure only one angle is deactivated at a time."""
         if checked:
             # If this angle is now deactivated, activate the other
