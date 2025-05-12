@@ -7,7 +7,6 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from functools import partial
 import numpy as np
-from .visualization import BrillouinVisualizer
 from packages.classes import Lab
 from packages.utils import angle_to_matrix
 

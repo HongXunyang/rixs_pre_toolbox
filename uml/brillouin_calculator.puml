@@ -1,0 +1,82 @@
+@startuml Brillouin Calculator
+
+class BrillouinCalculator {
+  - params: dict
+  - initialized: bool
+  - crystal: object
+  + initialize(params: dict): bool
+  + is_initialized(): bool
+  + calculate_hkl(tth: float, theta: float, phi: float, chi: float): dict
+  + calculate_angles(H: float, K: float, L: float, fixed_angle: float, fixed_angle_name: str): dict
+  + calculate_angles_tth_fixed(tth: float, H: float, K: float, L: float, fixed_angle_name: str, fixed_angle: float): dict
+}
+
+class TabInterface {
+  # main_window: MainWindow
+  # layout: QGridLayout
+  + __init__(main_window)
+  + init_ui()
+  + set_parameters(params: dict)
+}
+
+class BrillouinCalculatorTab {
+  - calculator: BrillouinCalculator
+  - angles_to_hkl_visualizer: ScatteringVisualizer
+  - hkl_to_angles_visualizer: ScatteringVisualizer
+  - hk_fixed_tth_visualizer: ScatteringVisualizer
+  - tips: Tips
+  + __init__(main_window)
+  + init_ui()
+  + set_parameters(params: dict)
+  - _create_angles_to_hkl_tab()
+  - _create_hkl_to_angles_tab()
+  - _create_hk_to_angles_tth_fixed_tab()
+  + calculate_hkl()
+  + calculate_angles()
+  + calculate_angles_tth_fixed()
+  + update_fixed_angle_ui()
+  + update_free_index_ui()
+  + ensure_one_free_index(index, checked)
+  + ensure_one_angle_deactivated(angle, checked)
+}
+
+class ScatteringVisualizer {
+  - fig: Figure
+  - canvas: FigureCanvas
+  - ax: Axes
+  - params: dict
+  - initialized: bool
+  + initialize(params: dict): bool
+  + is_initialized(): bool
+  + visualize_lab_system(is_clear: bool, chi: float, phi: float): Axes
+  + visualize_scattering_geometry(scattering_angles: dict, is_clear: bool): Axes
+}
+
+class DragDropLineEdit {
+  + dragEnterEvent(event: QDragEnterEvent)
+  + dropEvent(event: QDropEvent)
+}
+
+TabInterface <|-- BrillouinCalculatorTab
+BrillouinCalculatorTab *-- BrillouinCalculator
+BrillouinCalculatorTab *-- ScatteringVisualizer
+QLineEdit <|-- DragDropLineEdit
+
+note right of BrillouinCalculator::calculate_hkl
+  Calculates HKL indices from
+  scattering angles
+end note
+
+note right of BrillouinCalculator::calculate_angles
+  Calculates scattering angles
+  from HKL indices with one
+  angle fixed
+end note
+
+note right of BrillouinCalculator::calculate_angles_tth_fixed
+  Calculates scattering angles
+  from HK indices with fixed
+  tth angle
+end note
+
+@enduml 

@@ -1,0 +1,101 @@
+@startuml User Workflow Sequence
+
+actor User
+participant "MainWindow" as Main
+participant "InitWindow" as Init
+participant "TabWidget" as Tabs
+participant "BrillouinCalculatorTab" as BrillTab
+participant "BrillouinCalculator" as Calculator
+participant "ScatteringVisualizer" as Visualizer
+
+== Application Startup ==
+
+User -> Main: Launch application
+activate Main
+Main -> Init: Create
+activate Init
+Main -> Init: Show
+Init --> User: Display lattice parameter form
+deactivate Main
+
+== Parameter Initialization ==
+
+User -> Init: Enter lattice parameters
+User -> Init: Click "Initialize"
+activate Init
+Init -> Main: set_parameters(params)
+activate Main
+Main -> Main: store parameters
+Init -> Main: show_main_tabs()
+Main -> Main: load_tabs()
+Main -> Tabs: Create tabs from registry
+Tabs -> BrillTab: Create
+activate BrillTab
+BrillTab -> Calculator: Create
+activate Calculator
+BrillTab -> Visualizer: Create
+activate Visualizer
+Main -> BrillTab: set_parameters(params)
+BrillTab -> Calculator: initialize(params)
+BrillTab -> Visualizer: initialize(params)
+Main --> User: Display tabs interface
+deactivate Main
+deactivate Init
+
+== Calculation Workflow ==
+
+User -> BrillTab: Enter angles (tth, theta, phi, chi)
+User -> BrillTab: Click "Calculate HKL"
+activate BrillTab
+BrillTab -> Calculator: calculate_hkl(tth, theta, phi, chi)
+activate Calculator
+Calculator -> Calculator: Perform calculation
+Calculator --> BrillTab: Return results (H, K, L)
+deactivate Calculator
+BrillTab -> BrillTab: Update result fields
+BrillTab -> Visualizer: visualize_lab_system(chi, phi)
+activate Visualizer
+Visualizer --> BrillTab: Update visualization
+deactivate Visualizer
+BrillTab -> Visualizer: visualize_scattering_geometry(results)
+activate Visualizer
+Visualizer --> BrillTab: Update visualization
+deactivate Visualizer
+BrillTab --> User: Display results
+deactivate BrillTab
+
+== Alternative Workflow ==
+
+User -> BrillTab: Switch to "HKL → Angles" tab
+User -> BrillTab: Enter HKL values
+User -> BrillTab: Select fixed angle (chi or phi)
+User -> BrillTab: Enter fixed angle value
+User -> BrillTab: Click "Calculate Angles"
+activate BrillTab
+BrillTab -> Calculator: calculate_angles(H, K, L, fixed_angle, fixed_angle_name)
+activate Calculator
+Calculator -> Calculator: Perform calculation
+Calculator --> BrillTab: Return results (tth, theta, phi, chi)
+deactivate Calculator
+BrillTab -> BrillTab: Update result fields
+BrillTab -> Visualizer: visualize_lab_system(chi, phi)
+activate Visualizer
+Visualizer --> BrillTab: Update visualization
+deactivate Visualizer
+BrillTab -> Visualizer: visualize_scattering_geometry(results)
+activate Visualizer
+Visualizer --> BrillTab: Update visualization
+deactivate Visualizer
+BrillTab --> User: Display results
+deactivate BrillTab
+
+== Parameter Reset ==
+
+User -> Main: Click "Reset Parameters"
+activate Main
+Main -> Main: reset_parameters()
+Main -> Main: show_init_window()
+Main --> User: Return to parameter initialization
+deactivate Main
+
+@enduml 
