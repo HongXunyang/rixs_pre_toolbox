@@ -27,6 +27,11 @@ The application follows a modular architecture with the following key components
    - HKL to Angles converter
    - Each tab receives lattice parameters from main window
 
+5. **Core Object Model**
+   - **Lattice Class**: Manages crystal lattice parameters and vectors
+   - **Sample Class**: Adds sample orientation relative to crystal lattice
+   - **Lab Class**: Adds goniometer angles for sample positioning in lab
+
 ## Data Flow
 
 1. **Initialization**
@@ -36,60 +41,97 @@ The application follows a modular architecture with the following key components
 
 2. **Parameter Updates**
    ```
-   MainWindow (lattice_parameters) → Tab.set_lattice_parameters()
+   MainWindow (parameters) → Tab.set_parameters() → Backend.initialize(params)
    ```
+
+3. **Coordinate Transformations**
+   ```
+   Lattice (crystal frame) → Sample (sample frame) → Lab (lab frame)
+   ```
+
+## Coordinate Systems
+
+1. **Crystal (Lattice) Frame**
+   - Origin at lattice origin
+   - X-axis along a
+   - XY-plane contains b
+   - Managed by `Lattice` class
+
+2. **Sample Frame**
+   - Origin at sample center
+   - Z-axis normal to sample surface
+   - XY-plane is sample surface
+   - Managed by `Sample` class
+   - Transformed from crystal frame by roll, pitch, yaw angles
+
+3. **Laboratory Frame**
+   - Origin at beam-sample intersection
+   - Z-axis along incident beam direction
+   - XY-plane perpendicular to beam
+   - Managed by `Lab` class
+   - Transformed from sample frame by theta, phi, chi angles
 
 ## Key Features
 
 1. **Global State Management**
-   - Lattice parameters stored in `MainWindow`
-   - Accessible to all tabs via `get_lattice_parameters()`
-   - Updates propagated via `set_lattice_parameters()`
+   - Parameters stored in `MainWindow`
+   - Passed to tabs via `set_parameters()`
+   - Parameters used to initialize backend calculators
 
 2. **Initialization Process**
    - User enters parameters or drops CIF file
-   - Parameters validated and stored
-   - Main tabs loaded and initialized
-   - Visualization updated
+   - Parameters validated and stored in MainWindow
+   - Main tabs loaded and receive parameters
+   - Each tab initializes its backend with parameters
 
-3. **Tab Communication**
-   - Tabs implement `set_lattice_parameters()`
-   - Parameters updated automatically
-   - State preserved across tab switches
+3. **Coordinate Transformations**
+   - Hierarchical transformation chain
+   - Real and reciprocal space vector calculations
+   - Automatic updates when angles change
+
+4. **Scattering Calculations**
+   - Lab class handles momentum transfer calculations
+   - Proper coordinate transforms for accurate results
+   - Consistent calculations across all tools
 
 ## Development Guidelines
 
 1. **Adding New Tabs**
    - Inherit from `TabInterface`
-   - Implement `set_lattice_parameters()`
-   - Register in tab registry
+   - Implement `set_parameters(params)`
+   - Create backend calculator that uses the Lab class
 
 2. **State Management**
-   - Use global parameters from main window
-   - Implement state saving/loading
-   - Handle parameter updates
+   - Use parameters dict from main window
+   - Initialize Lab object with parameters
+   - Update Lab object when parameters change
 
 3. **UI Design**
    - Follow existing layout patterns
    - Use consistent spacing and margins
    - Support drag-and-drop where appropriate
 
+4. **Coordinate Handling**
+   - Always use the appropriate coordinate system
+   - Document which frame vectors are in
+   - Use Lab, Sample, Lattice objects for transformations
+
 ## Error Handling
 
 1. **Initialization Errors**
-   - Validate parameters before storing
-   - Show user-friendly error messages
-   - Prevent invalid state transitions
+   - Validate parameters before creating objects
+   - Use try/except in initialization methods
+   - Provide clear error messages for invalid parameters
 
 2. **Tab Errors**
+   - Check for initialized calculator
    - Handle missing parameters gracefully
    - Show appropriate error messages
-   - Maintain application stability
 
 ## Future Improvements
 
 1. **Parameter Validation**
-   - Add more robust validation
+   - Add more robust validation for lattice parameters
    - Support for different crystal systems
    - Unit conversion tools
 
@@ -102,3 +144,8 @@ The application follows a modular architecture with the following key components
    - Dark mode support
    - Customizable layouts
    - More visualization options
+
+4. **Coordinate Systems**
+   - Additional reference frames
+   - More flexible goniometer configurations
+   - Support for custom sample environments

@@ -1,4 +1,3 @@
-
 <strong style="color: red;"> See [This
 site](https://hongxunyang2.github.io/reports/rixs_pre_toolbox/rixs_pre_toolbox) for the REPORTS and the TODO of this project.</strong>
 
@@ -14,6 +13,7 @@ A PyQt5-based application for X-ray spectroscopy preparation, featuring various 
 - **Brillouin Zone Calculator**: Calculate and visualize Brillouin zones
 - **Scattering Geometry Tools**: Convert between angles and HKL indices
 - **Modern UI**: Clean, intuitive interface with drag-and-drop support
+- **Object-Oriented Architecture**: Hierarchical system of Lab, Sample, and Lattice classes for precise coordinate transformations
 
 ## Installation
 
@@ -30,6 +30,7 @@ A PyQt5-based application for X-ray spectroscopy preparation, featuring various 
    - Enter lattice parameters manually (a, b, c, α, β, γ)
    - Or drag and drop a CIF file
    - Set the X-ray energy
+   - Optionally configure sample orientation (roll, pitch, yaw)
 3. Use the various tools in the tabs:
    - Brillouin Zone Calculator
    - Angles to HKL converter
@@ -42,6 +43,28 @@ The application is built with:
 - PyQt5
 - Matplotlib
 - NumPy
+
+## Sample Coordinate System Architecture
+
+The application uses a three-level coordinate system architecture:
+
+### 1. Lattice Class
+- Manages crystal lattice parameters (a, b, c, α, β, γ)
+- Handles real and reciprocal space vectors in the crystal's frame
+- Provides methods for unit cell calculations
+
+### 2. Sample Class
+- Wraps a Lattice object
+- Adds orientation parameters (roll, pitch, yaw) relative to the sample surface
+- Transforms vectors between lattice frame and sample frame
+
+### 3. Lab Class
+- Wraps a Sample object
+- Adds goniometer angles (theta, phi, chi) for sample positioning
+- Transforms vectors between sample frame and laboratory frame
+- Provides methods for scattering geometry calculations
+
+This hierarchical approach ensures proper coordinate transformations between real/reciprocal space and different reference frames, critical for accurate X-ray scattering calculations.
 
 ## License
 
@@ -60,17 +83,21 @@ class BrillouinCalculator:
     def __init__(self):
         # Initialize state
         self._initialized = False
+        self.lab = Lab()  # Create a Lab object
         
-    def initialize(self, a, b, c, alpha, beta, gamma, energy):
-        # Set parameters and calculate 
-        # Returns True/False for success/failure
+    def initialize(self, params: dict):
+        # Extract parameters from dict
+        a, b, c = params.get("a"), params.get("b"), params.get("c")
+        alpha, beta, gamma = params.get("alpha"), params.get("beta"), params.get("gamma")
+        roll, pitch, yaw = params.get("roll"), params.get("pitch"), params.get("yaw")
+        theta, phi, chi = 0.0, 0.0, 0.0  # Default goniometer position
         
-    def calculate_hkl(self, gamma, theta, phi, chi):
-        # Calculate HKL from angles
+        # Initialize the Lab object with parameters
+        self.lab.initialize(a, b, c, alpha, beta, gamma, roll, pitch, yaw, theta, phi, chi)
+        
+    def calculate_hkl(self, tth, theta, phi, chi):
+        # Use lab object for calculations
         # Returns result dictionary
-        
-    def visualize_brillouin_zone(self):
-        # Create and return a matplotlib Figure
 ```
 
 ### 2. Tab Implementation (`packages/gui/tabs/brillouincalculatortab.py`)
@@ -83,110 +110,35 @@ class BrillouinCalculatorTab(TabInterface):
         # Create backend instance
         self.calculator = BrillouinCalculator()
         
-    def init_ui(self):
-        # Create UI components
-        
-    def initialize_calculator(self):
-        # Collect values from UI
-        params = {
-            'a': self.a_input.value(),
-            # ...other parameters
-        }
-        # Call backend
-        success = self.calculator.initialize(**params)
-        # Update UI based on result
-        
-    def calculate_hkl(self):
-        # Collect values from UI
-        angles = {
-            'gamma': self.gamma_input.value(),
-            # ...other angles
-        }
-        # Call backend
-        result = self.calculator.calculate_hkl(**angles)
-        # Display results in UI
-        
-    def update_visualization(self):
-        # Get figure from backend
-        fig = self.calculator.visualize_brillouin_zone()
-        # Display in UI canvas
+    def set_parameters(self, params: dict):
+        """Set parameters from global settings."""
+        self.calculator.initialize(params=params)
 ```
 
 ### 3. Tab Loading (`packages/gui/main_window.py`)
 
-The main window loads all tabs from the registry:
-
-```python
-def load_tab(self, tab_info):
-    # Get tab info from registry
-    module_name = f"packages.{tab_info['module_package']}"
-    tab_class_name = tab_info["tab_class"]
-    
-    # Import module and instantiate tab
-    module = importlib.import_module(f"packages.gui.tabs.{tab_class_name.lower()}")
-    tab_class = getattr(module, tab_class_name)
-    tab_instance = tab_class()
-    
-    # Add tab to the UI
-    self.tab_widget.addTab(tab_instance, tab_info["name"])
-```
+The main window loads all tabs from the registry and passes parameters to each tab.
 
 ### Key Communication Patterns
 
-1. **Initialization**: Tab creates an instance of the backend module
-2. **User Input → Calculation**: UI collects input values and calls backend methods
+1. **Initialization**: Main window passes parameters to all tabs
+2. **Coordinate Transformations**: Lab handles transforms between lab, sample, and lattice frames
 3. **Results → UI Update**: Backend returns results, tab updates UI components
 4. **Visualization**: Backend generates figures, tab displays them in canvas widgets
-5. **Error Handling**: Backend returns success/failure, tab shows appropriate messages
-
-This pattern maintains a clean separation of concerns:
-- Backend modules focus solely on calculations and logic
-- Tab implementations focus on user interface and interaction
-- The main window handles tab management and application framework
-
-## Adding New Modules
-
-The application is designed to be easily extendable with new functionality. To add a new module:
-
-1. **Create a new package directory** in the `packages/` folder:
-   ```
-   packages/your_module_name/
-   ```
-
-2. **Implement the backend module** in the package:
-   - Create an `__init__.py` file
-   - Create an `interface.py` file with a main class that implements your module's functionality
-   - Keep this code free of PyQt dependencies
-
-3. **Create a tab implementation** in the GUI package:
-   - Create a file in `packages/gui/tabs/yourmoduletab.py`
-   - Define a class that inherits from `TabInterface`
-   - Implement the UI and connect it to your backend module
-
-4. **Register your tab** in the tab registry:
-   - Add an entry to `config/tab_registry.json` with your module information
-
-### Example of a Tab Registry Entry
-
-```json
-{
-    "id": "your_module",
-    "name": "Your Module Name",
-    "description": "Description of what your module does",
-    "module_package": "your_module_name",
-    "tab_class": "YourModuleTab",
-    "icon": "icons/your_icon.png",
-    "enabled": true,
-    "order": 5
-}
-```
 
 ## Project Structure
 
 - `packages/`: Contains all functional modules and GUI components
+  - `classes/`: Core object model
+    - `lab.py`: Lab class for laboratory frame calculations
+    - `sample.py`: Sample class for sample frame calculations
+    - `lattice.py`: Lattice class for crystal lattice calculations
   - `gui/`: All PyQt5-related code
     - `main_window.py`: Main application window
     - `tabs/`: Tab implementations for each module
+  - `visualizer/`: Visualization components
+    - `scattering_visualizer.py`: Visualizes scattering geometry
+    - `coordinate_visualizer.py`: Visualizes coordinate systems
   - `module_name/`: Each module in its own package
     - `interface.py`: Backend implementation of module functionality
 - `config/`: Configuration files for the application
