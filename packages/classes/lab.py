@@ -37,6 +37,10 @@ class Lab:
         self.calculate_real_space_vectors()
         self.calculate_reciprocal_space_vectors()
 
+    def get_sample_angles(self):
+        """Get the sample angles."""
+        return self.theta, self.phi, self.chi
+
     def get_lattice_parameters(self):
         """Get the parameters of the sample."""
         return self.sample.get_lattice_parameters()

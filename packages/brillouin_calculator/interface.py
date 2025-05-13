@@ -112,14 +112,6 @@ class BrillouinCalculator:
     def get_k_magnitude(self, tth):
         return 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
 
-    def get_k_vector_in_lab(self, tth):
-        """get the momentum transfer k vector in lab frame from the scattering angle tth"""
-        eta = 90 - tth / 2
-        eta_rad = np.radians(eta)
-        k_magnitude = self.get_k_magnitude(tth)
-        k_vector = k_magnitude * np.array([-np.cos(eta_rad), 0, -np.sin(eta_rad)])
-        return k_vector
-
     def calculate_hkl(self, tth, theta, phi, chi):
         """Calculate HKL from scattering angles.
 
@@ -212,11 +204,9 @@ class BrillouinCalculator:
         fixed_angle=0.0,
     ):
         calculate_angles = _calculate_angles_factory("tth")
+        a_vec_lab, b_vec_lab, c_vec_lab = self.lab.get_real_space_vectors()
         a_star_vec_lab, b_star_vec_lab, c_star_vec_lab = (
             self.lab.get_reciprocal_space_vectors()
-        )
-        print(
-            f"a_star_vec_lab: {a_star_vec_lab}, b_star_vec_lab: {b_star_vec_lab}, c_star_vec_lab: {c_star_vec_lab}"
         )
         results = calculate_angles(
             self.k_in,
@@ -224,6 +214,9 @@ class BrillouinCalculator:
             H,
             K,
             L,
+            a_vec_lab,
+            b_vec_lab,
+            c_vec_lab,
             a_star_vec_lab,
             b_star_vec_lab,
             c_star_vec_lab,
@@ -284,6 +277,7 @@ def _calculate_angles_chi_fixed(
 
     # get momentum transfer vector in lab coordinates
     k_vec_lab = H * a_star_vec_lab + K * b_star_vec_lab + L * c_star_vec_lab
+    print(f"k_vec_lab: {k_vec_lab}")
     cos_chi = np.cos(np.radians(chi))
     sin_chi = np.sin(np.radians(chi))
     k_magnitude = np.linalg.norm(k_vec_lab)
@@ -382,6 +376,9 @@ def _calculate_angles_tth_fixed(
     H=0.15,
     K=0.1,
     L=None,
+    a_vec_lab=None,
+    b_vec_lab=None,
+    c_vec_lab=None,
     a_star_vec_lab=None,
     b_star_vec_lab=None,
     c_star_vec_lab=None,
@@ -390,30 +387,25 @@ def _calculate_angles_tth_fixed(
 ):
     """Calculate scattering angles from two of the three HKL indices, with tth fixed."""
 
-    H_temp = H if H is not None else 0.0
-    K_temp = K if K is not None else 0.0
-    L_temp = L if L is not None else 0.0
-    k_vec_lab_temp = (
-        H_temp * a_star_vec_lab + K_temp * b_star_vec_lab + L_temp * c_star_vec_lab
-    )
-    k_vec_lab = np.copy(k_vec_lab_temp)
-    k_magnitude_temp = np.linalg.norm(k_vec_lab_temp)
-    k_magnitude = calculate_k_magnitude(k_in, tth)
-    # the calculation of remainder is WRONG!!!
-    remainder = -np.sqrt(k_magnitude**2 - k_magnitude_temp**2)
+    # initial k_vec_lab when sample has not rotated
+    k_vec_lab = calculate_k_vector_in_lab(k_in, tth)
 
-    k_vec_lab[0] = k_vec_lab[0] if H is not None else remainder
-    k_vec_lab[1] = k_vec_lab[1] if K is not None else remainder
-    k_vec_lab[2] = k_vec_lab[2] if L is not None else remainder
+    print(f"calculated {np.dot(k_vec_lab, a_vec_lab)/np.pi/2}, H")
+    H = H if H is not None else np.dot(k_vec_lab, a_vec_lab) / (2 * np.pi)
+    K = K if K is not None else np.dot(k_vec_lab, b_vec_lab) / (2 * np.pi)
+    L = L if L is not None else np.dot(k_vec_lab, c_vec_lab) / (2 * np.pi)
 
+    k_vec_temp = H * a_star_vec_lab + K * b_star_vec_lab + L * c_star_vec_lab
+    assert np.allclose(
+        k_vec_temp, k_vec_lab
+    ), f"k_vec_temp: {k_vec_temp}, k_vec_lab: {k_vec_lab}"
     calculate_angles = _calculate_angles_factory(fixed_angle_name)
-
-    # WRONG INPUT ARGUMENTS.
     result = calculate_angles(
         k_in, H, K, L, a_star_vec_lab, b_star_vec_lab, c_star_vec_lab, fixed_angle
     )
-    assert np.abs(result["tth"] - tth) < 1e-6
-    print(f"reach here")
+    assert (
+        np.abs(result["tth"] - tth) < 1e-6
+    ), f"tth_calculated: {result['tth']}, tth_input: {tth}"
     return result
 
 
@@ -498,3 +490,12 @@ def _get_HKL_from_momentum_scattering(momentum, a_vec, b_vec, c_vec):
 def calculate_k_magnitude(k_in, tth):
     """Calculate the momentum transfer magnitude from the scattering angle."""
     return 2 * k_in * np.sin(np.radians(tth / 2.0))
+
+
+def calculate_k_vector_in_lab(k_in, tth):
+    """get the momentum transfer k vector in lab frame from the scattering angle tth"""
+    eta = 90 - tth / 2
+    eta_rad = np.radians(eta)
+    k_magnitude = calculate_k_magnitude(k_in, tth)
+    k_vector = k_magnitude * np.array([-np.cos(eta_rad), 0, -np.sin(eta_rad)])
+    return k_vector
