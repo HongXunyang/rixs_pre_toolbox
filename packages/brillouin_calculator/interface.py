@@ -112,6 +112,14 @@ class BrillouinCalculator:
     def get_k_magnitude(self, tth):
         return 2.0 * self.k_in * np.sin(np.radians(tth / 2.0))
 
+    def get_k_vector_in_lab(self, tth):
+        """get the momentum transfer k vector in lab frame from the scattering angle tth"""
+        eta = 90 - tth / 2
+        eta_rad = np.radians(eta)
+        k_magnitude = self.get_k_magnitude(tth)
+        k_vector = k_magnitude * np.array([-np.cos(eta_rad), 0, -np.sin(eta_rad)])
+        return k_vector
+
     def calculate_hkl(self, tth, theta, phi, chi):
         """Calculate HKL from scattering angles.
 
