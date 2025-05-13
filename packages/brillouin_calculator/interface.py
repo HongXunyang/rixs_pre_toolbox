@@ -207,6 +207,9 @@ class BrillouinCalculator:
         a_star_vec_lab, b_star_vec_lab, c_star_vec_lab = (
             self.lab.get_reciprocal_space_vectors()
         )
+        print(
+            f"a_star_vec_lab: {a_star_vec_lab}, b_star_vec_lab: {b_star_vec_lab}, c_star_vec_lab: {c_star_vec_lab}"
+        )
         results = calculate_angles(
             self.k_in,
             tth,
@@ -382,13 +385,13 @@ def _calculate_angles_tth_fixed(
     H_temp = H if H is not None else 0.0
     K_temp = K if K is not None else 0.0
     L_temp = L if L is not None else 0.0
-
     k_vec_lab_temp = (
         H_temp * a_star_vec_lab + K_temp * b_star_vec_lab + L_temp * c_star_vec_lab
     )
     k_vec_lab = np.copy(k_vec_lab_temp)
     k_magnitude_temp = np.linalg.norm(k_vec_lab_temp)
     k_magnitude = calculate_k_magnitude(k_in, tth)
+    # the calculation of remainder is WRONG!!!
     remainder = -np.sqrt(k_magnitude**2 - k_magnitude_temp**2)
 
     k_vec_lab[0] = k_vec_lab[0] if H is not None else remainder
@@ -396,10 +399,13 @@ def _calculate_angles_tth_fixed(
     k_vec_lab[2] = k_vec_lab[2] if L is not None else remainder
 
     calculate_angles = _calculate_angles_factory(fixed_angle_name)
+
+    # WRONG INPUT ARGUMENTS.
     result = calculate_angles(
         k_in, H, K, L, a_star_vec_lab, b_star_vec_lab, c_star_vec_lab, fixed_angle
     )
     assert np.abs(result["tth"] - tth) < 1e-6
+    print(f"reach here")
     return result
 
 

@@ -2,6 +2,7 @@
 
 import sys
 import os
+import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from packages.utils import (
@@ -72,3 +73,10 @@ class Lattice:
     def get_reciprocal_space_vectors(self):
         """Get the reciprocal space vectors in the lattice frame."""
         return self.a_star_vec_lattice, self.b_star_vec_lattice, self.c_star_vec_lattice
+
+    def get_lattice_basis(self):
+        """Get the lattice orthogonal basis vectors, in the lattice frame."""
+        ex_lattice_in_lattice = np.array([1, 0, 0])
+        ey_lattice_in_lattice = np.array([0, 1, 0])
+        ez_lattice_in_lattice = np.array([0, 0, 1])
+        return ex_lattice_in_lattice, ey_lattice_in_lattice, ez_lattice_in_lattice

@@ -2,6 +2,7 @@
 
 import sys
 import os
+import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from packages.classes.sample import Sample
@@ -14,6 +15,7 @@ class Lab:
     def __init__(self):
         """Initialize the lab."""
         self.sample = Sample()
+
         self.theta = 0
         self.phi = 0
         self.chi = 0
@@ -47,14 +49,6 @@ class Lab:
         """Get the reciprocal space vectors in the lab frame."""
         return self.a_star_vec_lab, self.b_star_vec_lab, self.c_star_vec_lab
 
-    def rotate_sample(self, theta, phi, chi):
-        """Rotate the sample."""
-        self.theta = theta
-        self.phi = phi
-        self.chi = chi
-        self.calculate_real_space_vectors()
-        self.calculate_reciprocal_space_vectors()
-
     def calculate_real_space_vectors(self):
         """Get the real space vectors in the lab frame."""
         a_vec_sample, b_vec_sample, c_vec_sample = self.sample.get_real_space_vectors()
@@ -72,3 +66,38 @@ class Lab:
         self.a_star_vec_lab = rotation_matrix @ a_star_vec_sample
         self.b_star_vec_lab = rotation_matrix @ b_star_vec_sample
         self.c_star_vec_lab = rotation_matrix @ c_star_vec_sample
+
+    def get_lab_basis(self):
+        """Get the lab orthogonal basis vectors, in the lab frame."""
+        ex_lab = np.array([1, 0, 0])
+        ey_lab = np.array([0, 1, 0])
+        ez_lab = np.array([0, 0, 1])
+        return ex_lab, ey_lab, ez_lab
+
+    def get_sample_basis(self):
+        """Get the sample orthogonal basis vectors, in the lab frame."""
+        ex_sample_in_sample, ey_sample_in_sample, ez_sample_in_sample = (
+            self.sample.get_sample_basis()
+        )  # sample basis in the sample frame
+
+        rotation_matrix = angle_to_matrix(self.theta, self.phi, self.chi)
+
+        # sample basis in the lab frame
+        ex_sample_in_lab = rotation_matrix @ ex_sample_in_sample
+        ey_sample_in_lab = rotation_matrix @ ey_sample_in_sample
+        ez_sample_in_lab = rotation_matrix @ ez_sample_in_sample
+        return ex_sample_in_lab, ey_sample_in_lab, ez_sample_in_lab
+
+    def get_lattice_basis(self):
+        """Get the lattice orthogonal basis vectors, in the lab frame."""
+        ex_lattice_in_sample, ey_lattice_in_sample, ez_lattice_in_sample = (
+            self.sample.get_lattice_basis()
+        )  # lattice basis in the sample frame
+
+        rotation_matrix = angle_to_matrix(self.theta, self.phi, self.chi)
+
+        # lattice basis in the lab frame
+        ex_lattice_in_lab = rotation_matrix @ ex_lattice_in_sample
+        ey_lattice_in_lab = rotation_matrix @ ey_lattice_in_sample
+        ez_lattice_in_lab = rotation_matrix @ ez_lattice_in_sample
+        return ex_lattice_in_lab, ey_lattice_in_lab, ez_lattice_in_lab

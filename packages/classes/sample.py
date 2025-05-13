@@ -2,6 +2,7 @@
 
 import sys
 import os
+import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from packages.utils import (
@@ -54,6 +55,28 @@ class Sample:
     def get_reciprocal_space_vectors(self):
         """Get the reciprocal space vectors in the sample frame."""
         return self.a_star_vec_sample, self.b_star_vec_sample, self.c_star_vec_sample
+
+    def get_reciprocal_sample_basis(self):
+        """Get the reciprocal sample basis vectors."""
+        return self.a_star_vec_sample, self.b_star_vec_sample, self.c_star_vec_sample
+
+    def get_sample_basis(self):
+        """Get the sample orthogonal basis vectors, in the sample frame."""
+        ex_sample_in_sample = np.array([1, 0, 0])
+        ey_sample_in_sample = np.array([0, 1, 0])
+        ez_sample_in_sample = np.array([0, 0, 1])
+        return ex_sample_in_sample, ey_sample_in_sample, ez_sample_in_sample
+
+    def get_lattice_basis(self):
+        """Get the lattice orthogonal basis vectors, in sample frame."""
+        ex_lattice_in_lattice, ey_lattice_in_lattice, ez_lattice_in_lattice = (
+            self.lattice.get_lattice_basis()
+        )
+        rotation_matrix = euler_to_matrix(self.roll, self.pitch, self.yaw)
+        ex_lattice = rotation_matrix @ ex_lattice_in_lattice
+        ey_lattice = rotation_matrix @ ey_lattice_in_lattice
+        ez_lattice = rotation_matrix @ ez_lattice_in_lattice
+        return ex_lattice, ey_lattice, ez_lattice
 
     def calculate_real_space_vectors(self):
         """Get the real space vectors in the sample frame."""
