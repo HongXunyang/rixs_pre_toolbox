@@ -41,6 +41,10 @@ class Lab:
         """Get the sample angles."""
         return self.theta, self.phi, self.chi
 
+    def get_lattice_angles(self):
+        """get the lattice euler angles: roll pitch and yaw"""
+        return self.sample.get_lattice_angles()
+
     def get_lattice_parameters(self):
         """Get the parameters of the sample."""
         return self.sample.get_lattice_parameters()
@@ -105,3 +109,11 @@ class Lab:
         ey_lattice_in_lab = rotation_matrix @ ey_lattice_in_sample
         ez_lattice_in_lab = rotation_matrix @ ez_lattice_in_sample
         return ex_lattice_in_lab, ey_lattice_in_lab, ez_lattice_in_lab
+
+    def rotate(self, theta, phi, chi):
+        """Rotate the lab."""
+        self.theta = theta
+        self.phi = phi
+        self.chi = chi
+        self.calculate_real_space_vectors()
+        self.calculate_reciprocal_space_vectors()

@@ -18,6 +18,9 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QVBoxLayout,
     QHBoxLayout,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
 )
 from PyQt5.QtCore import Qt, pyqtSlot, QMimeData
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
@@ -270,53 +273,20 @@ class BrillouinCalculatorTab(TabInterface):
         results_group = QGroupBox("Results")
         results_layout = QVBoxLayout(results_group)
 
-        # First row: tth and phi
-        first_row = QWidget()
-        first_row_layout = QHBoxLayout(first_row)
-        first_row_layout.setContentsMargins(0, 0, 0, 0)
-
-        tth_widget = QWidget()
-        tth_layout = QFormLayout(tth_widget)
-        tth_layout.setContentsMargins(0, 0, 0, 0)
-        self.tth_result = QLineEdit()
-        self._set_tip(self.tth_result, "TTH")
-        self.tth_result.setReadOnly(True)
-        tth_layout.addRow("tth:", self.tth_result)
-        first_row_layout.addWidget(tth_widget)
-
-        phi_widget = QWidget()
-        phi_layout = QFormLayout(phi_widget)
-        phi_layout.setContentsMargins(0, 0, 0, 0)
-        self.phi_result = QLineEdit()
-        self.phi_result.setReadOnly(True)
-        phi_layout.addRow("φ:", self.phi_result)
-        first_row_layout.addWidget(phi_widget)
-
-        results_layout.addWidget(first_row)
-
-        # Second row: theta and chi
-        second_row = QWidget()
-        second_row_layout = QHBoxLayout(second_row)
-        second_row_layout.setContentsMargins(0, 0, 0, 0)
-
-        theta_widget = QWidget()
-        theta_layout = QFormLayout(theta_widget)
-        theta_layout.setContentsMargins(0, 0, 0, 0)
-        self.theta_result = QLineEdit()
-        self._set_tip(self.theta_result, "THETA")
-        self.theta_result.setReadOnly(True)
-        theta_layout.addRow("θ:", self.theta_result)
-        second_row_layout.addWidget(theta_widget)
-
-        chi_widget = QWidget()
-        chi_layout = QFormLayout(chi_widget)
-        chi_layout.setContentsMargins(0, 0, 0, 0)
-        self.chi_result = QLineEdit()
-        self.chi_result.setReadOnly(True)
-        chi_layout.addRow("χ:", self.chi_result)
-        second_row_layout.addWidget(chi_widget)
-
-        results_layout.addWidget(second_row)
+        # Add a table widget to display all possible solutions
+        self.angles_results_table = QTableWidget()
+        self.angles_results_table.setColumnCount(4)
+        self.angles_results_table.setHorizontalHeaderLabels(
+            ["tth (°)", "θ (°)", "φ (°)", "χ (°)"]
+        )
+        self.angles_results_table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.Stretch
+        )
+        # Connect selection change signal
+        self.angles_results_table.itemSelectionChanged.connect(
+            self.on_angle_solution_selected
+        )
+        results_layout.addWidget(self.angles_results_table)
 
         hkl_layout.addWidget(results_group, 3, 0)
 
@@ -504,53 +474,20 @@ class BrillouinCalculatorTab(TabInterface):
         results_group = QGroupBox("Results")
         results_layout = QVBoxLayout(results_group)
 
-        # First row: tth and phi
-        first_row = QWidget()
-        first_row_layout = QHBoxLayout(first_row)
-        first_row_layout.setContentsMargins(0, 0, 0, 0)
-
-        tth_widget = QWidget()
-        tth_layout = QFormLayout(tth_widget)
-        tth_layout.setContentsMargins(0, 0, 0, 0)
-        self.tth_result_tth = QLineEdit()
-        self._set_tip(self.tth_result_tth, "TTH")
-        self.tth_result_tth.setReadOnly(True)
-        tth_layout.addRow("tth:", self.tth_result_tth)
-        first_row_layout.addWidget(tth_widget)
-
-        phi_widget = QWidget()
-        phi_layout = QFormLayout(phi_widget)
-        phi_layout.setContentsMargins(0, 0, 0, 0)
-        self.phi_result_tth = QLineEdit()
-        self.phi_result_tth.setReadOnly(True)
-        phi_layout.addRow("φ:", self.phi_result_tth)
-        first_row_layout.addWidget(phi_widget)
-
-        results_layout.addWidget(first_row)
-
-        # Second row: theta and chi
-        second_row = QWidget()
-        second_row_layout = QHBoxLayout(second_row)
-        second_row_layout.setContentsMargins(0, 0, 0, 0)
-
-        theta_widget = QWidget()
-        theta_layout = QFormLayout(theta_widget)
-        theta_layout.setContentsMargins(0, 0, 0, 0)
-        self.theta_result_tth = QLineEdit()
-        self._set_tip(self.theta_result_tth, "THETA")
-        self.theta_result_tth.setReadOnly(True)
-        theta_layout.addRow("θ:", self.theta_result_tth)
-        second_row_layout.addWidget(theta_widget)
-
-        chi_widget = QWidget()
-        chi_layout = QFormLayout(chi_widget)
-        chi_layout.setContentsMargins(0, 0, 0, 0)
-        self.chi_result_tth = QLineEdit()
-        self.chi_result_tth.setReadOnly(True)
-        chi_layout.addRow("χ:", self.chi_result_tth)
-        second_row_layout.addWidget(chi_widget)
-
-        results_layout.addWidget(second_row)
+        # Add a table widget to display all possible solutions
+        self.angles_results_table_tth = QTableWidget()
+        self.angles_results_table_tth.setColumnCount(4)
+        self.angles_results_table_tth.setHorizontalHeaderLabels(
+            ["tth (°)", "θ (°)", "φ (°)", "χ (°)"]
+        )
+        self.angles_results_table_tth.horizontalHeader().setSectionResizeMode(
+            QHeaderView.Stretch
+        )
+        # Connect selection change signal
+        self.angles_results_table_tth.itemSelectionChanged.connect(
+            self.on_angle_solution_selected_tth
+        )
+        results_layout.addWidget(self.angles_results_table_tth)
 
         hk_layout.addWidget(results_group, 3, 0)
 
@@ -661,25 +598,54 @@ class BrillouinCalculatorTab(TabInterface):
                 )
                 return
 
-            # Update results
-            tth = result["tth"]
-            theta = result["theta"]
-            chi = result["chi"]
-            phi = result["phi"]
-            self.tth_result.setText(f"{tth:.4f}°")
-            self.theta_result.setText(f"{theta:.4f}°")
-            self.phi_result.setText(f"{phi:.4f}°")
-            self.chi_result.setText(f"{chi:.4f}°")
+            # Extract results - these are now lists
+            tth_values = result["tth"]
+            theta_values = result["theta"]
+            phi_values = result["phi"]
+            chi_values = result["chi"]
 
-            # Update visualization
-            # self.update_visualization(scattering_angles=result)
-            # Update hkl tab visualization
-            self.hkl_to_angles_visualizer.visualize_lab_system(
-                is_clear=True, chi=chi, phi=phi
-            )
-            self.hkl_to_angles_visualizer.visualize_scattering_geometry(
-                scattering_angles=result, is_clear=False
-            )
+            # Clear the table and set the row count
+            self.angles_results_table.setRowCount(0)
+            num_solutions = len(tth_values)
+
+            # Populate the table with all solutions
+            for i in range(num_solutions):
+                row_position = self.angles_results_table.rowCount()
+                self.angles_results_table.insertRow(row_position)
+
+                # Add items to the row
+                self.angles_results_table.setItem(
+                    row_position, 0, QTableWidgetItem(f"{tth_values[i]:.1f}")
+                )
+                self.angles_results_table.setItem(
+                    row_position, 1, QTableWidgetItem(f"{theta_values[i]:.1f}")
+                )
+                self.angles_results_table.setItem(
+                    row_position, 2, QTableWidgetItem(f"{phi_values[i]:.1f}")
+                )
+                self.angles_results_table.setItem(
+                    row_position, 3, QTableWidgetItem(f"{chi_values[i]:.1f}")
+                )
+
+            # If we have at least one solution, visualize the first one
+            if num_solutions > 0:
+                first_solution = {
+                    "tth": tth_values[0],
+                    "theta": theta_values[0],
+                    "phi": phi_values[0],
+                    "chi": chi_values[0],
+                    "H": result["H"],
+                    "K": result["K"],
+                    "L": result["L"],
+                }
+
+                # Update visualization with the first solution
+                self.hkl_to_angles_visualizer.visualize_lab_system(
+                    is_clear=True, chi=chi_values[0], phi=phi_values[0]
+                )
+                self.hkl_to_angles_visualizer.visualize_scattering_geometry(
+                    scattering_angles=first_solution, is_clear=False
+                )
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
@@ -775,22 +741,73 @@ class BrillouinCalculatorTab(TabInterface):
                 )
                 return
 
-            # Update results
-            self.tth_result_tth.setText(f"{result['tth']:.4f}°")
-            self.theta_result_tth.setText(f"{result['theta']:.4f}°")
-            self.phi_result_tth.setText(f"{result['phi']:.4f}°")
-            self.chi_result_tth.setText(f"{result['chi']:.4f}°")
-            # update the H, K, L values
-            self.H_input_tth.setValue(result["H"])
-            self.K_input_tth.setValue(result["K"])
-            self.L_input_tth.setValue(result["L"])
-            # Update visualization
-            self.hk_fixed_tth_visualizer.visualize_lab_system(
-                is_clear=True, chi=result["chi"], phi=result["phi"]
-            )
-            self.hk_fixed_tth_visualizer.visualize_scattering_geometry(
-                scattering_angles=result, is_clear=False
-            )
+            # Extract results - these are now lists
+            tth_values = result["tth"]
+            theta_values = result["theta"]
+            phi_values = result["phi"]
+            chi_values = result["chi"]
+
+            # Clear the table and set the row count
+            self.angles_results_table_tth.setRowCount(0)
+            num_solutions = len(tth_values)
+
+            # Populate the table with all solutions
+            for i in range(num_solutions):
+                row_position = self.angles_results_table_tth.rowCount()
+                self.angles_results_table_tth.insertRow(row_position)
+
+                # Add items to the row
+                self.angles_results_table_tth.setItem(
+                    row_position, 0, QTableWidgetItem(f"{tth_values[i]:.1f}")
+                )
+                self.angles_results_table_tth.setItem(
+                    row_position, 1, QTableWidgetItem(f"{theta_values[i]:.1f}")
+                )
+                self.angles_results_table_tth.setItem(
+                    row_position, 2, QTableWidgetItem(f"{phi_values[i]:.1f}")
+                )
+                self.angles_results_table_tth.setItem(
+                    row_position, 3, QTableWidgetItem(f"{chi_values[i]:.1f}")
+                )
+
+            # If we have at least one solution, update the HKL values and visualize it
+            if num_solutions > 0:
+                # Update the HKL values
+                H_result = result["H"]
+                K_result = result["K"]
+                L_result = result["L"]
+
+                # Update the input fields without triggering signals
+                self.H_input_tth.blockSignals(True)
+                self.K_input_tth.blockSignals(True)
+                self.L_input_tth.blockSignals(True)
+
+                self.H_input_tth.setValue(H_result)
+                self.K_input_tth.setValue(K_result)
+                self.L_input_tth.setValue(L_result)
+
+                self.H_input_tth.blockSignals(False)
+                self.K_input_tth.blockSignals(False)
+                self.L_input_tth.blockSignals(False)
+
+                # Create a first solution for visualization
+                first_solution = {
+                    "tth": tth_values[0],
+                    "theta": theta_values[0],
+                    "phi": phi_values[0],
+                    "chi": chi_values[0],
+                    "H": H_result,
+                    "K": K_result,
+                    "L": L_result,
+                }
+
+                # Update visualization with the first solution
+                self.hk_fixed_tth_visualizer.visualize_lab_system(
+                    is_clear=True, chi=chi_values[0], phi=phi_values[0]
+                )
+                self.hk_fixed_tth_visualizer.visualize_scattering_geometry(
+                    scattering_angles=first_solution, is_clear=False
+                )
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
@@ -812,6 +829,76 @@ class BrillouinCalculatorTab(TabInterface):
                     self.chi_toggle.setChecked(True)
                 else:
                     self.phi_toggle.setChecked(True)
+
+    @pyqtSlot()
+    def on_angle_solution_selected(self):
+        """Handle selection of a specific angle solution from the results table."""
+        selected_items = self.angles_results_table.selectedItems()
+        if not selected_items:
+            return
+
+        # Get the row of the first selected item
+        row = selected_items[0].row()
+
+        # Get values from the selected row - convert from text to float
+        tth = float(self.angles_results_table.item(row, 0).text())
+        theta = float(self.angles_results_table.item(row, 1).text())
+        phi = float(self.angles_results_table.item(row, 2).text())
+        chi = float(self.angles_results_table.item(row, 3).text())
+
+        # Create a solution dictionary
+        solution = {
+            "tth": tth,
+            "theta": theta,
+            "phi": phi,
+            "chi": chi,
+            "H": self.H_input.value(),
+            "K": self.K_input.value(),
+            "L": self.L_input.value(),
+        }
+
+        # Update visualization with the selected solution
+        self.hkl_to_angles_visualizer.visualize_lab_system(
+            is_clear=True, chi=chi, phi=phi
+        )
+        self.hkl_to_angles_visualizer.visualize_scattering_geometry(
+            scattering_angles=solution, is_clear=False
+        )
+
+    @pyqtSlot()
+    def on_angle_solution_selected_tth(self):
+        """Handle selection of a specific angle solution from the results table."""
+        selected_items = self.angles_results_table_tth.selectedItems()
+        if not selected_items:
+            return
+
+        # Get the row of the first selected item
+        row = selected_items[0].row()
+
+        # Get values from the selected row - convert from text to float
+        tth = float(self.angles_results_table_tth.item(row, 0).text())
+        theta = float(self.angles_results_table_tth.item(row, 1).text())
+        phi = float(self.angles_results_table_tth.item(row, 2).text())
+        chi = float(self.angles_results_table_tth.item(row, 3).text())
+
+        # Create a solution dictionary
+        solution = {
+            "tth": tth,
+            "theta": theta,
+            "phi": phi,
+            "chi": chi,
+            "H": self.H_input_tth.value(),
+            "K": self.K_input_tth.value(),
+            "L": self.L_input_tth.value(),
+        }
+
+        # Update visualization with the selected solution
+        self.hk_fixed_tth_visualizer.visualize_lab_system(
+            is_clear=True, chi=chi, phi=phi
+        )
+        self.hk_fixed_tth_visualizer.visualize_scattering_geometry(
+            scattering_angles=solution, is_clear=False
+        )
 
     def get_module_instance(self):
         """Get the backend module instance."""

@@ -127,6 +127,7 @@ class BrillouinCalculator:
 
         # Calculate momentum transfer magnitude
         k_magnitude = self.get_k_magnitude(tth)
+        print(f"k_in: {self.k_in}, k_magnitude: {k_magnitude}")
         # Calculate delta = theta - (tth/2)
         delta = -(tth / 2.0)
         sin_delta = np.sin(np.radians(delta))
@@ -180,19 +181,35 @@ class BrillouinCalculator:
             raise ValueError("Calculator not initialized")
 
         calculate_angles = _calculate_angles_factory(fixed_angle_name)
-        a_star_vec_lab, b_star_vec_lab, c_star_vec_lab = (
-            self.lab.get_reciprocal_space_vectors()
-        )
-        return calculate_angles(
+        a, b, c, alpha, beta, gamma = self.lab.get_lattice_parameters()
+        roll, pitch, yaw = self.lab.get_lattice_angles()
+        tth_result, theta_result, phi_result, chi_result = calculate_angles(
             self.k_in,
             H,
             K,
             L,
-            a_star_vec_lab,
-            b_star_vec_lab,
-            c_star_vec_lab,
+            a,
+            b,
+            c,
+            alpha,
+            beta,
+            gamma,
+            roll,
+            pitch,
+            yaw,
             fixed_angle,
         )
+        return {
+            "tth": tth_result,
+            "theta": theta_result,
+            "phi": phi_result,
+            "chi": chi_result,
+            "H": H,
+            "K": K,
+            "L": L,
+            "success": True,
+            "error": None,
+        }
 
     def calculate_angles_tth_fixed(
         self,
@@ -260,114 +277,11 @@ class BrillouinCalculator:
 
 def _calculate_angles_factory(fixed_angle_name):
     if fixed_angle_name == "chi":
-        return _calculate_angles_chi_fixed
+        return _calculate_angles_chi_fixed_gradient_decent
     elif fixed_angle_name == "phi":
-        return _calculate_angles_phi_fixed
+        return _calculate_angles_phi_fixed_gradient_decent
     elif fixed_angle_name == "tth":
         return _calculate_angles_tth_fixed
-
-
-def _calculate_angles_chi_fixed(
-    k_in, H, K, L, a_star_vec_lab, b_star_vec_lab, c_star_vec_lab, chi
-):
-    """Calculate scattering angles from HKL, with chi fixed."""
-
-    # convert crystal coordinates to lab coordinates
-    epsilon = 1e-10
-
-    # get momentum transfer vector in lab coordinates
-    k_vec_lab = H * a_star_vec_lab + K * b_star_vec_lab + L * c_star_vec_lab
-    print(f"k_vec_lab: {k_vec_lab}")
-    cos_chi = np.cos(np.radians(chi))
-    sin_chi = np.sin(np.radians(chi))
-    k_magnitude = np.linalg.norm(k_vec_lab)
-    tth_rad = 2 * np.arcsin(k_magnitude / (2 * k_in))
-    tth = np.degrees(tth_rad)  # tth is done calculating
-
-    # delta == theta - (tth/2) is the angle between the momentum transfer vector and sample surface
-    delta_rad = np.sign(k_vec_lab[0]) * np.arccos(
-        -k_vec_lab[2] / (k_magnitude * cos_chi)
-    )
-    theta_rad = delta_rad + tth_rad / 2
-    theta = np.degrees(theta_rad)  # theta is done calculating
-
-    sin_delta = np.sin(delta_rad)
-    cos_delta = np.cos(delta_rad)
-    if (np.abs(k_vec_lab[0]) < epsilon) and (np.abs(k_vec_lab[1]) < epsilon):
-        phi = 0
-        chi = 0
-    else:
-        A = k_magnitude * sin_delta
-        B = -k_magnitude * cos_delta * sin_chi
-        C = k_magnitude * cos_delta * sin_chi
-        D = k_magnitude * sin_delta
-
-        mat = np.array([[A, B], [C, D]])
-        mat_inv = np.linalg.inv(mat)
-        vector = (k_vec_lab[0], k_vec_lab[1])
-        vector_rotated = mat_inv @ vector
-        phi_rad = np.arctan(vector_rotated[1] / vector_rotated[0])
-        phi = np.degrees(phi_rad)
-
-    return {
-        "tth": tth,
-        "theta": theta,
-        "phi": phi,
-        "chi": chi,
-        "H": H,
-        "K": K,
-        "L": L,
-        "success": True,
-        "error": None,
-    }
-
-
-def _calculate_angles_phi_fixed(
-    k_in,
-    H,
-    K,
-    L,
-    a_star_vec_lab,
-    b_star_vec_lab,
-    c_star_vec_lab,
-    phi,
-):
-    """Calculate scattering angles from HKL indices, with phi fixed."""
-
-    # get momentum transfer vector in lab coordinates
-    k_vec_lab = H * a_star_vec_lab + K * b_star_vec_lab + L * c_star_vec_lab
-    k_magnitude = np.linalg.norm(k_vec_lab)
-    tth_rad = 2 * np.arcsin(k_magnitude / (2 * k_in))
-    tth = np.degrees(tth_rad)  # tth is done calculating
-
-    cos_phi = np.cos(np.radians(phi))
-    sin_phi = np.sin(np.radians(phi))
-    vector = (k_vec_lab[0] / k_magnitude, k_vec_lab[1] / k_magnitude)
-    mat = np.array([[cos_phi, -sin_phi], [sin_phi, cos_phi]])
-    mat_inv = np.linalg.inv(mat)
-    vector_rotated = mat_inv @ vector
-    v0, v1 = vector_rotated
-    v2 = -k_vec_lab[2] / k_magnitude
-
-    chi_rad = np.arctan(v1 / v2)
-    chi = np.degrees(chi_rad)
-
-    delta = np.arcsin(v0)
-
-    theta_rad = delta + tth_rad / 2
-    theta = np.degrees(theta_rad)
-
-    return {
-        "tth": tth,
-        "theta": theta,
-        "phi": phi,
-        "chi": chi,
-        "H": H,
-        "K": K,
-        "L": L,
-        "success": True,
-        "error": None,
-    }
 
 
 def _calculate_angles_tth_fixed(
@@ -492,6 +406,11 @@ def calculate_k_magnitude(k_in, tth):
     return 2 * k_in * np.sin(np.radians(tth / 2.0))
 
 
+def calculate_tth_from_k_magnitude(k_in, k_magnitude):
+    """calculate the scattering angle tth from the momentum transfer magnitude"""
+    return 2 * np.degrees(np.arcsin(k_magnitude / (2 * k_in)))
+
+
 def calculate_k_vector_in_lab(k_in, tth):
     """get the momentum transfer k vector in lab frame from the scattering angle tth"""
     eta = 90 - tth / 2
@@ -499,3 +418,292 @@ def calculate_k_vector_in_lab(k_in, tth):
     k_magnitude = calculate_k_magnitude(k_in, tth)
     k_vector = k_magnitude * np.array([-np.cos(eta_rad), 0, -np.sin(eta_rad)])
     return k_vector
+
+
+def _calculate_angles_chi_fixed_gradient_decent(
+    k_in,
+    H,
+    K,
+    L,
+    a,
+    b,
+    c,
+    alpha,
+    beta,
+    gamma,
+    roll,
+    pitch,
+    yaw,
+    chi_fixed,
+    target_objective=1e-4,
+    num_steps=1000,
+    number_batch=10,
+    learning_rate=100,
+):
+    """gradient decent trial function"""
+
+    def objective_function(k_cal, k_target):
+        """objective function for gradient decent"""
+        return np.linalg.norm(k_cal - k_target)
+
+    def get_k_cal(lab, theta_, phi_, chi_):
+        lab.rotate(theta_, phi_, chi_)
+        a_star_vec, b_star_vec, c_star_vec = lab.get_reciprocal_space_vectors()
+        k_cal = H * a_star_vec + K * b_star_vec + L * c_star_vec
+        return k_cal
+
+    theta_best_list = [0] * number_batch
+    phi_best_list = [0] * number_batch
+    for batch in range(number_batch):
+        lab = Lab()
+        theta = np.random.uniform(0, 180)
+        phi = np.random.uniform(0, 180)
+
+        lab.initialize(
+            a, b, c, alpha, beta, gamma, roll, pitch, yaw, theta, phi, chi_fixed
+        )
+
+        k_cal = get_k_cal(lab, theta, phi, chi_fixed)
+        k_magnitude = np.linalg.norm(k_cal)
+        tth = calculate_tth_from_k_magnitude(k_in, k_magnitude)
+        k_target = calculate_k_vector_in_lab(k_in, tth)
+        objective = objective_function(k_cal, k_target)
+        for i in range(num_steps):
+            step_size = objective * learning_rate
+            theta_new = theta + np.random.uniform(-step_size, step_size)
+            phi_new = phi + np.random.uniform(-step_size, step_size)
+            k_cal = get_k_cal(lab, theta_new, phi_new, chi_fixed)
+            objective_new = objective_function(k_cal, k_target)
+            if objective_new < objective:
+                theta = theta_new
+                phi = phi_new
+                objective = objective_new
+            if objective < target_objective:
+                break
+        theta_best_list[batch] = theta
+        phi_best_list[batch] = phi
+
+    # round up to 0.1, discard duplicates, phi and theta should match the order of the list
+    theta_best_list = np.round(theta_best_list, 1)
+    phi_best_list = np.round(phi_best_list, 1)
+    theta_result = []
+    phi_result = []
+    tth_result = []
+    chi_result = []
+    for theta, phi in zip(theta_best_list, phi_best_list):
+        if theta not in theta_result:
+            theta_result.append(theta)
+            phi_result.append(phi)
+            tth_result.append(tth)
+            chi_result.append(chi_fixed)
+
+    return tth_result, theta_result, phi_result, chi_result
+
+
+def _calculate_angles_phi_fixed_gradient_decent(
+    k_in,
+    H,
+    K,
+    L,
+    a,
+    b,
+    c,
+    alpha,
+    beta,
+    gamma,
+    roll,
+    pitch,
+    yaw,
+    phi_fixed,
+    target_objective=1e-4,
+    num_steps=1000,
+    number_batch=10,
+    learning_rate=100,
+):
+    """gradient decent trial function with phi fixed"""
+
+    def objective_function(k_cal, k_target):
+        """objective function for gradient decent"""
+        return np.linalg.norm(k_cal - k_target)
+
+    def get_k_cal(lab, theta_, phi_, chi_):
+        lab.rotate(theta_, phi_, chi_)
+        a_star_vec, b_star_vec, c_star_vec = lab.get_reciprocal_space_vectors()
+        k_cal = H * a_star_vec + K * b_star_vec + L * c_star_vec
+        return k_cal
+
+    theta_best_list = [0] * number_batch
+    chi_best_list = [0] * number_batch
+    for batch in range(number_batch):
+        lab = Lab()
+        theta = np.random.uniform(0, 180)
+        chi = np.random.uniform(0, 180)
+
+        lab.initialize(
+            a, b, c, alpha, beta, gamma, roll, pitch, yaw, theta, phi_fixed, chi
+        )
+
+        k_cal = get_k_cal(lab, theta, phi_fixed, chi)
+        k_magnitude = np.linalg.norm(k_cal)
+        tth = calculate_tth_from_k_magnitude(k_in, k_magnitude)
+        k_target = calculate_k_vector_in_lab(k_in, tth)
+        objective = objective_function(k_cal, k_target)
+        for i in range(num_steps):
+            step_size = objective * learning_rate
+            theta_new = theta + np.random.uniform(-step_size, step_size)
+            chi_new = chi + np.random.uniform(-step_size, step_size)
+            k_cal = get_k_cal(lab, theta_new, phi_fixed, chi_new)
+            objective_new = objective_function(k_cal, k_target)
+            if objective_new < objective:
+                theta = theta_new
+                chi = chi_new
+                objective = objective_new
+            if objective < target_objective:
+                break
+        theta_best_list[batch] = theta
+        chi_best_list[batch] = chi
+
+    # round up to 0.1, discard duplicates, theta and chi should match the order of the list
+    theta_best_list = np.round(theta_best_list, 1)
+    chi_best_list = np.round(chi_best_list, 1)
+    theta_result = []
+    chi_result = []
+    tth_result = []
+    phi_result = []
+    for theta, chi in zip(theta_best_list, chi_best_list):
+        if theta not in theta_result:
+            theta_result.append(theta)
+            chi_result.append(chi)
+            tth_result.append(tth)
+            phi_result.append(phi_fixed)
+
+    return tth_result, theta_result, phi_result, chi_result
+
+
+# ------------------------------------------------------------
+# deprecated functions
+# ------------------------------------------------------------
+def _calculate_angles_chi_fixed_deprecated(
+    k_in, H, K, L, a_star_vec_lab, b_star_vec_lab, c_star_vec_lab, chi
+):
+    """Calculate scattering angles from HKL, with chi fixed."""
+    raise NotImplementedError("This function is deprecated")
+    # convert crystal coordinates to lab coordinates
+    epsilon = 1e-10
+
+    # get momentum transfer vector in lab coordinates
+    k_vec_lab = H * a_star_vec_lab + K * b_star_vec_lab + L * c_star_vec_lab
+    print(f"k_vec_lab: {k_vec_lab}")
+    cos_chi = np.cos(np.radians(chi))
+    sin_chi = np.sin(np.radians(chi))
+    k_magnitude = np.linalg.norm(k_vec_lab)
+    tth_rad = 2 * np.arcsin(k_magnitude / (2 * k_in))
+    tth = np.degrees(tth_rad)  # tth is done calculating
+
+    # delta == theta - (tth/2) is the angle between the momentum transfer vector and sample surface
+    delta_rad = np.sign(k_vec_lab[0]) * np.arccos(
+        -k_vec_lab[2] / (k_magnitude * cos_chi)
+    )
+    theta_rad = delta_rad + tth_rad / 2
+    theta = np.degrees(theta_rad)  # theta is done calculating
+
+    sin_delta = np.sin(delta_rad)
+    cos_delta = np.cos(delta_rad)
+    if (np.abs(k_vec_lab[0]) < epsilon) and (np.abs(k_vec_lab[1]) < epsilon):
+        phi = 0
+        chi = 0
+    else:
+        A = k_magnitude * sin_delta
+        B = -k_magnitude * cos_delta * sin_chi
+        C = k_magnitude * cos_delta * sin_chi
+        D = k_magnitude * sin_delta
+
+        mat = np.array([[A, B], [C, D]])
+        mat_inv = np.linalg.inv(mat)
+        vector = (k_vec_lab[0], k_vec_lab[1])
+        vector_rotated = mat_inv @ vector
+        phi_rad = np.arctan(vector_rotated[1] / vector_rotated[0])
+        phi = np.degrees(phi_rad)
+
+    return {
+        "tth": tth,
+        "theta": theta,
+        "phi": phi,
+        "chi": chi,
+        "H": H,
+        "K": K,
+        "L": L,
+        "success": True,
+        "error": None,
+    }
+
+
+def _calculate_angles_phi_fixed_deprecated(
+    k_in,
+    H,
+    K,
+    L,
+    a_star_vec_lab,
+    b_star_vec_lab,
+    c_star_vec_lab,
+    phi,
+):
+    """Calculate scattering angles from HKL indices, with phi fixed."""
+    raise NotImplementedError("This function is deprecated")
+    # get momentum transfer vector in lab coordinates
+    k_vec_lab = H * a_star_vec_lab + K * b_star_vec_lab + L * c_star_vec_lab
+    k_magnitude = np.linalg.norm(k_vec_lab)
+    tth_rad = 2 * np.arcsin(k_magnitude / (2 * k_in))
+    tth = np.degrees(tth_rad)  # tth is done calculating
+
+    cos_phi = np.cos(np.radians(phi))
+    sin_phi = np.sin(np.radians(phi))
+    vector = (k_vec_lab[0] / k_magnitude, k_vec_lab[1] / k_magnitude)
+    mat = np.array([[cos_phi, -sin_phi], [sin_phi, cos_phi]])
+    mat_inv = np.linalg.inv(mat)
+    vector_rotated = mat_inv @ vector
+    v0, v1 = vector_rotated
+    v2 = -k_vec_lab[2] / k_magnitude
+
+    chi_rad = np.arctan(v1 / v2)
+    chi = np.degrees(chi_rad)
+
+    delta = np.arcsin(v0)
+
+    theta_rad = delta + tth_rad / 2
+    theta = np.degrees(theta_rad)
+
+    return {
+        "tth": tth,
+        "theta": theta,
+        "phi": phi,
+        "chi": chi,
+        "H": H,
+        "K": K,
+        "L": L,
+        "success": True,
+        "error": None,
+    }
+
+
+if __name__ == "__main__":
+    params = {
+        "k_in": 0.48143441803485754,
+        "a": 1,
+        "b": 2,
+        "c": 3,
+        "alpha": 90,
+        "beta": 90,
+        "gamma": 90,
+        "roll": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "H": -0.0569,
+        "K": 0,
+        "L": -0.3837,
+        "target_objective": 1e-4,
+        "num_steps": 1000,
+        "number_batch": 5,
+    }
+    theta_results, phi_results = _calculate_angles_chi_fixed_gradient_decent(**params)
+    print(f"FINAL theta: {theta_results}, phi: {phi_results}")

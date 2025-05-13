@@ -48,6 +48,10 @@ class Sample:
         except KeyError as exc:
             raise ValueError("initialize the sample first") from exc
 
+    def get_lattice_angles(self):
+        """get the lattice euler angles: roll pitch and yaw"""
+        return self.roll, self.pitch, self.yaw
+
     def get_real_space_vectors(self):
         """Get the real space vectors in the sample frame."""
         return self.a_vec_sample, self.b_vec_sample, self.c_vec_sample
@@ -97,3 +101,6 @@ class Sample:
         self.a_star_vec_sample = rotation_matrix @ a_star_vec_lattice
         self.b_star_vec_sample = rotation_matrix @ b_star_vec_lattice
         self.c_star_vec_sample = rotation_matrix @ c_star_vec_lattice
+
+    def rotate(self, theta, phi, chi):
+        """Rotate the sample."""
