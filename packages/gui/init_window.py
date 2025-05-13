@@ -95,6 +95,7 @@ class InitWindow(QWidget):
         self.alpha_input.setRange(1.0, 179.0)
         self.alpha_input.setValue(90.0)
         self.alpha_input.setSuffix(" °")
+        self.alpha_input.valueChanged.connect(self.update_visualization)
         lattice_layout.addWidget(QLabel("α:"), 0, 2)
         lattice_layout.addWidget(self.alpha_input, 0, 3)
 
@@ -102,6 +103,7 @@ class InitWindow(QWidget):
         self.beta_input.setRange(1.0, 179.0)
         self.beta_input.setValue(90.0)
         self.beta_input.setSuffix(" °")
+        self.beta_input.valueChanged.connect(self.update_visualization)
         lattice_layout.addWidget(QLabel("β:"), 1, 2)
         lattice_layout.addWidget(self.beta_input, 1, 3)
 
@@ -109,6 +111,7 @@ class InitWindow(QWidget):
         self.gamma_input.setRange(1.0, 179.0)
         self.gamma_input.setValue(90.0)
         self.gamma_input.setSuffix(" °")
+        self.gamma_input.valueChanged.connect(self.update_visualization)
         lattice_layout.addWidget(QLabel("γ:"), 2, 2)
         lattice_layout.addWidget(self.gamma_input, 2, 3)
 
