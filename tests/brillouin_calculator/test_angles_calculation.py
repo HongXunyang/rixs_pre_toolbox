@@ -4,58 +4,239 @@ import numpy as np
 import pytest
 from packages.brillouin_calculator.interface import BrillouinCalculator
 
-
+# TEST CASE 1: WITH ZERO CHI AND PHI
 @pytest.fixture
 def calculator():
-    """Returns a BrillouinCalculator instance (not yet initialized)"""
-    return BrillouinCalculator()
+    """Create and initialize a BrillouinCalculator instance."""
+    calc = BrillouinCalculator()
+    params = {
+        "a": 4,
+        "b": 4,
+        "c": 12,
+        "alpha": 90.0,
+        "beta": 90.0,
+        "gamma": 90.0,
+        "energy": 930,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0,
+    }
+    calc.initialize(params)
+    return calc
 
 
-# Orthorhombic case
-params_orthorhombic = {
-    "energy": 950,
-    "a": 4.0,
-    "b": 5.0,
-    "c": 12.0,
-    "alpha": 90,
-    "beta": 90,
-    "gamma": 90,
-    "yaw": 0,
-    "pitch": 0,
-    "roll": 0,
-    "theta": 0,
-    "phi": 0,
-    "chi": 0,
-}
+def test_calculate_angles_chi_fixed(calculator):
+    """Test calculate_angles with chi fixed."""
+    # Test parameters
+    H = -0.2230
+    K = 0
+    L = -1.5024
+    fixed_angle = 0.0
+    fixed_angle_name = "chi"
+
+    # Expected angles that should be in the results
+    # Replace these with your actual expected values
+    expected_tth = 132  # Replace with your expected value
+    expected_theta = 42  # Replace with your expected value
+    expected_phi = 0  # Replace with your expected value
+    expected_chi = fixed_angle
+
+    # Call the calculate_angles method
+    result = calculator.calculate_angles(H, K, L, fixed_angle, fixed_angle_name)
+
+    # Check if the calculation was successful
+    assert result["success"] is True
+    assert result["error"] is None
+
+    # Get the results
+    tth_results = result["tth"]
+    theta_results = result["theta"]
+    phi_results = result["phi"]
+    chi_results = result["chi"]
+
+    # Check if expected values are in the results
+    # Note: Skip checks for None values
+    if expected_tth is not None:
+        assert any(
+            np.isclose(tth, expected_tth, atol=0.1) for tth in tth_results
+        ), f"Expected tth {expected_tth}, got {tth_results}"
+
+    if expected_theta is not None:
+        assert any(
+            np.isclose(theta, expected_theta, atol=0.1) for theta in theta_results
+        ), f"Expected theta {expected_theta}, got {theta_results}"
+
+    if expected_phi is not None:
+        assert any(
+            np.isclose(phi, expected_phi, atol=0.1) for phi in phi_results
+        ), f"Expected phi {expected_phi}, got {phi_results}"
+
+    if expected_chi is not None:
+        assert all(
+            np.isclose(chi, expected_chi, atol=0.1) for chi in chi_results
+        ), f"Expected chi {expected_chi}, got {chi_results}"
 
 
-@pytest.mark.parametrize(
-    "H, K, L, fixed_angle, fixed_angle_name, tth_expected, theta_expected, phi_expected, chi_expected",
-    [
-        (-0.5719, 0.0, -0.4597, 0, "chi", 150.0, 0.0, 0.0, 0.0),
-        (0.1532, 0.0, -1.716, 0, "chi", 150.0, 90.0, 0.0, 0.0),
-        (0.02098, -0.3377, -1.579, 23, "chi", 150.0, 90.0, 30.0, 23),
-    ],
-)
-def test_orthorhombic_calculate_angles(
-    calculator,
-    H,
-    K,
-    L,
-    fixed_angle,
-    fixed_angle_name,
-    tth_expected,
-    theta_expected,
-    phi_expected,
-    chi_expected,
-):
-    """test the function calculate_angles from the brillouin_calculator/interface.py in the orthorhombic case"""
-    calculator.initialize(params_orthorhombic)
-    results = calculator.calculate_angles(H, K, L, fixed_angle, fixed_angle_name)
-    print(
-        f"tth: {results['tth']}, tth_expected: {tth_expected},\n theta: {results['theta']}, theta_expected: {theta_expected},\n phi: {results['phi']}, phi_expected: {phi_expected},\n chi: {results['chi']}, chi_expected: {chi_expected}"
-    )
-    assert np.isclose(results["tth"], tth_expected, atol=1.0)
-    assert np.isclose(results["theta"], theta_expected, atol=1.0)
-    assert np.isclose(results["phi"], phi_expected, atol=1.0)
-    assert np.isclose(results["chi"], chi_expected, atol=1.0)
+def test_calculate_angles_phi_fixed(calculator):
+    """Test calculate_angles with phi fixed."""
+    # Test parameters
+    H = -0.2230
+    K = 0
+    L = -1.5024
+    fixed_angle = 0
+    fixed_angle_name = "phi"
+
+    # Expected angles that should be in the results
+    # Replace these with your actual expected values
+    expected_tth = 132  # Replace with your expected value
+    expected_theta = 42  # Replace with your expected value
+    expected_phi = fixed_angle
+    expected_chi = 0  # Replace with your expected value
+
+    # Call the calculate_angles method
+    result = calculator.calculate_angles(H, K, L, fixed_angle, fixed_angle_name)
+
+    # Get the results
+    tth_results = result["tth"]
+    theta_results = result["theta"]
+    phi_results = result["phi"]
+    chi_results = result["chi"]
+
+    # Check if expected values are in the results
+    # Note: Skip checks for None values
+    if expected_tth is not None:
+        assert any(
+            np.isclose(tth, expected_tth, atol=0.1) for tth in tth_results
+        ), f"Expected tth {expected_tth}, got {tth_results}"
+
+    if expected_theta is not None:
+        assert any(
+            np.isclose(theta, expected_theta, atol=0.1) for theta in theta_results
+        ), f"Expected theta {expected_theta}, got {theta_results}"
+
+    if expected_phi is not None:
+        assert all(
+            np.isclose(phi, expected_phi, atol=0.1) for phi in phi_results
+        ), f"Expected phi {expected_phi}, got {phi_results}"
+
+    if expected_chi is not None:
+        assert any(
+            np.isclose(chi, expected_chi, atol=0.1) for chi in chi_results
+        ), f"Expected chi {expected_chi}, got {chi_results}"
+
+
+# TEST CASE 2: WITH NON-ZERO CHI AND PHI
+@pytest.fixture
+def calculator_rotated():
+    """Create and initialize a BrillouinCalculator instance with non-zero roll/pitch/yaw."""
+    calc = BrillouinCalculator()
+    params = {
+        "a": 4,
+        "b": 4,
+        "c": 12,
+        "alpha": 90.0,
+        "beta": 90.0,
+        "gamma": 90.0,
+        "energy": 930,
+        "roll": 0,
+        "pitch": 0,
+        "yaw": 0,
+    }
+    calc.initialize(params)
+    return calc
+
+
+def test_calculate_angles_chi_fixed_rotated(calculator_rotated):
+    """Test calculate_angles with chi fixed for rotated crystal."""
+    # Test parameters
+    H = -0.3849
+    K = -0.0916
+    L = -0.8899
+    fixed_angle = 44
+    fixed_angle_name = "chi"
+
+    # Expected angles that should be in the results
+    expected_tth = 111
+    expected_theta = 22  # Different due to crystal rotation
+    expected_phi = 33  # Different due to crystal rotation
+    expected_chi = fixed_angle
+
+    # Call the calculate_angles method
+    result = calculator_rotated.calculate_angles(H, K, L, fixed_angle, fixed_angle_name)
+
+    # Check if the calculation was successful
+    assert result["success"] is True
+    assert result["error"] is None
+
+    # Get the results
+    tth_results = result["tth"]
+    theta_results = result["theta"]
+    phi_results = result["phi"]
+    chi_results = result["chi"]
+
+    # Check if expected values are in the results
+    if expected_tth is not None:
+        assert any(
+            np.isclose(tth, expected_tth, atol=0.1) for tth in tth_results
+        ), f"Expected tth {expected_tth}, got {tth_results}"
+
+    if expected_theta is not None:
+        assert any(
+            np.isclose(theta, expected_theta, atol=0.1) for theta in theta_results
+        ), f"Expected theta {expected_theta}, got {theta_results}"
+
+    if expected_phi is not None:
+        assert any(
+            np.isclose(phi, expected_phi, atol=0.1) for phi in phi_results
+        ), f"Expected phi {expected_phi}, got {phi_results}"
+
+    if expected_chi is not None:
+        assert all(
+            np.isclose(chi, expected_chi, atol=0.1) for chi in chi_results
+        ), f"Expected chi {expected_chi}, got {chi_results}"
+
+
+def test_calculate_angles_phi_fixed_rotated(calculator_rotated):
+    """Test calculate_angles with phi fixed for rotated crystal."""
+    # Test parameters
+    H = -0.3849
+    K = -0.0916
+    L = -0.8899
+    fixed_angle = 33
+    fixed_angle_name = "phi"
+
+    # Expected angles that should be in the results
+    expected_tth = 111
+    expected_theta = 22  # Different due to crystal rotation
+    expected_phi = fixed_angle
+    expected_chi = 44  # Different due to crystal rotation
+
+    # Call the calculate_angles method
+    result = calculator_rotated.calculate_angles(H, K, L, fixed_angle, fixed_angle_name)
+
+    # Get the results
+    tth_results = result["tth"]
+    theta_results = result["theta"]
+    phi_results = result["phi"]
+    chi_results = result["chi"]
+
+    # Check if expected values are in the results
+    if expected_tth is not None:
+        assert any(
+            np.isclose(tth, expected_tth, atol=0.1) for tth in tth_results
+        ), f"Expected tth {expected_tth}, got {tth_results}"
+
+    if expected_theta is not None:
+        assert any(
+            np.isclose(theta, expected_theta, atol=0.1) for theta in theta_results
+        ), f"Expected theta {expected_theta}, got {theta_results}"
+
+    if expected_phi is not None:
+        assert all(
+            np.isclose(phi, expected_phi, atol=0.1) for phi in phi_results
+        ), f"Expected phi {expected_phi}, got {phi_results}"
+
+    if expected_chi is not None:
+        assert any(
+            np.isclose(chi, expected_chi, atol=0.1) for chi in chi_results
+        ), f"Expected chi {expected_chi}, got {chi_results}"

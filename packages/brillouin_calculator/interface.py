@@ -517,6 +517,7 @@ def _calculate_angles_chi_fixed(
         k_cal = get_k_cal(lab, theta, phi, chi_fixed)
         k_magnitude = np.linalg.norm(k_cal)
         tth = calculate_tth_from_k_magnitude(k_in, k_magnitude)
+        print(f"tth: {tth}")
         k_target = calculate_k_vector_in_lab(k_in, tth)
         objective = objective_function(k_cal, k_target)
         for i in range(num_steps):
@@ -534,6 +535,7 @@ def _calculate_angles_chi_fixed(
         # Normalize angles to (0, 360) range
         theta = process_angle(theta)
         phi = process_angle(phi)
+
         theta_best_list[batch] = theta
         phi_best_list[batch] = phi
 
@@ -548,7 +550,7 @@ def _calculate_angles_chi_fixed(
         if theta not in theta_result:
             theta_result.append(theta)
             phi_result.append(phi)
-            tth_result.append(tth)
+            tth_result.append(process_angle(tth))
             chi_result.append(chi_fixed)
 
     return tth_result, theta_result, phi_result, chi_result
@@ -631,7 +633,7 @@ def _calculate_angles_phi_fixed(
         if theta not in theta_result:
             theta_result.append(theta)
             chi_result.append(chi)
-            tth_result.append(tth)
+            tth_result.append(process_angle(tth))
             phi_result.append(phi_fixed)
 
     return tth_result, theta_result, phi_result, chi_result
