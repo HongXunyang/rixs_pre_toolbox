@@ -711,11 +711,11 @@ class BrillouinCalculatorTab(TabInterface):
                 fixed_index = "L"
 
             # Determine which angle to fix
-            fixed_angle_name = "chi" if self.chi_toggle.isChecked() else "phi"
+            fixed_angle_name = "phi" if self.chi_toggle.isChecked() else "chi"
             fixed_angle_value = (
-                self.chi_input_tth.value()
+                self.phi_input_tth.value()
                 if self.chi_toggle.isChecked()
-                else self.phi_input_tth.value()
+                else self.chi_input_tth.value()
             )
 
             # Get input values
