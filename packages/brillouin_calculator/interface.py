@@ -125,7 +125,6 @@ class BrillouinCalculator:
 
         # Calculate momentum transfer magnitude
         k_magnitude = self.get_k_magnitude(tth)
-        print(f"k_in: {self.k_in}, k_magnitude: {k_magnitude}")
         # Calculate delta = theta - (tth/2)
         delta = -(tth / 2.0)
         sin_delta = np.sin(np.radians(delta))
@@ -218,27 +217,44 @@ class BrillouinCalculator:
         fixed_angle_name="chi",
         fixed_angle=0.0,
     ):
-        calculate_angles = _calculate_angles_factory("tth")
-        a_vec_lab, b_vec_lab, c_vec_lab = self.lab.get_real_space_vectors()
-        a_star_vec_lab, b_star_vec_lab, c_star_vec_lab = (
-            self.lab.get_reciprocal_space_vectors()
+        a, b, c, alpha, beta, gamma = self.lab.get_lattice_parameters()
+        roll, pitch, yaw = self.lab.get_lattice_angles()
+
+        tth_result, theta_result, phi_result, chi_result, momentum = (
+            _calculate_angles_tth_fixed(
+                self.k_in,
+                tth,
+                a,
+                b,
+                c,
+                alpha,
+                beta,
+                gamma,
+                roll,
+                pitch,
+                yaw,
+                H,
+                K,
+                L,
+                fixed_angle_name,
+                fixed_angle,
+            )
         )
-        results = calculate_angles(
-            self.k_in,
-            tth,
-            H,
-            K,
-            L,
-            a_vec_lab,
-            b_vec_lab,
-            c_vec_lab,
-            a_star_vec_lab,
-            b_star_vec_lab,
-            c_star_vec_lab,
-            fixed_angle_name,
-            fixed_angle,
-        )
-        return results
+        H = momentum if H is None else H
+        K = momentum if K is None else K
+        L = momentum if L is None else L
+        result = {
+            "tth": tth_result,
+            "theta": theta_result,
+            "phi": phi_result,
+            "chi": chi_result,
+            "H": H,
+            "K": K,
+            "L": L,
+            "success": True,
+            "error": None,
+        }
+        return result
 
     def is_initialized(self):
         """Check if the calculator is initialized.
@@ -292,6 +308,7 @@ def _get_real_space_vectors(a, b, c, alpha, beta, gamma):
         np.radians(beta),
         np.radians(gamma),
     )
+    print(f"HEY HERE: gamma_rad: {gamma_rad}")
     a_vec = np.array([a, 0, 0])
     b_vec = np.array([b * np.cos(gamma_rad), b * np.sin(gamma_rad), 0])
     c_vec_x = c * np.cos(beta_rad)
@@ -439,7 +456,7 @@ def _calculate_angles_tth_fixed(
         k_magnitude = np.linalg.norm(k)
         return k_magnitude - k_magnitude_target
 
-    momentum = fsolve(fun_to_solve, -0.4)
+    momentum = fsolve(fun_to_solve, -1.0)
 
     # Update the appropriate index
     if index_to_solve == "H":
@@ -449,10 +466,9 @@ def _calculate_angles_tth_fixed(
     elif index_to_solve == "L":
         L = momentum[0]
 
-    print(f"H: {H}, K: {K}, L: {L}")
     calculate_angles = _calculate_angles_factory(fixed_angle_name)
 
-    result = calculate_angles(
+    tth_result, theta_result, phi_result, chi_result = calculate_angles(
         k_in,
         H,
         K,
@@ -468,7 +484,7 @@ def _calculate_angles_tth_fixed(
         yaw,
         fixed_angle,
     )
-    return result
+    return tth_result, theta_result, phi_result, chi_result, momentum[0]
 
 
 def _calculate_angles_chi_fixed(
@@ -517,7 +533,6 @@ def _calculate_angles_chi_fixed(
         k_cal = get_k_cal(lab, theta, phi, chi_fixed)
         k_magnitude = np.linalg.norm(k_cal)
         tth = calculate_tth_from_k_magnitude(k_in, k_magnitude)
-        print(f"tth: {tth}")
         k_target = calculate_k_vector_in_lab(k_in, tth)
         objective = objective_function(k_cal, k_target)
         for i in range(num_steps):
@@ -661,8 +676,8 @@ if __name__ == "__main__":
         "num_steps": 1000,
         "number_batch": 5,
     }
-    tth_results, theta_results, phi_results, chi_results = _calculate_angles_tth_fixed(
-        **params
+    tth_results, theta_results, phi_results, chi_results, L_result = (
+        _calculate_angles_tth_fixed(**params)
     )
     print(f"FINAL theta: {theta_results}, phi: {phi_results}, chi: {chi_results}")
-    print(f"tth: {tth_results}")
+    print(f"tth: {tth_results}, L: {L_result}")

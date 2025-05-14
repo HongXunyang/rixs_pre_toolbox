@@ -1,4 +1,4 @@
-"""This is to test the function calculate_angles in the interface.py file."""
+"""This is to test the function calculate_angles with chi and phi fixed in the interface.py file."""
 
 import numpy as np
 import pytest
