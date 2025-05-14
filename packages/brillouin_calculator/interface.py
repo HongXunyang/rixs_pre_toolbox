@@ -264,28 +264,3 @@ class BrillouinCalculator:
         """
         return self.lab.get_real_space_vectors()
 
-
-if __name__ == "__main__":
-    params = {
-        "k_in": 0.48143441803485754,
-        "tth": 131.98,
-        "a": 1,
-        "b": 2,
-        "c": 3,
-        "alpha": 90,
-        "beta": 90,
-        "gamma": 90,
-        "roll": 0,
-        "pitch": 0,
-        "yaw": 0,
-        "fixed_angle_name": "chi",
-        "fixed_angle": 0,
-        "H": -0.0569,
-        "K": 0,
-        "L": None,  # L = -0.3837
-    }
-    tth_results, theta_results, phi_results, chi_results, L_result = (
-        _calculate_angles_tth_fixed(**params)
-    )
-    print(f"FINAL theta: {theta_results}, phi: {phi_results}, chi: {chi_results}")
-    print(f"tth: {tth_results}, L: {L_result}")
