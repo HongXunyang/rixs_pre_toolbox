@@ -426,10 +426,6 @@ def _calculate_angles_tth_fixed(
     L=None,
     fixed_angle_name="chi",
     fixed_angle=0.0,
-    target_objective=1e-4,
-    num_steps=1000,
-    number_batch=10,
-    learning_rate=100,
 ):
     """Calculate scattering angles from two of the three HKL indices, with tth fixed."""
 
@@ -502,7 +498,7 @@ def _calculate_angles_chi_fixed(
     pitch,
     yaw,
     chi_fixed,
-    target_objective=1e-4,
+    target_objective=1e-5,
     num_steps=1000,
     number_batch=10,
     learning_rate=100,
@@ -586,7 +582,7 @@ def _calculate_angles_phi_fixed(
     pitch,
     yaw,
     phi_fixed,
-    target_objective=1e-4,
+    target_objective=1e-5,
     num_steps=1000,
     number_batch=10,
     learning_rate=100,
@@ -672,9 +668,6 @@ if __name__ == "__main__":
         "H": -0.0569,
         "K": 0,
         "L": None,  # L = -0.3837
-        "target_objective": 1e-4,
-        "num_steps": 1000,
-        "number_batch": 5,
     }
     tth_results, theta_results, phi_results, chi_results, L_result = (
         _calculate_angles_tth_fixed(**params)
