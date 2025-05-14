@@ -1,12 +1,9 @@
-"""This is to test the function _get_HKL_from_momentum_scattering in the interface.py file."""
+"""This is to test the function calculate_hkl in the interface.py file."""
 
 import numpy as np
 
 import pytest
-from packages.brillouin_calculator.interface import (
-    _get_HKL_from_momentum_scattering,
-    BrillouinCalculator,
-)
+from packages.brillouin_calculator.interface import BrillouinCalculator
 
 
 @pytest.fixture

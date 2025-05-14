@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """This is to test the function _get_d_spacing in the interface.py file."""
 import numpy as np
-from packages.brillouin_calculator.interface import _get_d_spacing
+from packages.brillouin_calculator.core import _get_d_spacing
 
 
 def test_cubic_spacing():
