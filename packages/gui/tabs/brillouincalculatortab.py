@@ -39,6 +39,10 @@ from packages.gui.tabs.tab_interface import TabInterface
 from packages.brillouin_calculator.interface import BrillouinCalculator
 from packages.visualizer.scattering_visualizer import ScatteringVisualizer
 from packages.helpers.tips import Tips, set_tip
+from packages.gui.components.hkl_scan_components import (
+    HKLScanControls,
+    HKLScanResultsTable,
+)
 
 class DragDropLineEdit(QLineEdit):
     """Custom QLineEdit that accepts drag and drop events."""
@@ -100,6 +104,7 @@ class BrillouinCalculatorTab(TabInterface):
         self._create_angles_to_hkl_tab()
         self._create_hkl_to_angles_tab()
         self._create_hk_to_angles_tth_fixed_tab()
+        self._create_hkl_scan_tab()  # Add the new HKL scan tab
 
     def set_parameters(self, params: dict):
         """Set parameters from global settings."""
@@ -499,6 +504,65 @@ class BrillouinCalculatorTab(TabInterface):
 
         # Add to tab widget
         self.tab_widget.addTab(hk_tab, "HK to Angles | tth fixed")
+
+    def _create_hkl_scan_tab(self):
+        """Create tab for scanning a range of HKL values."""
+        scan_tab = QWidget()
+        scan_layout = QHBoxLayout(scan_tab)
+
+        # Create controls widget
+        self.hkl_scan_controls = HKLScanControls()
+        self.hkl_scan_controls.calculateClicked.connect(self.calculate_hkl_scan)
+        scan_layout.addWidget(self.hkl_scan_controls, 1)
+
+        # Create results table
+        self.hkl_scan_results_table = HKLScanResultsTable()
+        scan_layout.addWidget(
+            self.hkl_scan_results_table.get_widget(), 3.3
+        )  # Increased from 3 to 3.3 for 10% wider
+
+        # Add to tab widget
+        self.tab_widget.addTab(scan_tab, "HKL Scan | tth fixed")
+
+    @pyqtSlot()
+    def calculate_hkl_scan(self):
+        """Calculate angles for a range of HKL values."""
+        try:
+            # Check if calculator is initialized
+            if not self.calculator.is_initialized():
+                QMessageBox.warning(
+                    self, "Warning", "Please initialize the calculator first!"
+                )
+                self.tab_widget.setCurrentIndex(0)
+                return
+
+            # Get parameters for scan
+            params = self.hkl_scan_controls.get_scan_parameters()
+
+            # Calculate angles for the scan
+            result = self.calculator.calculate_angles_tth_fixed_scan(
+                tth=params["tth"],
+                start_points=params["start_points"],
+                end_points=params["end_points"],
+                num_points=params["num_points"],
+                deactivated_index=params["deactivated_index"],
+                fixed_angle_name=params["fixed_angle_name"],
+                fixed_angle=params["fixed_angle"],
+            )
+
+            # Check for success
+            success = result.get("success", False)
+            if not success:
+                QMessageBox.warning(
+                    self, "Warning", result.get("error", "Unknown error")
+                )
+                return
+
+            # Display results in table
+            self.hkl_scan_results_table.display_results(result)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error calculating HKL scan: {str(e)}")
 
     @pyqtSlot()
     def browse_cif_file(self):
