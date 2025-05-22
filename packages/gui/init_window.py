@@ -25,6 +25,7 @@ from PyQt5.QtCore import Qt, pyqtSlot, QMimeData
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 import numpy as np
 from packages.visualizer.coordinate_visualizer import CoordinateVisualizer
+from packages.helpers import UnitConverter
 
 class DragDropLineEdit(QLineEdit):
     """Custom QLineEdit that accepts drag and drop events."""
@@ -56,6 +57,7 @@ class InitWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
+        self.unit_converter = UnitConverter()
         self.init_ui()
 
     def init_ui(self):
@@ -133,7 +135,15 @@ class InitWindow(QWidget):
         self.energy_input.setRange(1.0, 20000.0)
         self.energy_input.setValue(950.0)
         self.energy_input.setSuffix(" eV")
+        self.energy_input.valueChanged.connect(self.on_energy_changed)
         energy_layout.addRow("Energy:", self.energy_input)
+
+        self.wavelength_input = QDoubleSpinBox()
+        self.wavelength_input.setRange(0.1, 100.0)
+        self.wavelength_input.setValue(self.unit_converter.ev_to_angstrom(950.0))
+        self.wavelength_input.setSuffix(" Å")
+        self.wavelength_input.valueChanged.connect(self.on_wavelength_changed)
+        energy_layout.addRow("Wavelength:", self.wavelength_input)
 
         # Add energy group to main layout at (0,1)
         layout.addWidget(energy_group, 0, 1)
@@ -288,4 +298,34 @@ class InitWindow(QWidget):
         except Exception as e:
             QMessageBox.critical(
                 self, "Error", f"Error initializing parameters: {str(e)}"
+            )
+
+    @pyqtSlot()
+    def on_energy_changed(self):
+        """Update wavelength when energy changes."""
+        try:
+            # Block signals to prevent infinite loop
+            self.wavelength_input.blockSignals(True)
+            # Convert energy to wavelength
+            wavelength = self.unit_converter.ev_to_angstrom(self.energy_input.value())
+            self.wavelength_input.setValue(wavelength)
+            # Unblock signals
+            self.wavelength_input.blockSignals(False)
+        except Exception as e:
+            QMessageBox.warning(self, "Warning", f"Error converting energy: {str(e)}")
+
+    @pyqtSlot()
+    def on_wavelength_changed(self):
+        """Update energy when wavelength changes."""
+        try:
+            # Block signals to prevent infinite loop
+            self.energy_input.blockSignals(True)
+            # Convert wavelength to energy
+            energy = self.unit_converter.angstrom_to_ev(self.wavelength_input.value())
+            self.energy_input.setValue(energy)
+            # Unblock signals
+            self.energy_input.blockSignals(False)
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Warning", f"Error converting wavelength: {str(e)}"
             )
