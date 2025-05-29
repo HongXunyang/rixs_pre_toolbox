@@ -7,7 +7,7 @@ class StructureFactorCalculator:
     structure."""
 
     def __init__(self):
-        """Initialize the structure factor calculator."""
+        """define object attributes"""
         self._initialized = False
 
     def initialize(self):

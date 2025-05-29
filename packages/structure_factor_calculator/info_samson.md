@@ -1,6 +1,45 @@
+# Prerequisites
+0. setup SSH key:
+   - **Set Up SSH Key (only if not already done)**
+     - Generate SSH key:
+       ```bash
+       ssh-keygen -t ed25519 -C "your_email@example.com"
+       ```
+     - Add SSH key to ssh-agent:
+       ```bash
+       eval "$(ssh-agent -s)"
+       ssh-add ~/.ssh/id_ed25519
+       ```
+     - Add public key to GitHub:
+       - Go to GitHub → Settings → SSH and GPG Keys → New SSH Key
+       - Paste content of `~/.ssh/id_ed25519.pub`
+   - **Clone the Repository**
+     - Using SSH (recommended if SSH is set up):
+       ```bash
+       git clone git@github.com:HongXunyang/rixs_pre_toolbox.git
+       ```
+   - **Create a Branch**
+     ```bash
+     git switch -c <your_branch_name>
+     ```
+   - **Make a Test Changes and Commit**
+     ```bash
+     git add .
+     git commit -m "Describe your changes"
+     ```
+   - **Push Changes to GitHub**
+     ```bash
+     git push origin <your_branch_name>
+     ```
+
+1. Install the dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
 # General guideline
-- Create a new branch. 
-- Only work in the following folders/files:
+- Work only in your own branch. 
+- Work only in the following folders/files:
   1. `packages/structure_factor_calculator/` folder: this is the core backend calculator. Your code
      should go in here.
   2. `tests/structure_factor_calculator/` folder: this is the folder for tests.
