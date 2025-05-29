@@ -18,3 +18,5 @@ class StructureFactorCalculator:
     def is_initialized(self):
         """Check if the structure factor calculator is initialized."""
         return self._initialized
+
+#test
