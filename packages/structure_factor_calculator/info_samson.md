@@ -37,6 +37,7 @@
    pip install -r requirements.txt
    ```
 
+
 # General guideline
 - Work only in your own branch. 
 - Work only in the following folders/files:
@@ -64,6 +65,7 @@ Wrap the code in a class.
 - Write tests for the code. Use pytest and put tests file in the
   `tests/structure_factor_calculator/` folder. 
 - Ideally, each function should be tested with multiple test cases. 
+- Push to github when all tests pass.
 
 
 # Bonus
