@@ -2,7 +2,7 @@
     "app_name": "RIXS Preparation Toolbox",
     "app_version": "0.1.0",
     "window_size": {
-        "width": 1000,
+        "width": 1200,
         "height": 800 
     },
     "theme": "default",
