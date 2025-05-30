@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from pathlib import Path
-from structure_factor_app import StructureFactorCalculator # Ensure this import works
+from packages.structure_factor_calculator.interface import StructureFactorCalculator # Ensure this import works
 
 # Content for a dummy CIF file (NaCl example from the original script)
 DUMMY_CIF_CONTENT = """
