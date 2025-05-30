@@ -21,9 +21,10 @@ from PyQt5.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
+    QFrame,
 )
 from PyQt5.QtCore import Qt, pyqtSlot, QMimeData
-from PyQt5.QtGui import QDragEnterEvent, QDropEvent
+from PyQt5.QtGui import QDragEnterEvent, QDropEvent, QFont
 import sys
 import os
 import matplotlib
@@ -86,6 +87,9 @@ class BrillouinCalculatorTab(TabInterface):
         ]  # group up the funtional objects and initailize them later on
         self.tips = Tips()
 
+        # Store parameters for display
+        self.parameters = None
+
         # Initialize UI
         super().__init__(main_window)
         self.init_ui()
@@ -98,7 +102,10 @@ class BrillouinCalculatorTab(TabInterface):
         """Initialize UI components."""
         # Create tab widget for input methods
         self.tab_widget = QTabWidget()
-        self.layout.addWidget(self.tab_widget, 0, 0)  # Add to grid at (0,0)
+        self.layout.addWidget(self.tab_widget, 0, 0)  # Back to (0,0) position
+
+        # Create and add parameter header to the right
+        self._create_parameter_header()
 
         # Create tabs for different functionalities
         self._create_angles_to_hkl_tab()
@@ -106,12 +113,102 @@ class BrillouinCalculatorTab(TabInterface):
         self._create_hk_to_angles_tth_fixed_tab()
         self._create_hkl_scan_tab()  # Add the new HKL scan tab
 
+    def _create_parameter_header(self):
+        """Create parameter display header."""
+        # Create main header frame
+        header_frame = QFrame()
+        header_frame.setObjectName("parameterPanel")
+        header_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
+        header_frame.setLineWidth(1)
+        header_frame.setFixedWidth(200)  # Reduced from 280 to 220 for narrower panel
+
+        # Create header layout - vertical for sidebar
+        header_layout = QVBoxLayout(header_frame)
+        header_layout.setContentsMargins(15, 15, 15, 15)
+        header_layout.setSpacing(15)  # Reduced from 25 to 15 for more compact layout
+
+        # Crystal Structure section
+        crystal_title = QLabel("Crystal Structure")
+        crystal_title.setObjectName("parameterSectionTitle")
+        header_layout.addWidget(crystal_title)
+
+        self.crystal_info_label = QLabel(
+            "a = -- Å\nb = -- Å\nc = -- Å\nα = --°\nβ = --°\nγ = --°"
+        )
+        self.crystal_info_label.setObjectName("parameterText")
+        self.crystal_info_label.setWordWrap(True)
+        header_layout.addWidget(self.crystal_info_label)
+
+        # X-ray section
+        xray_title = QLabel("X-ray Parameters")
+        xray_title.setObjectName("parameterSectionTitle")
+        header_layout.addWidget(xray_title)
+
+        self.xray_info_label = QLabel("Energy: -- eV\nWavelength: -- Å")
+        self.xray_info_label.setObjectName("parameterText")
+        self.xray_info_label.setWordWrap(True)
+        header_layout.addWidget(self.xray_info_label)
+
+        # Add stretch to push edit button to the bottom
+        header_layout.addStretch()
+
+        # Edit button
+        edit_button = QPushButton("Reset Parameters")
+        edit_button.setObjectName("editParametersButton")
+        edit_button.setToolTip("Return to parameter initialization window")
+        edit_button.clicked.connect(self._edit_parameters)
+        edit_button.setFixedHeight(35)  # Reduced from 45 to 35
+        header_layout.addWidget(edit_button)
+
+        # Add header to main layout - right side
+        self.layout.addWidget(header_frame, 0, 1)
+
+        # Set column stretch so tab widget takes most space
+        self.layout.setColumnStretch(0, 5)  # Tab widget gets more space
+        self.layout.setColumnStretch(1, 1)  # Header gets less space
+
     def set_parameters(self, params: dict):
         """Set parameters from global settings."""
+        # Store parameters
+        self.parameters = params
+
+        # Update header display
+        self._update_parameter_display()
+
+        # Initialize functional objects
         for obj in self.funtional_objects:
             obj.initialize(params=params)
 
         print("params set!!!!!!!!")
+
+    def _update_parameter_display(self):
+        """Update the parameter display in the header."""
+        if not self.parameters:
+            return
+
+        # Update crystal structure display - vertical format
+        crystal_text = (
+            f"a = {self.parameters.get('a', 0):.1f} Å\n"
+            f"b = {self.parameters.get('b', 0):.1f} Å\n"
+            f"c = {self.parameters.get('c', 0):.1f} Å\n"
+            f"α = {self.parameters.get('alpha', 0):.0f}°\n"
+            f"β = {self.parameters.get('beta', 0):.0f}°\n"
+            f"γ = {self.parameters.get('gamma', 0):.0f}°"
+        )
+        self.crystal_info_label.setText(crystal_text)
+
+        # Update X-ray display - vertical format
+        energy = self.parameters.get("energy", 0)
+        # Convert eV to Angstrom: λ = hc/E = 12398.4 / E(eV)
+        wavelength = 12398.4 / energy if energy > 0 else 0
+        xray_text = f"Energy: {energy:.0f} eV\nWavelength: {wavelength:.2f} Å"
+        self.xray_info_label.setText(xray_text)
+
+    @pyqtSlot()
+    def _edit_parameters(self):
+        """Return to parameter initialization window."""
+        if self.main_window:
+            self.main_window.reset_parameters()
 
     def _set_tip(self, widget, name):
         """Set the tooltip and status tip for a widget by the name"""

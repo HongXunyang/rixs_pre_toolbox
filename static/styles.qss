@@ -13,7 +13,7 @@ QTabBar::tab {
     background-color: #E0E0E0;
     border: 1px solid #C4C4C4;
     border-bottom: none;
-    min-width: 100px;
+    min-width: 160px;
     padding: 6px 12px;
     font-weight: bold;
 }
@@ -127,4 +127,54 @@ QToolTip {
     background-color: #FFFFCC;
     color: #333333;
     padding: 3px;
+}
+
+/* Parameter Panel Styles */
+QFrame#parameterPanel {
+    background-color: #f8f9fa;
+    border: 1px solid #c0c0c0;
+    border-radius: 8px;
+    margin: 2px;
+}
+
+QLabel#parameterMainTitle {
+    color: #2c3e50;
+    font-family: Arial;
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+QLabel#parameterSectionTitle {
+    color: #34495e;
+    font-family: Arial;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 5px;
+    margin-bottom: 2px;
+}
+
+QLabel#parameterText {
+    color: #5d6d7e;
+    font-family: Arial;
+    font-size: 13px;
+    margin-left: 15px;
+    line-height: 1.3;
+}
+
+QPushButton#editParametersButton {
+    background-color: #F0F0F0;
+    color: #333333;
+    border: 1px solid #C4C4C4;
+    border-radius: 3px;
+    font-size: 13px;
+    padding: 6px;
+}
+
+QPushButton#editParametersButton:hover {
+    background-color: #E6E6E6;
+}
+
+QPushButton#editParametersButton:pressed {
+    background-color: #D6D6D6;
 } 
