@@ -188,12 +188,12 @@ class BrillouinCalculatorTab(TabInterface):
 
         # Update crystal structure display - vertical format
         crystal_text = (
-            f"a = {self.parameters.get('a', 0):.1f} Å\n"
-            f"b = {self.parameters.get('b', 0):.1f} Å\n"
-            f"c = {self.parameters.get('c', 0):.1f} Å\n"
-            f"α = {self.parameters.get('alpha', 0):.0f}°\n"
-            f"β = {self.parameters.get('beta', 0):.0f}°\n"
-            f"γ = {self.parameters.get('gamma', 0):.0f}°"
+            f"a = {self.parameters.get('a', 0):.2f} Å\n"
+            f"b = {self.parameters.get('b', 0):.2f} Å\n"
+            f"c = {self.parameters.get('c', 0):.2f} Å\n"
+            f"α = {self.parameters.get('alpha', 0):.1f}°\n"
+            f"β = {self.parameters.get('beta', 0):.1f}°\n"
+            f"γ = {self.parameters.get('gamma', 0):.1f}°"
         )
         self.crystal_info_label.setText(crystal_text)
 
@@ -201,7 +201,7 @@ class BrillouinCalculatorTab(TabInterface):
         energy = self.parameters.get("energy", 0)
         # Convert eV to Angstrom: λ = hc/E = 12398.4 / E(eV)
         wavelength = 12398.4 / energy if energy > 0 else 0
-        xray_text = f"Energy: {energy:.0f} eV\nWavelength: {wavelength:.2f} Å"
+        xray_text = f"Energy: {energy:.2f} eV\nWavelength: {wavelength:.3f} Å"
         self.xray_info_label.setText(xray_text)
 
     @pyqtSlot()
@@ -293,19 +293,19 @@ class BrillouinCalculatorTab(TabInterface):
 
         self.H_input = QDoubleSpinBox()
         self.H_input.setRange(-10.0, 10.0)
-        self.H_input.setDecimals(3)
+        self.H_input.setDecimals(4)
         self.H_input.setValue(0.15)
         form_layout.addRow("H:", self.H_input)
 
         self.K_input = QDoubleSpinBox()
         self.K_input.setRange(-10.0, 10.0)
-        self.K_input.setDecimals(3)
+        self.K_input.setDecimals(4)
         self.K_input.setValue(0.1)
         form_layout.addRow("K:", self.K_input)
 
         self.L_input = QDoubleSpinBox()
         self.L_input.setRange(-10.0, 10.0)
-        self.L_input.setDecimals(3)
+        self.L_input.setDecimals(4)
         self.L_input.setValue(-0.5)
         form_layout.addRow("L:", self.L_input)
 
@@ -498,7 +498,7 @@ class BrillouinCalculatorTab(TabInterface):
         h_form_layout.setContentsMargins(0, 0, 0, 0)
         self.H_input_tth = QDoubleSpinBox()
         self.H_input_tth.setRange(-10.0, 10.0)
-        self.H_input_tth.setDecimals(3)
+        self.H_input_tth.setDecimals(4)
         self.H_input_tth.setValue(0.15)
         h_form_layout.addRow("H:", self.H_input_tth)
         h_layout.addWidget(h_form)
@@ -517,7 +517,7 @@ class BrillouinCalculatorTab(TabInterface):
         k_form_layout.setContentsMargins(0, 0, 0, 0)
         self.K_input_tth = QDoubleSpinBox()
         self.K_input_tth.setRange(-10.0, 10.0)
-        self.K_input_tth.setDecimals(3)
+        self.K_input_tth.setDecimals(4)
         self.K_input_tth.setValue(0.1)
         k_form_layout.addRow("K:", self.K_input_tth)
         k_layout.addWidget(k_form)
@@ -536,7 +536,7 @@ class BrillouinCalculatorTab(TabInterface):
         l_form_layout.setContentsMargins(0, 0, 0, 0)
         self.L_input_tth = QDoubleSpinBox()
         self.L_input_tth.setRange(-10.0, 10.0)
-        self.L_input_tth.setDecimals(3)
+        self.L_input_tth.setDecimals(4)
         self.L_input_tth.setValue(-0.5)
         self.L_input_tth.setEnabled(False)  # Default to disabled (grayed out)
         l_form_layout.addRow("L:", self.L_input_tth)
