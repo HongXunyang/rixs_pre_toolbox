@@ -37,14 +37,14 @@ class StructureFactorCalculator:
     # E(keV) = HC_E / lambda(Angstrom)
     HC_E = 12.3984198
 
-    def __init__(self, cif_file_path):
+    def __init__(self):
         """
         Initializes the StructureFactorCalculator.
 
         Args:
             cif_file_path (str): Path to the .cif file.
         """
-        self.cif_file_path = cif_file_path
+        self.cif_file_path = None
         self.xtl = None
         self._initialized = False
 
@@ -54,16 +54,14 @@ class StructureFactorCalculator:
         self._energy_mode = None  # 0 for predefined source, 1 for custom wavelength
         self._energy_kev = None
 
-    def initialize(self):
+    def initialize(self, cif_file_path):
         """
         Loads the CIF file and initializes the crystal object.
 
         Returns:
             bool: True if initialization is successful, False otherwise.
         """
-        if self._initialized:
-            print("Calculator already initialized.")
-            return True
+        self.cif_file_path = cif_file_path
         try:
             self.xtl = dif.Crystal(self.cif_file_path)
             self._initialized = True
@@ -140,7 +138,7 @@ class StructureFactorCalculator:
         """
         if self._hkl_mode != 1:
             raise TypeError("HKL input mode must be 1 to set an HKL list. Use set_hkl_input_mode(1) first.")
-        
+
         if hkl_list is None:
             self._hkl_input_list = self.DEFAULT_HKL_LIST
             print(f"Using default HKL list with {len(self._hkl_input_list)} entries.")
@@ -181,7 +179,7 @@ class StructureFactorCalculator:
             raise TypeError("Energy mode must be 0 to use a predefined source. Use set_energy_mode(0) first.")
         if source_name not in self.PREDEFINED_SOURCES:
             raise ValueError(f"Unknown predefined source: {source_name}. Available sources: {list(self.PREDEFINED_SOURCES.keys())}")
-        
+
         wavelength = self.PREDEFINED_SOURCES[source_name]
         self._energy_kev = self._wavelength_to_kev(wavelength)
         print(f"Energy set from predefined source: {source_name} ({self._energy_kev:.6f} keV)")
@@ -201,7 +199,7 @@ class StructureFactorCalculator:
             raise TypeError("Energy mode must be 1 to set a custom wavelength. Use set_energy_mode(1) first.")
         if not isinstance(wavelength_angstrom, (int, float)) or wavelength_angstrom <= 0:
             raise ValueError("Wavelength must be a positive number.")
-            
+
         self._energy_kev = self._wavelength_to_kev(float(wavelength_angstrom))
         print(f"Energy set from custom wavelength: {wavelength_angstrom} Å ({self._energy_kev:.6f} keV)")
 
@@ -228,7 +226,7 @@ class StructureFactorCalculator:
         try:
             # Setup scattering: output=False suppresses console output from Dans_Diffraction
             self.xtl.Scatter.setup_scatter(scattering_type='x-ray', energy_kev=self._energy_kev, output=False)
-            
+
             # Calculate structure factors
             # 'xray dispersion' typically includes anomalous scattering effects.
             F_hkl_complex_array = self.xtl.Scatter.structure_factor(
@@ -237,20 +235,19 @@ class StructureFactorCalculator:
             )
 
             if not isinstance(F_hkl_complex_array, np.ndarray):
-                 F_hkl_complex_array = np.array(F_hkl_complex_array)
-
+                F_hkl_complex_array = np.array(F_hkl_complex_array)
 
             results = []
             if self._hkl_mode == 0: # Single HKL
                 if F_hkl_complex_array.ndim == 0: # Scalar complex number for single HKL
                     F_complex = F_hkl_complex_array.item() # Get the complex number itself
                 elif F_hkl_complex_array.size == 1: # Array with one complex number
-                     F_complex = F_hkl_complex_array[0]
+                    F_complex = F_hkl_complex_array[0]
                 else:
                     print(f"Error: Expected a single complex value for mode 0, but got array of shape {F_hkl_complex_array.shape}")
                     return None
                 results.extend([F_complex.real, F_complex.imag])
-            
+
             elif self._hkl_mode == 1: # List of HKLs
                 if len(F_hkl_complex_array) == len(self._hkl_input_list):
                     for F_complex in F_hkl_complex_array:
@@ -258,7 +255,7 @@ class StructureFactorCalculator:
                 else:
                     print(f"Error: Mismatch between number of HKL inputs ({len(self._hkl_input_list)}) and F_hkl results ({len(F_hkl_complex_array)}).")
                     return None
-            
+
             return np.array(results)
 
         except Exception as e:
@@ -295,13 +292,13 @@ Cl Cl- 0.50000 0.00000 0.00000 1.0
     print("--- Example Usage of StructureFactorCalculator ---")
 
     # Path to your CIF file
-    cif_file = "NaCl.cif" # Replace with your CIF file path
+    cif_file = "data/nacl.cif"  # Replace with your CIF file path
 
     # 1. Create an instance of the calculator
-    calculator = StructureFactorCalculator(cif_file_path=cif_file)
+    calculator = StructureFactorCalculator()
 
     # 2. Initialize the calculator (loads CIF)
-    if not calculator.initialize():
+    if not calculator.initialize(cif_file_path=cif_file):
         print("Exiting due to initialization failure.")
         exit()
 
@@ -309,10 +306,10 @@ Cl Cl- 0.50000 0.00000 0.00000 1.0
     print("\n--- Scenario 1: Single HKL (1,1,1), Cu Kα1 energy ---")
     calculator.set_hkl_input_mode(0)
     calculator.set_hkl_user_defined(1, 1, 1)
-    
+
     calculator.set_energy_mode(0)
     calculator.set_predefined_energy_source("Cu Kα1")
-    
+
     results_scenario1 = calculator.calculate_structure_factors()
     if results_scenario1 is not None:
         print(f"Results for (1,1,1) [Real(F), Imag(F)]: {results_scenario1}")
@@ -328,7 +325,7 @@ Cl Cl- 0.50000 0.00000 0.00000 1.0
     print("\n--- Scenario 2: List of HKLs, custom energy (Mo Kα1 wavelength) ---")
     calculator.set_hkl_input_mode(1)
     # Using default HKL list, or provide your own:
-    # calculator.set_hkl_list([[1,0,0], [2,0,0], [2,2,0]]) 
+    # calculator.set_hkl_list([[1,0,0], [2,0,0], [2,2,0]])
     calculator.set_hkl_list() # Uses default list
 
     calculator.set_energy_mode(1)
@@ -356,12 +353,10 @@ Cl Cl- 0.50000 0.00000 0.00000 1.0
     print("\n--- Scenario 4: Single HKL (2,0,0), Cu Kα1 energy ---")
     calculator.set_hkl_input_mode(0)
     calculator.set_hkl_user_defined(2,0,0) # (2,0,0) is an all-even reflection for NaCl
-    
+
     calculator.set_energy_mode(0) # Already set to Cu Kα1 from scenario 1 if energy settings were not changed
     calculator.set_predefined_energy_source("Cu Kα1") # Re-set to be sure
-    
+
     results_scenario4 = calculator.calculate_structure_factors()
     if results_scenario4 is not None:
         print(f"Results for (2,0,0) [Real(F), Imag(F)]: {results_scenario4}")
-
-

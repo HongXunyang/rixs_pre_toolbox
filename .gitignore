@@ -3,4 +3,5 @@
 /reports
 .DS_Store
 /materials
+__pycache__/
 
