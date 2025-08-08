@@ -18,14 +18,13 @@ from PyQt5.QtWidgets import (
     QDoubleSpinBox,
     QGroupBox,
     QMessageBox,
-    QVBoxLayout,
     QFileDialog,
 )
-from PyQt5.QtCore import Qt, pyqtSlot, QMimeData
+from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
-import numpy as np
 from packages.visualizer.coordinate_visualizer import CoordinateVisualizer
 from packages.helpers import UnitConverter
+from CifFile import ReadCif
 
 class DragDropLineEdit(QLineEdit):
     """Custom QLineEdit that accepts drag and drop events."""
@@ -58,6 +57,8 @@ class InitWindow(QWidget):
         super().__init__(parent)
         self.parent = parent
         self.unit_converter = UnitConverter()
+        self._lattice_locked = False
+        self._accepted_cif_path = None
         self.init_ui()
 
     def init_ui(self):
@@ -203,6 +204,7 @@ class InitWindow(QWidget):
         file_layout = QGridLayout(file_group)
 
         self.file_path_input = DragDropLineEdit()
+        self.file_path_input.textChanged.connect(self.on_cif_file_changed)
         file_layout.addWidget(self.file_path_input, 0, 0)
 
         browse_button = QPushButton("Browse...")
@@ -230,6 +232,136 @@ class InitWindow(QWidget):
 
         if file_path:
             self.file_path_input.setText(file_path)
+            # on_cif_file_changed will be triggered by textChanged
+
+    def set_lattice_inputs_enabled(self, enabled: bool):
+        """Enable/disable lattice parameter inputs (a,b,c,alpha,beta,gamma)."""
+        self.a_input.setEnabled(enabled)
+        self.b_input.setEnabled(enabled)
+        self.c_input.setEnabled(enabled)
+        self.alpha_input.setEnabled(enabled)
+        self.beta_input.setEnabled(enabled)
+        self.gamma_input.setEnabled(enabled)
+
+    @pyqtSlot(str)
+    def on_cif_file_changed(self, file_path: str):
+        """Handle CIF file path changes: parse CIF and apply lattice params.
+
+        Once a CIF is successfully applied, lattice inputs are locked for the session.
+        """
+        try:
+            if self._lattice_locked:
+                # Prevent changing CIF after lock
+                if self._accepted_cif_path and file_path != self._accepted_cif_path:
+                    QMessageBox.warning(
+                        self,
+                        "Lattice Parameters Locked",
+                        "Lattice parameters are locked from a previously accepted CIF. "
+                        "Restart the application to change the CIF.",
+                    )
+                    # revert displayed path
+                    # Block signal to avoid recursion
+                    self.file_path_input.blockSignals(True)
+                    self.file_path_input.setText(self._accepted_cif_path)
+                    self.file_path_input.blockSignals(False)
+                return
+
+            # Empty path - user cleared the field; keep inputs editable
+            if not file_path:
+                self._accepted_cif_path = None
+                self._lattice_locked = False
+                self.set_lattice_inputs_enabled(True)
+                return
+
+            # Parse CIF using PyCifRW
+            cif = ReadCif(file_path)
+            if not cif or len(cif.keys()) == 0:
+                raise ValueError("No data blocks found in CIF file")
+
+            first_block_key = list(cif.keys())[0]
+            block = cif[first_block_key]
+
+            def parse_numeric(value) -> float:
+                s = str(value).strip()
+                if "(" in s:
+                    s = s.split("(")[0]
+                return float(s)
+
+            def get_float(key: str) -> float:
+                value = block.get(key)
+                if value is None:
+                    raise KeyError(f"Missing required CIF field: {key}")
+                return parse_numeric(value)
+
+            a = get_float("_cell_length_a")
+            b = get_float("_cell_length_b")
+            c = get_float("_cell_length_c")
+            alpha = get_float("_cell_angle_alpha")
+            beta = get_float("_cell_angle_beta")
+            gamma = get_float("_cell_angle_gamma")
+
+            # Basic validation (units assumed Angstroms and degrees)
+            if min(a, b, c) <= 0:
+                raise ValueError("Cell lengths must be positive")
+            for ang, name in [(alpha, "alpha"), (beta, "beta"), (gamma, "gamma")]:
+                if not (0.0 < ang < 180.0):
+                    raise ValueError(
+                        f"Cell angle {name} must be between 0 and 180 degrees"
+                    )
+
+            # Apply to UI and lock
+            self.apply_cif_parameters(a, b, c, alpha, beta, gamma)
+            self._lattice_locked = True
+            self._accepted_cif_path = file_path
+            self.set_lattice_inputs_enabled(False)
+            QMessageBox.information(
+                self,
+                "CIF Loaded",
+                "Lattice parameters have been loaded from the CIF and inputs are now locked.",
+            )
+
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "Invalid CIF",
+                f"Failed to read lattice parameters from CIF: {str(e)}",
+            )
+            # clear text and keep inputs editable
+            self.file_path_input.blockSignals(True)
+            self.file_path_input.clear()
+            self.file_path_input.blockSignals(False)
+            self._accepted_cif_path = None
+            self._lattice_locked = False
+            self.set_lattice_inputs_enabled(True)
+
+    def apply_cif_parameters(
+        self, a: float, b: float, c: float, alpha: float, beta: float, gamma: float
+    ):
+        """Set lattice parameter inputs from parsed CIF values and refresh visualization."""
+        # Block signals to avoid multiple redraws
+        self.a_input.blockSignals(True)
+        self.b_input.blockSignals(True)
+        self.c_input.blockSignals(True)
+        self.alpha_input.blockSignals(True)
+        self.beta_input.blockSignals(True)
+        self.gamma_input.blockSignals(True)
+
+        self.a_input.setValue(a)
+        self.b_input.setValue(b)
+        self.c_input.setValue(c)
+        self.alpha_input.setValue(alpha)
+        self.beta_input.setValue(beta)
+        self.gamma_input.setValue(gamma)
+
+        self.a_input.blockSignals(False)
+        self.b_input.blockSignals(False)
+        self.c_input.blockSignals(False)
+        self.alpha_input.blockSignals(False)
+        self.beta_input.blockSignals(False)
+        self.gamma_input.blockSignals(False)
+
+        # Update visualization with new parameters
+        self.update_visualization()
 
     @pyqtSlot()
     def update_visualization(self):
