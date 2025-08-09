@@ -50,6 +50,37 @@ class DragDropLineEdit(QLineEdit):
                 self.textChanged.emit(file_path)
 
 
+class DragDropGroupBox(QGroupBox):
+    """QGroupBox that accepts CIF file drag-and-drop anywhere in the panel.
+
+    When a valid CIF is dropped, it will update the target line edit.
+    """
+
+    def __init__(self, title: str = "", parent=None):
+        super().__init__(title, parent)
+        self.setAcceptDrops(True)
+        self._target_line_edit: QLineEdit = None
+
+    def set_target_line_edit(self, line_edit: QLineEdit):
+        self._target_line_edit = line_edit
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            if urls and urls[0].toLocalFile().endswith(".cif"):
+                event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        urls = event.mimeData().urls()
+        if not urls:
+            return
+        file_path = urls[0].toLocalFile()
+        if file_path.endswith(".cif") and self._target_line_edit is not None:
+            # Update target line edit; it will emit textChanged and trigger parsing
+            self._target_line_edit.setText(file_path)
+            self._target_line_edit.textChanged.emit(file_path)
+
+
 class InitWindow(QWidget):
     """Initialization window for setting up lattice parameters."""
 
@@ -200,7 +231,7 @@ class InitWindow(QWidget):
         layout.addWidget(self.visualizer, 1, 2)
 
         # File input area
-        file_group = QGroupBox("Crystal Structure File")
+        file_group = DragDropGroupBox("Crystal Structure File")
         file_layout = QGridLayout(file_group)
 
         self.file_path_input = DragDropLineEdit()
@@ -210,6 +241,9 @@ class InitWindow(QWidget):
         browse_button = QPushButton("Browse...")
         browse_button.clicked.connect(self.browse_cif_file)
         file_layout.addWidget(browse_button, 0, 1)
+
+        # Allow dropping on the entire group box
+        file_group.set_target_line_edit(self.file_path_input)
 
         # Add file group to main layout at (1,0) spanning 2 columns
         layout.addWidget(file_group, 1, 0, 1, 2)

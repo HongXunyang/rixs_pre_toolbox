@@ -407,6 +407,16 @@ class VisualizationTab(TabInterface):
         
         self.canvas.draw()
 ```
+### 5. Structure Factor UI/Visualization specifics
+
+- The `StructureFactorTab` uses subtabs: "In use" and "Deprecated".
+- "In use" subtab layout: 2 rows × 4 columns.
+  - (0,0): 3D plot via `StructureFactorVisualizer3D`.
+  - (0,1)-(0,3): 2D sliced plots (HK/HL/KL) via `StructureFactorVisualizer2D`.
+  - (1,0): energy + initialize controls.
+  - (1,1)-(1,3): integer spinbox+slider controls fixing L, K, H respectively.
+- The 2D plots show full HKL labels per point and hide the colorbar. Marker size/color scale use an optional `value_max` (typically |F(0,0,0)|).
+- The 3D plot supports translucent plane overlays. Controls update the corresponding planes live using `set_plane_values(H=?, K=?, L=?)`.
 
 ## Key Architecture Principles
 
