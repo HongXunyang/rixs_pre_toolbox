@@ -1,0 +1,256 @@
+---
+description: Comprehensive guide to the RIXS Preparation Toolbox project structure and file organization patterns
+alwaysApply: false 
+---
+
+# RIXS Preparation Toolbox - Project Structure Guide
+
+## Core Architecture Overview
+
+This PyQt5-based X-ray spectroscopy preparation application follows a modular architecture with strict separation between backend calculations and frontend UI components.
+
+### Top-Level Structure
+
+```
+rixs_pre_toolbox/
+├── main.py                 # Entry point - launches MainWindow
+├── requirements.txt        # Python dependencies
+├── README.md              # User documentation
+├── README_AI.md           # AI/developer documentation
+├── packages/              # Core application modules
+├── config/                # Configuration files and registry
+├── static/                # UI resources (QSS, icons)
+├── figures/               # Generated visualizations
+├── documents/             # Project documentation
+├── tests/                 # Unit and integration tests
+├── uml/                   # UML diagrams and documentation
+└── .cursor/               # Cursor IDE rules and configuration
+```
+
+## Main Application Structure
+
+### Entry Point
+- **[main.py](mdc:main.py)**: Application entry point
+  - Configures PyQt5 high DPI settings
+  - Loads QSS stylesheet from `static/styles.qss`
+  - Creates and shows [MainWindow](mdc:packages/gui/main_window.py)
+
+### Core Application Flow
+1. **Initialization**: [InitWindow](mdc:packages/gui/init_window.py) → [MainWindow](mdc:packages/gui/main_window.py)
+2. **Tab Loading**: Registry-based loading from [tab_registry.json](mdc:config/tab_registry.json)
+3. **Parameter Distribution**: Global parameters passed to all tabs via `set_parameters()`
+
+## Package Structure (`packages/`)
+
+### Core Object Model (`packages/classes/`)
+**Hierarchical coordinate system architecture:**
+- **[lattice.py](mdc:packages/classes/lattice.py)**: Crystal lattice parameters (a,b,c,α,β,γ)
+- **[sample.py](mdc:packages/classes/sample.py)**: Sample orientation (roll, pitch, yaw)
+- **[lab.py](mdc:packages/classes/lab.py)**: Laboratory frame positioning (theta, phi, chi)
+
+**Transformation Chain**: `Lattice (crystal) → Sample (surface) → Lab (beam)`
+
+### GUI Components (`packages/gui/`)
+
+```
+gui/
+├── main_window.py          # Main application window
+├── init_window.py          # Initialization/setup window
+├── tabs/                   # Tab implementations
+│   ├── tab_interface.py    # Base class for all tabs
+│   ├── brillouincalculatortab.py
+│   ├── structurefactortab.py
+│   └── placeholdertab.py
+├── components/             # Reusable UI components
+└── utils/                  # GUI utilities and transformations
+```
+
+**Tab Architecture Pattern**:
+```python
+class SampleTab(TabInterface):
+    def __init__(self, main_window=None):
+        super().__init__(main_window)
+        self.calculator = SampleCalculator()  # Backend instance
+    
+    def set_parameters(self, params: dict):
+        """Receive global parameters from MainWindow"""
+        self.calculator.initialize(params)
+    
+    def init_ui(self):
+        """Create UI components"""
+        # Implementation specific to this tab
+```
+
+### Backend Modules Pattern (`packages/module_name/`)
+
+Each functional module follows this structure:
+```
+module_name/
+├── __init__.py
+├── interface.py            # Main backend class (no PyQt dependencies)
+├── core.py                 # Core calculations (optional)
+└── visualization.py        # Matplotlib support (optional)
+```
+
+**Backend Interface Pattern**:
+```python
+class ModuleCalculator:
+    def __init__(self):
+        self._initialized = False
+        self.lab = Lab()  # Use Lab class for coordinates
+    
+    def initialize(self, params: dict):
+        """Initialize with global parameters"""
+        # Extract and set parameters
+        self.lab.initialize(a, b, c, alpha, beta, gamma, ...)
+        self._initialized = True
+    
+    def calculate_something(self, inputs):
+        """Pure calculation method"""
+        # Use self.lab for coordinate transformations
+        return results
+```
+
+### Visualization (`packages/visualizer/`)
+- **[scattering_visualizer.py](mdc:packages/visualizer/scattering_visualizer.py)**: Scattering geometry plots
+- **[coordinate_visualizer.py](mdc:packages/visualizer/coordinate_visualizer.py)**: Coordinate system visualization
+- **[structure_factor_visualizer.py](mdc:packages/visualizer/structure_factor_visualizer.py)**: 3D structure factors and translucent HKL planes (class `StructureFactorVisualizer3D`)
+- **[structure_factor_visualizer_2d.py](mdc:packages/visualizer/structure_factor_visualizer_2d.py)**: 2D sliced planes (HK/HL/KL) without colorbar
+
+### Utilities (`packages/helpers/`, `packages/utils/`)
+- **[helpers/tips.py](mdc:packages/helpers/tips.py)**: Tooltip management
+- **[helpers/unit_converter.py](mdc:packages/helpers/unit_converter.py)**: Unit conversions
+- **[utils/translation.py](mdc:packages/utils/translation.py)**: Internationalization support
+
+## Configuration System (`config/`)
+
+### Configuration Files
+- **[app_config.json](mdc:config/app_config.json)**: Application settings
+  ```json
+  {
+    "app_name": "RIXS Preparation Toolbox",
+    "window_size": {"width": 1000, "height": 800},
+    "debug_mode": false
+  }
+  ```
+
+- **[tab_registry.json](mdc:config/tab_registry.json)**: Tab registration system
+  ```json
+  {
+    "tabs": [{
+      "id": "module_name",
+      "name": "Display Name",
+      "module_package": "backend_module",
+      "tab_class": "TabClassName",
+      "enabled": true,
+      "order": 1
+    }]
+  }
+  ```
+
+- **[tips.json](mdc:config/tips.json)**: UI tooltips and help text
+
+### Module Configuration (`config/module_configs/`)
+Module-specific configuration files for specialized settings.
+
+## Development Resources
+
+### Documentation (`documents/`)
+- **[collaboration_protocol.md](mdc:documents/collaboration_protocol.md)**: Backend/frontend collaboration guidelines
+- **[todo.md](mdc:documents/todo.md)**: Project roadmap and tasks
+- **[uml_docs/](mdc:documents/uml_docs/)**: UML documentation and guides
+
+### UML Diagrams (`uml/`)
+- **[project_structure.puml](mdc:uml/project_structure.puml)**: Overall architecture
+- **[gui_structure.puml](mdc:uml/gui_structure.puml)**: GUI component relationships
+- **[sequence_diagram.puml](mdc:uml/sequence_diagram.puml)**: Interaction flows
+- **[new_feature_template.puml](mdc:uml/new_feature_template.puml)**: Template for new features
+
+### Testing (`tests/`)
+```
+tests/
+├── brillouin_calculator/   # Module-specific tests
+├── classes/                # Core class tests
+├── structure_factor_calculator/
+└── strcture_factor_calculator/  # Legacy folder (note typo)
+```
+
+## Static Resources (`static/`)
+- **[styles.qss](mdc:static/styles.qss)**: PyQt5 stylesheet
+- **[icons/](mdc:static/icons/)**: UI icons and resources
+
+## File Naming Conventions
+
+### Python Files
+- **Modules**: `snake_case` (e.g., `brillouin_calculator`)
+- **Classes**: `PascalCase` (e.g., `BrillouinCalculator`, `BrillouinCalculatorTab`)
+- **Functions/Methods**: `snake_case` with verb-first (e.g., `calculate_hkl`, `set_parameters`)
+
+### Configuration Files
+- **JSON configs**: `snake_case.json` (e.g., `app_config.json`)
+- **Registry files**: `descriptive_name_registry.json`
+
+### Documentation
+- **Markdown**: `snake_case.md` or `descriptive-name.md`
+- **UML**: `descriptive_name.puml`
+
+## Key Design Patterns
+
+### 1. Module-Tab Communication
+- **Global State**: Parameters managed by [MainWindow](mdc:packages/gui/main_window.py)
+- **Distribution**: `set_parameters(params)` method on all tabs
+- **Coordination**: Lab class hierarchy ensures consistent coordinate transformations
+
+### 2. Backend-Frontend Separation
+- **Backend**: Pure Python, no PyQt dependencies
+- **Frontend**: UI logic only, delegates calculations to backend
+- **Interface**: Clean API with dictionaries for parameter passing
+
+### 3. Registry-Based Loading
+- **Tab Discovery**: [tab_registry.json](mdc:config/tab_registry.json) defines available tabs
+- **Dynamic Loading**: Tabs loaded by [MainWindow](mdc:packages/gui/main_window.py) at runtime
+- **Extensibility**: Add new tabs by updating registry and creating files
+
+### 4. Coordinate System Hierarchy
+- **Lattice** → **Sample** → **Lab** transformation chain
+- **Consistent API**: All calculations use Lab objects
+- **Proper Transforms**: Automatic coordinate system management
+
+## Adding New Features
+
+### New Tab/Module
+1. Create backend module in `packages/new_module/interface.py`
+2. Create tab class in `packages/gui/tabs/newmoduletab.py`
+3. Add entry to [tab_registry.json](mdc:config/tab_registry.json)
+4. Follow [TabInterface](mdc:packages/gui/tabs/tab_interface.py) pattern
+5. Use [Lab](mdc:packages/classes/lab.py) class for coordinates
+
+### New Visualization
+1. Add to `packages/visualizer/new_visualizer.py`
+2. Follow matplotlib integration pattern
+3. Support both embedded and standalone plotting
+
+### New Configuration
+1. Add to `config/` directory
+2. Use JSON format for consistency
+3. Document in relevant README sections
+
+## Dependencies and Requirements
+
+### Core Dependencies (from [requirements.txt](mdc:requirements.txt))
+- **PyQt5**: GUI framework
+- **matplotlib**: Plotting and visualization
+- **numpy**: Numerical computations
+- **CifFile**: Crystal structure file support
+
+### Development Dependencies
+- **pylint**: Code linting
+- **pytest**: Testing framework (if used)
+
+## Important Notes
+
+- **Coordinate Systems**: Always specify which frame (lattice/sample/lab) vectors are in
+- **Parameter Flow**: Global parameters → MainWindow → Tabs → Backend modules
+- **Error Handling**: Validate parameters before creating Lab objects
+- **Testing**: Module tests should verify coordinate transformations
+- **Documentation**: Update UML diagrams when adding new components

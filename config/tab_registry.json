@@ -13,7 +13,7 @@
         {
             "id": "structure_factor",
             "name": "Structure Factor Calculator",
-            "description": "Calculate structure factors for different HKL indices",
+            "description": "Calculate X-ray structure factors from CIF files using Dans_Diffraction",
             "module_package": "structure_factor_calculator",
             "tab_class": "StructureFactorTab",
             "icon": "icons/structure.png",
