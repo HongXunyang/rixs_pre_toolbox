@@ -4,4 +4,44 @@
 .DS_Store
 /materials
 __pycache__/
+/docs
 
+# --- Python bytecode & caches ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.coverage*
+htmlcov/
+
+# --- Virtual environments (common names) ---
+.venv/
+venv/
+env/
+ENV/
+.virtualenv/
+.pythonenv/
+
+# --- PyInstaller outputs ---
+/build/
+/dist/
+/*.spec    # keep if you want your build recipe tracked; remove this line to commit it
+
+# --- Logs & local data ---
+*.log
+*.sqlite3
+*.db
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- Editors/IDEs ---
+.vscode/
+.idea/
