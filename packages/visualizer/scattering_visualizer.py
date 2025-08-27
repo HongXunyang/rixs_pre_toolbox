@@ -27,7 +27,7 @@ class ScatteringVisualizer(FigureCanvas):
         super().__init__(self.fig)
 
         # Set initial view
-        self.axes.view_init(elev=39, azim=75)
+        self.axes.view_init(elev=135, azim=-105, roll=-20)
 
         # Initialize reciprocal lattice vectors in lab frame
         self.a_star_lab = np.array([1, 0, 0])
@@ -92,8 +92,20 @@ class ScatteringVisualizer(FigureCanvas):
             Poly3DCollection(
                 vertices_sample[faces_sample],
                 facecolors=[0.3, 0.3, 0.3],
-                edgecolors=[0.55, 0.55, 0.55],
-                alpha=0.2,
+                edgecolors=[0.55, 0.55, 0.55, 0.2],
+                alpha=0.05,
+            )
+        )
+
+        # add extra color to the top face
+
+        # add extra color to the top face
+        self.axes.add_collection3d(
+            Poly3DCollection(
+                [vertices_sample[faces_sample[0]]],
+                facecolors=[0.3, 0.3, 0.3],
+                edgecolors=[0.55, 0.55, 0.55, 0.1],
+                alpha=0.25,
             )
         )
 
@@ -127,7 +139,7 @@ class ScatteringVisualizer(FigureCanvas):
             # Add a small offset to prevent text from overlapping with the arrow
             offset = 0.1
             self.axes.text(
-                vec[0] + offset,
+                vec[0] + offset+0.1,
                 vec[1] + offset,
                 vec[2] + offset,
                 label,

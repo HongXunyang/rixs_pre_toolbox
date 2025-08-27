@@ -26,7 +26,7 @@ class CoordinateVisualizer(FigureCanvas):
         self.axes.set_facecolor("white")
 
         # Set initial view
-        self.axes.view_init(elev=39, azim=75)
+        self.axes.view_init(elev=135, azim=-105, roll=-20)
 
         # Remove ticks and grid
         self.axes.set_xticks([])
@@ -84,9 +84,9 @@ class CoordinateVisualizer(FigureCanvas):
         self.axes.add_collection3d(
             Poly3DCollection(
                 scatter_plane_vertices[scatter_plane_faces],
-                facecolors=[0.3010, 0.7450, 0.9330],  # light blue
+                facecolors=[0.3510, 0.7850, 0.9330],  # light blue
                 edgecolors=[0.7, 0.7, 0.7],
-                alpha=0.15,
+                alpha=0.3,
             )
         )
 
@@ -121,11 +121,20 @@ class CoordinateVisualizer(FigureCanvas):
             Poly3DCollection(
                 ver[fac],
                 facecolors=[0.3, 0.3, 0.3],
-                edgecolors=[0.55, 0.55, 0.55],
-                alpha=0.2,
+                    edgecolors=[0.55, 0.55, 0.55, 0.2],
+                alpha=0.05,
             )
         )
 
+        # add extra color to the top face
+        self.axes.add_collection3d(
+            Poly3DCollection(
+                [ver[fac[0]]],
+                facecolors=[0.3, 0.3, 0.3],
+                edgecolors=[0.55, 0.55, 0.55, 0.1],
+                alpha=0.25,
+            )
+        )
         # Normalize the vectors
         a_star_norm = self.a_star_lab / np.linalg.norm(self.a_star_lab)
         b_star_norm = self.b_star_lab / np.linalg.norm(self.b_star_lab)
