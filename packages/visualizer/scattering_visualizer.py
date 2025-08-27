@@ -218,9 +218,9 @@ class ScatteringVisualizer(FigureCanvas):
         self.axes.add_collection3d(
             Poly3DCollection(
                 scatter_plane_vertices[scatter_plane_faces],
-                facecolors=[0.3010, 0.7450, 0.9330],  # light blue
+                facecolors=[0.3510, 0.7850, 0.9330],  # light blue
                 edgecolors=[0.7, 0.7, 0.7],
-                alpha=0.15,
+                alpha=0.3,
             )
         )
 
