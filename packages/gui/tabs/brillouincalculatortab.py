@@ -39,6 +39,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from packages.gui.tabs.tab_interface import TabInterface
 from packages.brillouin_calculator.interface import BrillouinCalculator
 from packages.visualizer.scattering_visualizer import ScatteringVisualizer
+from packages.visualizer.unitcell_visualizer import UnitcellVisualizer
 from packages.helpers.tips import Tips, set_tip
 from packages.gui.components.hkl_scan_components import (
     HKLScanControls,
@@ -79,6 +80,11 @@ class BrillouinCalculatorTab(TabInterface):
         self.angles_to_hkl_visualizer = ScatteringVisualizer()  # first subtab
         self.hkl_to_angles_visualizer = ScatteringVisualizer()  # second subtab
         self.hk_fixed_tth_visualizer = ScatteringVisualizer()  # third subtab
+        
+        # Unit cell visualizers for each subtab
+        self.angles_to_hkl_unitcell_viz = UnitcellVisualizer()
+        self.hkl_to_angles_unitcell_viz = UnitcellVisualizer()
+        self.hk_fixed_tth_unitcell_viz = UnitcellVisualizer()
         self.funtional_objects = [
             self.calculator,
             self.angles_to_hkl_visualizer,
@@ -179,7 +185,28 @@ class BrillouinCalculatorTab(TabInterface):
         for obj in self.funtional_objects:
             obj.initialize(params=params)
 
+        # Initialize unit cell visualizers if CIF file is provided
+        cif_file = params.get('cif_file')
+        if cif_file:
+            self._update_unitcell_visualizers(cif_file)
+
         print("params set!!!!!!!!")
+
+    def _update_unitcell_visualizers(self, cif_file_path: str):
+        """Update all unit cell visualizers with the CIF file."""
+        try:
+            unit_cell_vizs = [
+                self.angles_to_hkl_unitcell_viz,
+                self.hkl_to_angles_unitcell_viz,
+                self.hk_fixed_tth_unitcell_viz
+            ]
+            
+            for viz in unit_cell_vizs:
+                viz.set_parameters({"cif_file": cif_file_path})
+                viz.visualize_unitcell()
+                
+        except Exception as e:
+            print(f"Error updating unit cell visualizers: {e}")
 
     def _update_parameter_display(self):
         """Update the parameter display in the header."""
@@ -217,7 +244,11 @@ class BrillouinCalculatorTab(TabInterface):
     def _create_angles_to_hkl_tab(self):
         """Create tab for angles to HKL calculation."""
         angles_tab = QWidget()
-        angles_layout = QGridLayout(angles_tab)
+        angles_layout = QHBoxLayout(angles_tab)
+
+        # Left column - Parameters and inputs
+        left_column = QWidget()
+        left_layout = QVBoxLayout(left_column)
 
         # Input form
         form_group = QGroupBox("Scattering Angles")
@@ -249,12 +280,12 @@ class BrillouinCalculatorTab(TabInterface):
         self.chi_angle_input.setSuffix(" °")
         form_layout.addRow("χ:", self.chi_angle_input)
 
-        angles_layout.addWidget(form_group, 0, 0)
+        left_layout.addWidget(form_group)
 
         # Calculate button
         calculate_button = QPushButton("Calculate HKL")
         calculate_button.clicked.connect(self.calculate_hkl)
-        angles_layout.addWidget(calculate_button, 1, 0)
+        left_layout.addWidget(calculate_button)
 
         # Results group
         results_group = QGroupBox("Results")
@@ -272,12 +303,24 @@ class BrillouinCalculatorTab(TabInterface):
         self.L_result.setReadOnly(True)
         results_layout.addRow("L:", self.L_result)
 
-        angles_layout.addWidget(results_group, 2, 0)
+        left_layout.addWidget(results_group)
+        left_layout.addStretch()  # Add stretch to push content to top
 
-        # Visualizer
+        # Right column - Visualizers
+        right_column = QWidget()
+        right_layout = QVBoxLayout(right_column)
+
+        # Scattering visualizer
         self.angles_to_hkl_visualizer.visualize_lab_system(is_clear=True)
         self.angles_to_hkl_visualizer.visualize_scattering_geometry(is_clear=False)
-        angles_layout.addWidget(self.angles_to_hkl_visualizer, 0, 1, 2, 1)
+        right_layout.addWidget(self.angles_to_hkl_visualizer)
+        
+        # Unit cell visualizer
+        right_layout.addWidget(self.angles_to_hkl_unitcell_viz)
+
+        # Add columns to main layout
+        angles_layout.addWidget(left_column, 1)  # Left column takes 1 part
+        angles_layout.addWidget(right_column, 1.5)  # Right column takes 1.5 parts
 
         # Add to tab widget
         self.tab_widget.addTab(angles_tab, "Angles → HKL")
@@ -285,7 +328,11 @@ class BrillouinCalculatorTab(TabInterface):
     def _create_hkl_to_angles_tab(self):
         """Create tab for HKL to angles calculation."""
         hkl_tab = QWidget()
-        hkl_layout = QGridLayout(hkl_tab)
+        hkl_layout = QHBoxLayout(hkl_tab)
+
+        # Left column - Parameters and inputs
+        left_column = QWidget()
+        left_layout = QVBoxLayout(left_column)
 
         # Input form
         form_group = QGroupBox("HKL Indices")
@@ -309,7 +356,7 @@ class BrillouinCalculatorTab(TabInterface):
         self.L_input.setValue(-0.5)
         form_layout.addRow("L:", self.L_input)
 
-        hkl_layout.addWidget(form_group, 0, 0)
+        left_layout.addWidget(form_group)
 
         # Constraints group
         constraints_group = QGroupBox("Constraints")
@@ -364,12 +411,12 @@ class BrillouinCalculatorTab(TabInterface):
         # Initialize UI state
         self._update_fixed_angle_ui()
 
-        hkl_layout.addWidget(constraints_group, 1, 0)
+        left_layout.addWidget(constraints_group)
 
         # Calculate button
         calculate_button = QPushButton("Calculate Angles")
         calculate_button.clicked.connect(self.calculate_angles)
-        hkl_layout.addWidget(calculate_button, 2, 0)
+        left_layout.addWidget(calculate_button)
 
         # Results group
         results_group = QGroupBox("Results")
@@ -390,12 +437,24 @@ class BrillouinCalculatorTab(TabInterface):
         )
         results_layout.addWidget(self.angles_results_table)
 
-        hkl_layout.addWidget(results_group, 3, 0)
+        left_layout.addWidget(results_group)
+        left_layout.addStretch()  # Add stretch to push content to top
 
-        # Visualizer
+        # Right column - Visualizers
+        right_column = QWidget()
+        right_layout = QVBoxLayout(right_column)
+
+        # Scattering visualizer
         self.hkl_to_angles_visualizer.visualize_lab_system(is_clear=True)
         self.hkl_to_angles_visualizer.visualize_scattering_geometry(is_clear=False)
-        hkl_layout.addWidget(self.hkl_to_angles_visualizer, 0, 1, 3, 1)
+        right_layout.addWidget(self.hkl_to_angles_visualizer)
+        
+        # Unit cell visualizer
+        right_layout.addWidget(self.hkl_to_angles_unitcell_viz)
+
+        # Add columns to main layout
+        hkl_layout.addWidget(left_column, 1)  # Left column takes 1 part
+        hkl_layout.addWidget(right_column, 1.5)  # Right column takes 1.5 parts
 
         # Add to tab widget
         self.tab_widget.addTab(hkl_tab, "HKL → Angles")
@@ -403,7 +462,11 @@ class BrillouinCalculatorTab(TabInterface):
     def _create_hk_to_angles_tth_fixed_tab(self):
         """Create tab for HK to angles calculation with fixed tth."""
         hk_tab = QWidget()
-        hk_layout = QGridLayout(hk_tab)
+        hk_layout = QHBoxLayout(hk_tab)
+
+        # Left column - Parameters and inputs
+        left_column = QWidget()
+        left_layout = QVBoxLayout(left_column)
 
         # Constraints group
         constraints_group = QGroupBox("Constraints")
@@ -478,7 +541,7 @@ class BrillouinCalculatorTab(TabInterface):
         # Initialize UI state
         self._update_fixed_angle_ui_tth()
 
-        hk_layout.addWidget(constraints_group, 0, 0)
+        left_layout.addWidget(constraints_group)
 
         # HKL indices group
         hkl_group = QGroupBox("HKL Indices")
@@ -565,12 +628,12 @@ class BrillouinCalculatorTab(TabInterface):
             lambda checked: self._ensure_one_free_index("L", checked)
         )
 
-        hk_layout.addWidget(hkl_group, 1, 0)
+        left_layout.addWidget(hkl_group)
 
         # Calculate button
         calculate_button = QPushButton("Calculate Angles")
         calculate_button.clicked.connect(self.calculate_angles_tth_fixed)
-        hk_layout.addWidget(calculate_button, 2, 0)
+        left_layout.addWidget(calculate_button)
 
         # Results group
         results_group = QGroupBox("Results")
@@ -591,13 +654,24 @@ class BrillouinCalculatorTab(TabInterface):
         )
         results_layout.addWidget(self.angles_results_table_tth)
 
-        hk_layout.addWidget(results_group, 3, 0)
+        left_layout.addWidget(results_group)
+        left_layout.addStretch()  # Add stretch to push content to top
 
-        # Visualizer
+        # Right column - Visualizers
+        right_column = QWidget()
+        right_layout = QVBoxLayout(right_column)
 
+        # Scattering visualizer
         self.hk_fixed_tth_visualizer.visualize_lab_system(is_clear=True)
         self.hk_fixed_tth_visualizer.visualize_scattering_geometry(is_clear=False)
-        hk_layout.addWidget(self.hk_fixed_tth_visualizer, 0, 1, 3, 1)
+        right_layout.addWidget(self.hk_fixed_tth_visualizer)
+        
+        # Unit cell visualizer
+        right_layout.addWidget(self.hk_fixed_tth_unitcell_viz)
+
+        # Add columns to main layout
+        hk_layout.addWidget(left_column, 1)  # Left column takes 1 part
+        hk_layout.addWidget(right_column, 1.5)  # Right column takes 1.5 parts
 
         # Add to tab widget
         self.tab_widget.addTab(hk_tab, "HK to Angles | tth fixed")
