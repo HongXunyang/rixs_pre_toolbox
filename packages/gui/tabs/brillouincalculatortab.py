@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (
     QFrame,
 )
 from PyQt5.QtCore import Qt, pyqtSlot, QMimeData
-from PyQt5.QtGui import QDragEnterEvent, QDropEvent, QFont
+from PyQt5.QtGui import QDragEnterEvent, QDropEvent, QFont, QColor, QBrush
 import sys
 import os
 import matplotlib
@@ -282,9 +282,10 @@ class BrillouinCalculatorTab(TabInterface):
 
         left_layout.addWidget(form_group)
 
-        # Calculate button
+        # Calculate button with fancy styling
         calculate_button = QPushButton("Calculate HKL")
         calculate_button.clicked.connect(self.calculate_hkl)
+        calculate_button.setObjectName("calculateHKLButton")
         left_layout.addWidget(calculate_button)
 
         # Results group
@@ -413,9 +414,10 @@ class BrillouinCalculatorTab(TabInterface):
 
         left_layout.addWidget(constraints_group)
 
-        # Calculate button
+        # Calculate button with fancy styling
         calculate_button = QPushButton("Calculate Angles")
         calculate_button.clicked.connect(self.calculate_angles)
+        calculate_button.setObjectName("calculateButton")
         left_layout.addWidget(calculate_button)
 
         # Results group
@@ -436,6 +438,12 @@ class BrillouinCalculatorTab(TabInterface):
             self.on_angle_solution_selected
         )
         results_layout.addWidget(self.angles_results_table)
+
+        # Add clear button with smaller styling
+        clear_button = QPushButton("Clear Results")
+        clear_button.clicked.connect(self.clear_hkl_to_angles_results)
+        clear_button.setObjectName("clearButton")
+        results_layout.addWidget(clear_button)
 
         left_layout.addWidget(results_group)
         left_layout.addStretch()  # Add stretch to push content to top
@@ -630,9 +638,10 @@ class BrillouinCalculatorTab(TabInterface):
 
         left_layout.addWidget(hkl_group)
 
-        # Calculate button
+        # Calculate button with fancy styling
         calculate_button = QPushButton("Calculate Angles")
         calculate_button.clicked.connect(self.calculate_angles_tth_fixed)
+        calculate_button.setObjectName("calculateButton")
         left_layout.addWidget(calculate_button)
 
         # Results group
@@ -653,6 +662,12 @@ class BrillouinCalculatorTab(TabInterface):
             self.on_angle_solution_selected_tth
         )
         results_layout.addWidget(self.angles_results_table_tth)
+
+        # Add clear button with smaller styling
+        clear_button_tth = QPushButton("Clear Results")
+        clear_button_tth.clicked.connect(self.clear_hk_tth_fixed_results)
+        clear_button_tth.setObjectName("clearButton")
+        results_layout.addWidget(clear_button_tth)
 
         left_layout.addWidget(results_group)
         left_layout.addStretch()  # Add stretch to push content to top
@@ -839,28 +854,42 @@ class BrillouinCalculatorTab(TabInterface):
             phi_values = result["phi"]
             chi_values = result["chi"]
 
-            # Clear the table and set the row count
-            self.angles_results_table.setRowCount(0)
+            # Store the current row count to know where the new results start
+            start_row = self.angles_results_table.rowCount()
             num_solutions = len(tth_values)
 
-            # Populate the table with all solutions
+            # First, clear highlighting from all existing rows (set to white background)
+            for row in range(start_row):
+                for col in range(self.angles_results_table.columnCount()):
+                    item = self.angles_results_table.item(row, col)
+                    if item:
+                        item.setBackground(QBrush(QColor(255, 255, 255)))  # White background
+
+            # Append new solutions to the table
             for i in range(num_solutions):
                 row_position = self.angles_results_table.rowCount()
                 self.angles_results_table.insertRow(row_position)
 
-                # Add items to the row
-                self.angles_results_table.setItem(
-                    row_position, 0, QTableWidgetItem(f"{tth_values[i]:.1f}")
-                )
-                self.angles_results_table.setItem(
-                    row_position, 1, QTableWidgetItem(f"{theta_values[i]:.1f}")
-                )
-                self.angles_results_table.setItem(
-                    row_position, 2, QTableWidgetItem(f"{phi_values[i]:.1f}")
-                )
-                self.angles_results_table.setItem(
-                    row_position, 3, QTableWidgetItem(f"{chi_values[i]:.1f}")
-                )
+                # Add items to the row with highlighting
+                tth_item = QTableWidgetItem(f"{tth_values[i]:.1f}")
+                theta_item = QTableWidgetItem(f"{theta_values[i]:.1f}")
+                phi_item = QTableWidgetItem(f"{phi_values[i]:.1f}")
+                chi_item = QTableWidgetItem(f"{chi_values[i]:.1f}")
+                
+                # Set background color for new items (230, 230, 240)
+                highlight_color = QBrush(QColor(230, 230, 240))
+                tth_item.setBackground(highlight_color)
+                theta_item.setBackground(highlight_color)
+                phi_item.setBackground(highlight_color)
+                chi_item.setBackground(highlight_color)
+
+                self.angles_results_table.setItem(row_position, 0, tth_item)
+                self.angles_results_table.setItem(row_position, 1, theta_item)
+                self.angles_results_table.setItem(row_position, 2, phi_item)
+                self.angles_results_table.setItem(row_position, 3, chi_item)
+
+            # Scroll to the bottom to show the new results
+            self.angles_results_table.scrollToBottom()
 
             # If we have at least one solution, visualize the first one
             if num_solutions > 0:
@@ -982,28 +1011,42 @@ class BrillouinCalculatorTab(TabInterface):
             phi_values = result["phi"]
             chi_values = result["chi"]
 
-            # Clear the table and set the row count
-            self.angles_results_table_tth.setRowCount(0)
+            # Store the current row count to know where the new results start
+            start_row = self.angles_results_table_tth.rowCount()
             num_solutions = len(tth_values)
 
-            # Populate the table with all solutions
+            # First, clear highlighting from all existing rows (set to white background)
+            for row in range(start_row):
+                for col in range(self.angles_results_table_tth.columnCount()):
+                    item = self.angles_results_table_tth.item(row, col)
+                    if item:
+                        item.setBackground(QBrush(QColor(255, 255, 255)))  # White background
+
+            # Append new solutions to the table
             for i in range(num_solutions):
                 row_position = self.angles_results_table_tth.rowCount()
                 self.angles_results_table_tth.insertRow(row_position)
 
-                # Add items to the row
-                self.angles_results_table_tth.setItem(
-                    row_position, 0, QTableWidgetItem(f"{tth_values[i]:.1f}")
-                )
-                self.angles_results_table_tth.setItem(
-                    row_position, 1, QTableWidgetItem(f"{theta_values[i]:.1f}")
-                )
-                self.angles_results_table_tth.setItem(
-                    row_position, 2, QTableWidgetItem(f"{phi_values[i]:.1f}")
-                )
-                self.angles_results_table_tth.setItem(
-                    row_position, 3, QTableWidgetItem(f"{chi_values[i]:.1f}")
-                )
+                # Add items to the row with highlighting
+                tth_item = QTableWidgetItem(f"{tth_values[i]:.1f}")
+                theta_item = QTableWidgetItem(f"{theta_values[i]:.1f}")
+                phi_item = QTableWidgetItem(f"{phi_values[i]:.1f}")
+                chi_item = QTableWidgetItem(f"{chi_values[i]:.1f}")
+                
+                # Set background color for new items (230, 230, 240)
+                highlight_color = QBrush(QColor(230, 230, 240))
+                tth_item.setBackground(highlight_color)
+                theta_item.setBackground(highlight_color)
+                phi_item.setBackground(highlight_color)
+                chi_item.setBackground(highlight_color)
+
+                self.angles_results_table_tth.setItem(row_position, 0, tth_item)
+                self.angles_results_table_tth.setItem(row_position, 1, theta_item)
+                self.angles_results_table_tth.setItem(row_position, 2, phi_item)
+                self.angles_results_table_tth.setItem(row_position, 3, chi_item)
+
+            # Scroll to the bottom to show the new results
+            self.angles_results_table_tth.scrollToBottom()
 
             # If we have at least one solution, update the HKL values and visualize it
             if num_solutions > 0:
@@ -1134,6 +1177,16 @@ class BrillouinCalculatorTab(TabInterface):
         self.hk_fixed_tth_visualizer.visualize_scattering_geometry(
             scattering_angles=solution, is_clear=False
         )
+
+    @pyqtSlot()
+    def clear_hkl_to_angles_results(self):
+        """Clear all results from the HKL to angles table."""
+        self.angles_results_table.setRowCount(0)
+
+    @pyqtSlot()
+    def clear_hk_tth_fixed_results(self):
+        """Clear all results from the HK to angles (tth fixed) table."""
+        self.angles_results_table_tth.setRowCount(0)
 
     def get_module_instance(self):
         """Get the backend module instance."""
