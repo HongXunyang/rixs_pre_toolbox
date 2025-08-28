@@ -249,7 +249,7 @@ def _calculate_angles_chi_fixed(
     yaw,
     chi_fixed,
     target_objective=1e-7,
-    num_steps=1000,
+    num_steps=3000,
     number_batch=10,
     learning_rate=100,
 ):
@@ -281,7 +281,7 @@ def _calculate_angles_chi_fixed(
 
     def objective_function(k_cal, k_target):
         """objective function for gradient decent"""
-        return np.linalg.norm(k_cal - k_target)
+        return np.linalg.norm(k_cal - k_target)/np.linalg.norm(k_target)
 
     def get_k_cal(lab, theta_, phi_, chi_):
         lab.rotate(theta_, phi_, chi_)
@@ -289,9 +289,18 @@ def _calculate_angles_chi_fixed(
         k_cal = H * a_star_vec + K * b_star_vec + L * c_star_vec
         return k_cal
 
-    theta_best_list = [0] * number_batch
-    phi_best_list = [0] * number_batch
-    for batch in range(number_batch):
+    def is_valid_solution(phi):
+        if phi is None:
+            return False
+        if (phi > 90) or (phi < -90):
+            return False
+        return True
+
+    theta_best = None
+    phi_best = None
+    _is_valid_solution = False
+
+    while not _is_valid_solution:
         lab = Lab()
         theta = np.random.uniform(0, 180)
         phi = np.random.uniform(-90, 90)
@@ -317,26 +326,18 @@ def _calculate_angles_chi_fixed(
                 objective = objective_new
             if objective < target_objective:
                 break
-        # Normalize angles to (0, 360) range
+        # Normalize angles to (-180, 180] range
         theta = process_angle(theta)
         phi = process_angle(phi)
 
-        theta_best_list[batch] = theta
-        phi_best_list[batch] = phi
+        theta_best = theta
+        phi_best = phi
+        _is_valid_solution = is_valid_solution(phi_best)
 
-    # round up to 0.1, discard duplicates, phi and theta should match the order of the list
-    theta_best_list = np.round(theta_best_list, 1)
-    phi_best_list = np.round(phi_best_list, 1)
-    theta_result = []
-    phi_result = []
-    tth_result = []
-    chi_result = []
-    for theta, phi in zip(theta_best_list, phi_best_list):
-        if theta not in theta_result:
-            theta_result.append(theta)
-            phi_result.append(phi)
-            tth_result.append(process_angle(tth))
-            chi_result.append(chi_fixed)
+    theta_result = [np.round(theta_best, 1)]
+    phi_result = [np.round(phi_best, 1)]
+    tth_result = [np.round(process_angle(tth), 1)]
+    chi_result = [np.round(chi_fixed, 1)]
 
     return tth_result, theta_result, phi_result, chi_result
 
@@ -357,8 +358,8 @@ def _calculate_angles_phi_fixed(
     yaw,
     phi_fixed,
     target_objective=1e-7,
-    num_steps=1000,
-    number_batch=5,
+    num_steps=3000,
+    number_batch=10,
     learning_rate=100,
 ):
     """Calculate scattering angles with phi angle fixed.
@@ -396,13 +397,21 @@ def _calculate_angles_phi_fixed(
         a_star_vec, b_star_vec, c_star_vec = lab.get_reciprocal_space_vectors()
         k_cal = H * a_star_vec + K * b_star_vec + L * c_star_vec
         return k_cal
-
-    theta_best_list = [0] * number_batch
-    chi_best_list = [0] * number_batch
-    for batch in range(number_batch):
+    
+    def is_valid_solution(chi):
+        if chi is None:
+            return False
+        if (chi > 90) or (chi < -90):
+            return False
+        return True
+    
+    theta_best = None
+    chi_best = None
+    _is_valid_solution = False
+    while not _is_valid_solution:
         lab = Lab()
         theta = np.random.uniform(0, 180)
-        chi = np.random.uniform(0, 180)
+        chi = np.random.uniform(-90, 90)
 
         lab.initialize(
             a, b, c, alpha, beta, gamma, roll, pitch, yaw, theta, phi_fixed, chi
@@ -428,23 +437,15 @@ def _calculate_angles_phi_fixed(
         # Normalize angles to (0, 360) range
         theta = process_angle(theta)
         chi = process_angle(chi)
-        theta_best_list[batch] = theta
-        chi_best_list[batch] = chi
+        theta_best = theta
+        chi_best = chi
+        _is_valid_solution = is_valid_solution(chi_best)
 
     # round up to 0.1, discard duplicates, theta and chi should match the order of the list
-    theta_best_list = np.round(theta_best_list, 1)
-    chi_best_list = np.round(chi_best_list, 1)
-    theta_result = []
-    chi_result = []
-    tth_result = []
-    phi_result = []
-    for theta, chi in zip(theta_best_list, chi_best_list):
-        if theta not in theta_result:
-            theta_result.append(theta)
-            chi_result.append(chi)
-            tth_result.append(process_angle(tth))
-            phi_result.append(phi_fixed)
-
+    theta_result = [np.round(theta_best, 1)]
+    chi_result = [np.round(chi_best, 1)]
+    tth_result = [np.round(process_angle(tth), 1)]
+    phi_result = [np.round(phi_fixed, 1)]
     return tth_result, theta_result, phi_result, chi_result
 
 
@@ -516,3 +517,5 @@ def _calculate_hkl(k_in, tth, theta, phi, chi, a_vec_lab, b_vec_lab, c_vec_lab):
             "success": False,
             "error": str(e),
         }
+
+

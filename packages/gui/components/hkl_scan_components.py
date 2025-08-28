@@ -288,13 +288,10 @@ class HKLScanResultsTable(QTableWidget):
         # Hide vertical header (row numbers)
         self.verticalHeader().setVisible(False)
 
-        # Define colors for alternating groups
+        # Define colors for alternating groups white and gray
         self.group_colors = [
-            QColor(255, 245, 225),  # Light peach
-            QColor(235, 235, 255),  # Light lavender
-            QColor(225, 255, 225),  # Light green
-            QColor(255, 230, 230),  # Light pink
-            QColor(230, 255, 245),  # Light teal
+            QColor(255, 255, 255),  # White
+            QColor(230, 230, 240),  # Gray
         ]
 
         # Enable sorting
