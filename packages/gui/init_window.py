@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 from packages.visualizer.coordinate_visualizer import CoordinateVisualizer
+from packages.visualizer.unitcell_visualizer import UnitcellVisualizer
 from packages.helpers import UnitConverter
 from CifFile import ReadCif
 
@@ -228,7 +229,11 @@ class InitWindow(QWidget):
             }
         )
         self.visualizer.visualize_lab_system()
-        layout.addWidget(self.visualizer, 1, 2)
+        layout.addWidget(self.visualizer, 1, 1)
+
+        # Create and add the unit cell visualizer
+        self.unitcell_visualizer = UnitcellVisualizer()
+        layout.addWidget(self.unitcell_visualizer, 1, 2)
 
         # File input area
         file_group = DragDropGroupBox("Crystal Structure File")
@@ -245,14 +250,14 @@ class InitWindow(QWidget):
         # Allow dropping on the entire group box
         file_group.set_target_line_edit(self.file_path_input)
 
-        # Add file group to main layout at (1,0) spanning 2 columns
-        layout.addWidget(file_group, 1, 0, 1, 2)
+        # Add file group to main layout at (1,0) spanning 1 column
+        layout.addWidget(file_group, 1, 0, 1, 1)
 
         # Initialize button
         initialize_button = QPushButton("Initialize")
         initialize_button.clicked.connect(self.initialize)
-        # Add initialize button at (2,0) spanning 2 columns
-        layout.addWidget(initialize_button, 2, 0, 1, 2)
+        # Add initialize button at (2,0) spanning 1 column
+        layout.addWidget(initialize_button, 2, 0, 1, 1)
 
         # Add spacer
         layout.setRowStretch(3, 1)
@@ -305,6 +310,8 @@ class InitWindow(QWidget):
                 self._accepted_cif_path = None
                 self._lattice_locked = False
                 self.set_lattice_inputs_enabled(True)
+                # Clear unit cell visualization
+                self.clear_unitcell_visualization()
                 return
 
             # Parse CIF using PyCifRW
@@ -348,6 +355,10 @@ class InitWindow(QWidget):
             self._lattice_locked = True
             self._accepted_cif_path = file_path
             self.set_lattice_inputs_enabled(False)
+            
+            # Update unit cell visualizer with the CIF file
+            self.update_unitcell_visualization(file_path)
+            
             QMessageBox.information(
                 self,
                 "CIF Loaded",
@@ -396,6 +407,24 @@ class InitWindow(QWidget):
 
         # Update visualization with new parameters
         self.update_visualization()
+
+    def update_unitcell_visualization(self, cif_file_path: str):
+        """Update the unit cell visualizer with a new CIF file."""
+        try:
+            self.unitcell_visualizer.set_parameters({"cif_file": cif_file_path})
+            self.unitcell_visualizer.visualize_unitcell()
+        except Exception as e:
+            print(f"Error updating unit cell visualization: {e}")
+
+    def clear_unitcell_visualization(self):
+        """Clear the unit cell visualization."""
+        try:
+            self.unitcell_visualizer.axes.clear()
+            self.unitcell_visualizer.axes.set_facecolor("white")
+            self.unitcell_visualizer.axes.set_axis_off()
+            self.unitcell_visualizer.draw()
+        except Exception as e:
+            print(f"Error clearing unit cell visualization: {e}")
 
     @pyqtSlot()
     def update_visualization(self):

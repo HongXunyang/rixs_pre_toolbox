@@ -19,7 +19,9 @@ class CoordinateVisualizer(FigureCanvas):
         """Initialize the visualizer with a 3D canvas."""
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111, projection="3d")
+        self.axes.set_axis_off()
         super().__init__(self.fig)
+    
 
         # Set background color to white
         self.fig.patch.set_facecolor("white")
@@ -28,11 +30,6 @@ class CoordinateVisualizer(FigureCanvas):
         # Set initial view
         self.axes.view_init(elev=135, azim=-105, roll=-20)
 
-        # Remove ticks and grid
-        self.axes.set_xticks([])
-        self.axes.set_yticks([])
-        self.axes.set_zticks([])
-        self.axes.grid(False)
 
         # Set initial limits
         self.axes.set_xlim(-0.75, 0.75)
@@ -84,9 +81,9 @@ class CoordinateVisualizer(FigureCanvas):
         self.axes.add_collection3d(
             Poly3DCollection(
                 scatter_plane_vertices[scatter_plane_faces],
-                facecolors=[0.3510, 0.7850, 0.9330],  # light blue
+                facecolors=[0.3010, 0.7450, 0.9330],  # light blue
                 edgecolors=[0.7, 0.7, 0.7],
-                alpha=0.3,
+                alpha=0.15,
             )
         )
 
@@ -121,20 +118,11 @@ class CoordinateVisualizer(FigureCanvas):
             Poly3DCollection(
                 ver[fac],
                 facecolors=[0.3, 0.3, 0.3],
-                    edgecolors=[0.55, 0.55, 0.55, 0.2],
-                alpha=0.05,
+                edgecolors=[0.55, 0.55, 0.55],
+                alpha=0.2,
             )
         )
 
-        # add extra color to the top face
-        self.axes.add_collection3d(
-            Poly3DCollection(
-                [ver[fac[0]]],
-                facecolors=[0.3, 0.3, 0.3],
-                edgecolors=[0.55, 0.55, 0.55, 0.1],
-                alpha=0.25,
-            )
-        )
         # Normalize the vectors
         a_star_norm = self.a_star_lab / np.linalg.norm(self.a_star_lab)
         b_star_norm = self.b_star_lab / np.linalg.norm(self.b_star_lab)
@@ -212,10 +200,7 @@ class CoordinateVisualizer(FigureCanvas):
         self.axes.set_ylim(-1, 1)
         self.axes.set_zlim(-1, 1)
 
-        # Remove ticks
-        self.axes.set_xticks([])
-        self.axes.set_yticks([])
-        self.axes.set_zticks([])
-
+        self.axes.set_axis_off()
+        self.fig.tight_layout()
         # Update the canvas
         self.draw()

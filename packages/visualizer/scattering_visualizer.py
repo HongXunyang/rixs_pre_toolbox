@@ -28,7 +28,7 @@ class ScatteringVisualizer(FigureCanvas):
 
         # Set initial view
         self.axes.view_init(elev=135, azim=-105, roll=-20)
-
+        
         # Initialize reciprocal lattice vectors in lab frame
         self.a_star_lab = np.array([1, 0, 0])
         self.b_star_lab = np.array([0, 1, 0])
@@ -191,11 +191,8 @@ class ScatteringVisualizer(FigureCanvas):
         self.axes.set_ylim(-1, 1)
         self.axes.set_zlim(-1, 1)
 
-        # Remove ticks
-        self.axes.set_xticks([])
-        self.axes.set_yticks([])
-        self.axes.set_zticks([])
-
+        self.axes.set_axis_off()
+        self.fig.tight_layout()
         self.draw()
 
     def visualize_scattering_geometry(self, scattering_angles=None, is_clear=True):
@@ -281,10 +278,8 @@ class ScatteringVisualizer(FigureCanvas):
         self.axes.set_ylim(-1, 1)
         self.axes.set_zlim(-1, 1)
 
-        # Remove ticks
-        self.axes.set_xticks([])
-        self.axes.set_yticks([])
-        self.axes.set_zticks([])
+        self.axes.set_axis_off()
+        self.fig.tight_layout()
         # Update the canvas
         self.draw()
 
