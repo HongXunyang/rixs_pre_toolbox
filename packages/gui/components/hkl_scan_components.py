@@ -104,24 +104,14 @@ class HKLScanControls(QWidget):
         # Main layout
         main_layout = QVBoxLayout(self)
 
-        # Fixed tth input
-        tth_group = QGroupBox("Fixed 2θ")
-        tth_layout = QFormLayout(tth_group)
+        # Unified Fixed Angles panel
+        fixed_angles_group = QGroupBox("Fixed Angles")
+        fixed_angles_layout = QVBoxLayout(fixed_angles_group)
 
-        self.tth_input = QDoubleSpinBox()
-        self.tth_input.setRange(0.0, 180.0)
-        self.tth_input.setValue(150.0)
-        self.tth_input.setSuffix(" °")
-        tth_layout.addRow("tth:", self.tth_input)
-
-        main_layout.addWidget(tth_group)
-
-        # Fixed angle selection (chi or phi)
-        fixed_angle_group = QGroupBox("Fixed Sample Angle")
-        fixed_angle_layout = QVBoxLayout(fixed_angle_group)
-
+        # Top row: Fix χ/Fix φ buttons
         angle_selection = QWidget()
         angle_selection_layout = QHBoxLayout(angle_selection)
+        angle_selection_layout.setContentsMargins(0, 0, 0, 0)
 
         self.fix_chi_btn = QPushButton("Fix χ")
         self.fix_phi_btn = QPushButton("Fix φ")
@@ -140,12 +130,23 @@ class HKLScanControls(QWidget):
         angle_selection_layout.addWidget(self.fix_chi_btn)
         angle_selection_layout.addWidget(self.fix_phi_btn)
 
-        fixed_angle_layout.addWidget(angle_selection)
+        fixed_angles_layout.addWidget(angle_selection)
 
-        # Create angle value inputs
+        # Bottom row: tth on left, chi/phi angles on right
         angle_values = QWidget()
         angle_values_layout = QHBoxLayout(angle_values)
         angle_values_layout.setContentsMargins(0, 0, 0, 0)
+
+        # tth input (left side)
+        self.tth_widget = QWidget()
+        tth_layout = QFormLayout(self.tth_widget)
+        tth_layout.setContentsMargins(0, 0, 0, 0)
+        self.tth_input = QDoubleSpinBox()
+        self.tth_input.setRange(0.0, 180.0)
+        self.tth_input.setValue(150.0)
+        self.tth_input.setSuffix(" °")
+        tth_layout.addRow("tth:", self.tth_input)
+        angle_values_layout.addWidget(self.tth_widget)
         
         # Chi input
         self.chi_widget = QWidget()
@@ -169,11 +170,11 @@ class HKLScanControls(QWidget):
         phi_layout.addRow("φ:", self.phi_input)
         angle_values_layout.addWidget(self.phi_widget)
 
-        fixed_angle_layout.addWidget(angle_values)
-        main_layout.addWidget(fixed_angle_group)
+        fixed_angles_layout.addWidget(angle_values)
+        main_layout.addWidget(fixed_angles_group)
 
         # HKL index selection
-        hkl_group = QGroupBox("HKL Scan")
+        hkl_group = QGroupBox("Choose a plane")
         hkl_layout = QVBoxLayout(hkl_group)
 
         # Plane selection - using plane-based naming like Structure Factor Calculator
@@ -288,8 +289,6 @@ class HKLScanControls(QWidget):
 
     def _update_fixed_angle_styles(self, active: str):
         """Update fixed angle button colors based on active selection."""
-        active_css = "background-color: #2ecc71; color: white; font-weight: bold;"
-        inactive_css = "background-color: #bdc3c7; color: #333333;"
         mapping = {
             "chi": self.fix_chi_btn,
             "phi": self.fix_phi_btn,
@@ -297,10 +296,13 @@ class HKLScanControls(QWidget):
         for name, btn in mapping.items():
             if name == active:
                 btn.setChecked(True)
-                btn.setStyleSheet(active_css)
+                btn.setProperty("class", "activeToggle")
             else:
                 btn.setChecked(False)
-                btn.setStyleSheet(inactive_css)
+                btn.setProperty("class", "inactiveToggle")
+            # Force style refresh
+            btn.style().unpolish(btn)
+            btn.style().polish(btn)
 
     def _set_active_fixed_angle(self, angle: str):
         """Set the active fixed angle and update widget states and styling."""
@@ -310,8 +312,6 @@ class HKLScanControls(QWidget):
 
     def _update_toggle_styles(self, active: str):
         """Update toggle button colors based on active plane."""
-        active_css = "background-color: #2ecc71; color: white; font-weight: bold;"
-        inactive_css = "background-color: #bdc3c7; color: #333333;"
         mapping = {
             "HK": self.hk_plane_toggle,
             "HL": self.hl_plane_toggle,
@@ -320,10 +320,13 @@ class HKLScanControls(QWidget):
         for name, btn in mapping.items():
             if name == active:
                 btn.setChecked(True)
-                btn.setStyleSheet(active_css)
+                btn.setProperty("class", "activeToggle")
             else:
                 btn.setChecked(False)
-                btn.setStyleSheet(inactive_css)
+                btn.setProperty("class", "inactiveToggle")
+            # Force style refresh
+            btn.style().unpolish(btn)
+            btn.style().polish(btn)
 
     def _set_active_plane(self, plane: str):
         """Set the active plane and update widget states and styling."""

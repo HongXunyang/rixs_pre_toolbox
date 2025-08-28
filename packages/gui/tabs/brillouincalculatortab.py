@@ -46,6 +46,18 @@ from packages.gui.components.hkl_scan_components import (
     HKLScanResultsTable,
     HKLScan2DVisualizer,
 )
+from packages.gui.components.hk_angles_components import (
+    HKAnglesControls,
+    HKAnglesResultsWidget,
+)
+from packages.gui.components.angles_to_hkl_components import (
+    AnglesToHKLControls,
+    AnglesToHKLResults,
+)
+from packages.gui.components.hkl_to_angles_components import (
+    HKLToAnglesControls,
+    HKLToAnglesResultsWidget,
+)
 
 
 class DragDropLineEdit(QLineEdit):
@@ -248,65 +260,19 @@ class BrillouinCalculatorTab(TabInterface):
         angles_tab = QWidget()
         angles_layout = QHBoxLayout(angles_tab)
 
-        # Left column - Parameters and inputs
+        # Left column - Controls and Results
         left_column = QWidget()
         left_layout = QVBoxLayout(left_column)
 
-        # Input form
-        form_group = QGroupBox("Scattering Angles")
-        form_layout = QFormLayout(form_group)
+        # Create controls widget
+        self.angles_to_hkl_controls = AnglesToHKLControls(parent=self)
+        self.angles_to_hkl_controls.calculateClicked.connect(self.calculate_hkl)
+        left_layout.addWidget(self.angles_to_hkl_controls)
 
-        self.tth_angle_input = QDoubleSpinBox()
-        self.tth_angle_input.setRange(0.0, 180.0)
-        self.tth_angle_input.setValue(150.0)
-        self.tth_angle_input.setSuffix(" °")
-        self._set_tip(self.tth_angle_input, "TTH")
-        form_layout.addRow("tth:", self.tth_angle_input)
+        # Create results widget
+        self.angles_to_hkl_results = AnglesToHKLResults(parent=self)
+        left_layout.addWidget(self.angles_to_hkl_results)
 
-        self.theta_angle_input = QDoubleSpinBox()
-        self.theta_angle_input.setRange(-180.0, 180.0)
-        self.theta_angle_input.setValue(50.0)
-        self.theta_angle_input.setSuffix(" °")
-        self._set_tip(self.theta_angle_input, "THETA")
-        form_layout.addRow("θ:", self.theta_angle_input)
-
-        self.phi_angle_input = QDoubleSpinBox()
-        self.phi_angle_input.setRange(-180.0, 180.0)
-        self.phi_angle_input.setValue(0.0)
-        self.phi_angle_input.setSuffix(" °")
-        form_layout.addRow("φ:", self.phi_angle_input)
-
-        self.chi_angle_input = QDoubleSpinBox()
-        self.chi_angle_input.setRange(-180.0, 180.0)
-        self.chi_angle_input.setValue(0.0)
-        self.chi_angle_input.setSuffix(" °")
-        form_layout.addRow("χ:", self.chi_angle_input)
-
-        left_layout.addWidget(form_group)
-
-        # Calculate button with fancy styling
-        calculate_button = QPushButton("Calculate HKL")
-        calculate_button.clicked.connect(self.calculate_hkl)
-        calculate_button.setObjectName("calculateHKLButton")
-        left_layout.addWidget(calculate_button)
-
-        # Results group
-        results_group = QGroupBox("Results")
-        results_layout = QFormLayout(results_group)
-
-        self.H_result = QLineEdit()
-        self.H_result.setReadOnly(True)
-        results_layout.addRow("H:", self.H_result)
-
-        self.K_result = QLineEdit()
-        self.K_result.setReadOnly(True)
-        results_layout.addRow("K:", self.K_result)
-
-        self.L_result = QLineEdit()
-        self.L_result.setReadOnly(True)
-        results_layout.addRow("L:", self.L_result)
-
-        left_layout.addWidget(results_group)
         left_layout.addStretch()  # Add stretch to push content to top
 
         # Right column - Visualizers
@@ -333,121 +299,20 @@ class BrillouinCalculatorTab(TabInterface):
         hkl_tab = QWidget()
         hkl_layout = QHBoxLayout(hkl_tab)
 
-        # Left column - Parameters and inputs
+        # Left column - Controls and Results
         left_column = QWidget()
         left_layout = QVBoxLayout(left_column)
 
-        # Input form
-        form_group = QGroupBox("HKL Indices")
-        form_layout = QFormLayout(form_group)
+        # Create controls widget
+        self.hkl_to_angles_controls = HKLToAnglesControls(parent=self)
+        self.hkl_to_angles_controls.calculateClicked.connect(self.calculate_angles)
+        left_layout.addWidget(self.hkl_to_angles_controls)
 
-        self.H_input = QDoubleSpinBox()
-        self.H_input.setRange(-10.0, 10.0)
-        self.H_input.setDecimals(4)
-        self.H_input.setValue(0.15)
-        form_layout.addRow("H:", self.H_input)
+        # Create results widget
+        self.hkl_to_angles_results = HKLToAnglesResultsWidget(parent=self)
+        self.hkl_to_angles_results.solutionSelected.connect(self.on_angle_solution_selected)
+        left_layout.addWidget(self.hkl_to_angles_results)
 
-        self.K_input = QDoubleSpinBox()
-        self.K_input.setRange(-10.0, 10.0)
-        self.K_input.setDecimals(4)
-        self.K_input.setValue(0.1)
-        form_layout.addRow("K:", self.K_input)
-
-        self.L_input = QDoubleSpinBox()
-        self.L_input.setRange(-10.0, 10.0)
-        self.L_input.setDecimals(4)
-        self.L_input.setValue(-0.5)
-        form_layout.addRow("L:", self.L_input)
-
-        left_layout.addWidget(form_group)
-
-        # Constraints group
-        constraints_group = QGroupBox("Constraints")
-        constraints_layout = QFormLayout(constraints_group)
-
-        # Fix angle selection
-        fix_angle_group = QGroupBox("Fix Angle")
-        fix_angle_layout = QHBoxLayout(fix_angle_group)
-
-        self.fix_chi_radio = QRadioButton("Fix χ")
-        self.fix_phi_radio = QRadioButton("Fix φ")
-        self.fix_chi_radio.setChecked(True)  # Default to fixed chi
-
-        fix_angle_layout.addWidget(self.fix_chi_radio)
-        fix_angle_layout.addWidget(self.fix_phi_radio)
-
-        constraints_layout.addRow(fix_angle_group)
-
-        # Create a horizontal layout for chi and phi inputs
-        angles_row = QWidget()
-        angles_layout = QHBoxLayout(angles_row)
-        angles_layout.setContentsMargins(0, 0, 0, 0)
-
-        # Chi input
-        chi_widget = QWidget()
-        chi_layout = QFormLayout(chi_widget)
-        chi_layout.setContentsMargins(0, 0, 0, 0)
-        self.chi_input = QDoubleSpinBox()
-        self.chi_input.setRange(-180.0, 180.0)
-        self.chi_input.setValue(0.0)
-        self.chi_input.setSuffix(" °")
-        chi_layout.addRow("χ:", self.chi_input)
-        angles_layout.addWidget(chi_widget)
-
-        # Phi input
-        phi_widget = QWidget()
-        phi_layout = QFormLayout(phi_widget)
-        phi_layout.setContentsMargins(0, 0, 0, 0)
-        self.phi_input = QDoubleSpinBox()
-        self.phi_input.setRange(-180.0, 180.0)
-        self.phi_input.setValue(0.0)
-        self.phi_input.setSuffix(" °")
-        phi_layout.addRow("φ:", self.phi_input)
-        angles_layout.addWidget(phi_widget)
-
-        constraints_layout.addRow(angles_row)
-
-        # Connect radio buttons to enable/disable corresponding inputs
-        self.fix_chi_radio.toggled.connect(self._update_fixed_angle_ui)
-        self.fix_phi_radio.toggled.connect(self._update_fixed_angle_ui)
-
-        # Initialize UI state
-        self._update_fixed_angle_ui()
-
-        left_layout.addWidget(constraints_group)
-
-        # Calculate button with fancy styling
-        calculate_button = QPushButton("Calculate Angles")
-        calculate_button.clicked.connect(self.calculate_angles)
-        calculate_button.setObjectName("calculateButton")
-        left_layout.addWidget(calculate_button)
-
-        # Results group
-        results_group = QGroupBox("Results")
-        results_layout = QVBoxLayout(results_group)
-
-        # Add a table widget to display all possible solutions
-        self.angles_results_table = QTableWidget()
-        self.angles_results_table.setColumnCount(4)
-        self.angles_results_table.setHorizontalHeaderLabels(
-            ["tth (°)", "θ (°)", "φ (°)", "χ (°)"]
-        )
-        self.angles_results_table.horizontalHeader().setSectionResizeMode(
-            QHeaderView.Stretch
-        )
-        # Connect selection change signal
-        self.angles_results_table.itemSelectionChanged.connect(
-            self.on_angle_solution_selected
-        )
-        results_layout.addWidget(self.angles_results_table)
-
-        # Add clear button with smaller styling
-        clear_button = QPushButton("Clear Results")
-        clear_button.clicked.connect(self.clear_hkl_to_angles_results)
-        clear_button.setObjectName("clearButton")
-        results_layout.addWidget(clear_button)
-
-        left_layout.addWidget(results_group)
         left_layout.addStretch()  # Add stretch to push content to top
 
         # Right column - Visualizers
@@ -474,204 +339,20 @@ class BrillouinCalculatorTab(TabInterface):
         hk_tab = QWidget()
         hk_layout = QHBoxLayout(hk_tab)
 
-        # Left column - Parameters and inputs
+        # Left column - Controls and Results
         left_column = QWidget()
         left_layout = QVBoxLayout(left_column)
 
-        # Constraints group
-        constraints_group = QGroupBox("Constraints")
-        constraints_layout = QFormLayout(constraints_group)
+        # Create controls widget
+        self.hk_angles_controls = HKAnglesControls(parent=self)
+        self.hk_angles_controls.calculateClicked.connect(self.calculate_angles_tth_fixed)
+        left_layout.addWidget(self.hk_angles_controls)
 
-        # tth input
-        self.tth_fixed_input = QDoubleSpinBox()
-        self.tth_fixed_input.setRange(0.0, 180.0)
-        self.tth_fixed_input.setValue(150.0)
-        self.tth_fixed_input.setSuffix(" °")
-        constraints_layout.addRow("tth:", self.tth_fixed_input)
+        # Create results widget
+        self.hk_angles_results = HKAnglesResultsWidget(parent=self)
+        self.hk_angles_results.solutionSelected.connect(self.on_angle_solution_selected_tth)
+        left_layout.addWidget(self.hk_angles_results)
 
-        # Create a vertical layout for chi and phi inputs
-        angles_widget = QWidget()
-        angles_layout = QVBoxLayout(angles_widget)
-        angles_layout.setContentsMargins(0, 0, 0, 0)
-
-        # Chi input row
-        chi_row = QWidget()
-        chi_layout = QHBoxLayout(chi_row)
-        chi_layout.setContentsMargins(0, 0, 0, 0)
-        chi_form = QWidget()
-        chi_form_layout = QFormLayout(chi_form)
-        chi_form_layout.setContentsMargins(0, 0, 0, 0)
-        self.chi_input_tth = QDoubleSpinBox()
-        self.chi_input_tth.setRange(-180.0, 180.0)
-        self.chi_input_tth.setValue(0.0)
-        self.chi_input_tth.setSuffix(" °")
-        self.chi_input_tth.setEnabled(False)  # Default to disabled
-        chi_form_layout.addRow("χ:", self.chi_input_tth)
-        chi_layout.addWidget(chi_form)
-        self.chi_toggle = QPushButton("De-activate")
-        self.chi_toggle.setCheckable(True)
-        self.chi_toggle.setChecked(True)  # Default to deactivated
-        chi_layout.addWidget(self.chi_toggle)
-        angles_layout.addWidget(chi_row)
-
-        # Phi input row
-        phi_row = QWidget()
-        phi_layout = QHBoxLayout(phi_row)
-        phi_layout.setContentsMargins(0, 0, 0, 0)
-        phi_form = QWidget()
-        phi_form_layout = QFormLayout(phi_form)
-        phi_form_layout.setContentsMargins(0, 0, 0, 0)
-        self.phi_input_tth = QDoubleSpinBox()
-        self.phi_input_tth.setRange(-180.0, 180.0)
-        self.phi_input_tth.setValue(0.0)
-        self.phi_input_tth.setSuffix(" °")
-        self.phi_input_tth.setEnabled(True)  # Default to enabled
-        phi_form_layout.addRow("φ:", self.phi_input_tth)
-        phi_layout.addWidget(phi_form)
-        self.phi_toggle = QPushButton("De-activate")
-        self.phi_toggle.setCheckable(True)
-        self.phi_toggle.setChecked(False)  # Default to activated
-        phi_layout.addWidget(self.phi_toggle)
-        angles_layout.addWidget(phi_row)
-
-        constraints_layout.addRow(angles_widget)
-
-        # Connect toggle buttons to enable/disable corresponding inputs
-        self.chi_toggle.toggled.connect(self._update_fixed_angle_ui_tth)
-        self.phi_toggle.toggled.connect(self._update_fixed_angle_ui_tth)
-
-        # Ensure only one angle is deactivated at a time
-        self.chi_toggle.toggled.connect(
-            lambda checked: self._ensure_one_angle_deactivated("chi", checked)
-        )
-        self.phi_toggle.toggled.connect(
-            lambda checked: self._ensure_one_angle_deactivated("phi", checked)
-        )
-
-        # Initialize UI state
-        self._update_fixed_angle_ui_tth()
-
-        left_layout.addWidget(constraints_group)
-
-        # HKL indices group
-        hkl_group = QGroupBox("HKL Indices")
-        hkl_layout = QFormLayout(hkl_group)
-
-        # Create a vertical layout for HKL inputs
-        hkl_row = QWidget()
-        hkl_input_layout = QVBoxLayout(hkl_row)
-        hkl_input_layout.setContentsMargins(0, 0, 0, 0)
-
-        # H input row
-        h_row = QWidget()
-        h_layout = QHBoxLayout(h_row)
-        h_layout.setContentsMargins(0, 0, 0, 0)
-        h_form = QWidget()
-        h_form_layout = QFormLayout(h_form)
-        h_form_layout.setContentsMargins(0, 0, 0, 0)
-        self.H_input_tth = QDoubleSpinBox()
-        self.H_input_tth.setRange(-10.0, 10.0)
-        self.H_input_tth.setDecimals(4)
-        self.H_input_tth.setValue(0.15)
-        h_form_layout.addRow("H:", self.H_input_tth)
-        h_layout.addWidget(h_form)
-        self.H_toggle = QPushButton("De-activate")
-        self.H_toggle.setCheckable(True)
-        self.H_toggle.setChecked(False)  # Default to active (gray)
-        h_layout.addWidget(self.H_toggle)
-        hkl_input_layout.addWidget(h_row)
-
-        # K input row
-        k_row = QWidget()
-        k_layout = QHBoxLayout(k_row)
-        k_layout.setContentsMargins(0, 0, 0, 0)
-        k_form = QWidget()
-        k_form_layout = QFormLayout(k_form)
-        k_form_layout.setContentsMargins(0, 0, 0, 0)
-        self.K_input_tth = QDoubleSpinBox()
-        self.K_input_tth.setRange(-10.0, 10.0)
-        self.K_input_tth.setDecimals(4)
-        self.K_input_tth.setValue(0.1)
-        k_form_layout.addRow("K:", self.K_input_tth)
-        k_layout.addWidget(k_form)
-        self.K_toggle = QPushButton("De-activate")
-        self.K_toggle.setCheckable(True)
-        self.K_toggle.setChecked(False)  # Default to active (gray)
-        k_layout.addWidget(self.K_toggle)
-        hkl_input_layout.addWidget(k_row)
-
-        # L input row
-        l_row = QWidget()
-        l_layout = QHBoxLayout(l_row)
-        l_layout.setContentsMargins(0, 0, 0, 0)
-        l_form = QWidget()
-        l_form_layout = QFormLayout(l_form)
-        l_form_layout.setContentsMargins(0, 0, 0, 0)
-        self.L_input_tth = QDoubleSpinBox()
-        self.L_input_tth.setRange(-10.0, 10.0)
-        self.L_input_tth.setDecimals(4)
-        self.L_input_tth.setValue(-0.5)
-        self.L_input_tth.setEnabled(False)  # Default to disabled (grayed out)
-        l_form_layout.addRow("L:", self.L_input_tth)
-        l_layout.addWidget(l_form)
-        self.L_toggle = QPushButton("De-activate")
-        self.L_toggle.setCheckable(True)
-        self.L_toggle.setChecked(True)  # Default to deactivated (red)
-        l_layout.addWidget(self.L_toggle)
-        hkl_input_layout.addWidget(l_row)
-
-        hkl_layout.addRow(hkl_row)
-
-        # Connect toggle buttons to enable/disable corresponding inputs
-        self.H_toggle.toggled.connect(self._update_free_index_ui)
-        self.K_toggle.toggled.connect(self._update_free_index_ui)
-        self.L_toggle.toggled.connect(self._update_free_index_ui)
-
-        # Ensure only one index is free at a time
-        self.H_toggle.toggled.connect(
-            lambda checked: self._ensure_one_free_index("H", checked)
-        )
-        self.K_toggle.toggled.connect(
-            lambda checked: self._ensure_one_free_index("K", checked)
-        )
-        self.L_toggle.toggled.connect(
-            lambda checked: self._ensure_one_free_index("L", checked)
-        )
-
-        left_layout.addWidget(hkl_group)
-
-        # Calculate button with fancy styling
-        calculate_button = QPushButton("Calculate Angles")
-        calculate_button.clicked.connect(self.calculate_angles_tth_fixed)
-        calculate_button.setObjectName("calculateButton")
-        left_layout.addWidget(calculate_button)
-
-        # Results group
-        results_group = QGroupBox("Results")
-        results_layout = QVBoxLayout(results_group)
-
-        # Add a table widget to display all possible solutions
-        self.angles_results_table_tth = QTableWidget()
-        self.angles_results_table_tth.setColumnCount(4)
-        self.angles_results_table_tth.setHorizontalHeaderLabels(
-            ["tth (°)", "θ (°)", "φ (°)", "χ (°)"]
-        )
-        self.angles_results_table_tth.horizontalHeader().setSectionResizeMode(
-            QHeaderView.Stretch
-        )
-        # Connect selection change signal
-        self.angles_results_table_tth.itemSelectionChanged.connect(
-            self.on_angle_solution_selected_tth
-        )
-        results_layout.addWidget(self.angles_results_table_tth)
-
-        # Add clear button with smaller styling
-        clear_button_tth = QPushButton("Clear Results")
-        clear_button_tth.clicked.connect(self.clear_hk_tth_fixed_results)
-        clear_button_tth.setObjectName("clearButton")
-        results_layout.addWidget(clear_button_tth)
-
-        left_layout.addWidget(results_group)
         left_layout.addStretch()  # Add stretch to push content to top
 
         # Right column - Visualizers
@@ -778,16 +459,15 @@ class BrillouinCalculatorTab(TabInterface):
                 self.tab_widget.setCurrentIndex(0)
                 return
 
+            # Get parameters from the controls component
+            params = self.angles_to_hkl_controls.get_calculation_parameters()
+            
             # Calculate HKL
-            tth = self.tth_angle_input.value()
-            theta = self.theta_angle_input.value()
-            phi = self.phi_angle_input.value()
-            chi = self.chi_angle_input.value()
             result = self.calculator.calculate_hkl(
-                tth=tth,
-                theta=theta,
-                phi=phi,
-                chi=chi,
+                tth=params["tth"],
+                theta=params["theta"],
+                phi=params["phi"],
+                chi=params["chi"],
             )
             success = result.get("success", False)
             if not success:
@@ -795,14 +475,13 @@ class BrillouinCalculatorTab(TabInterface):
                     self, "Warning", result.get("error", "Unknown error")
                 )
                 return
-            # Update results
-            self.H_result.setText(f"{result['H']:.4f}")
-            self.K_result.setText(f"{result['K']:.4f}")
-            self.L_result.setText(f"{result['L']:.4f}")
+            
+            # Display results using the new results widget
+            self.angles_to_hkl_results.display_results(result)
 
             # Update visualization
             self.angles_to_hkl_visualizer.visualize_lab_system(
-                is_clear=True, chi=chi, phi=phi
+                is_clear=True, chi=params["chi"], phi=params["phi"]
             )
             self.angles_to_hkl_visualizer.visualize_scattering_geometry(
                 scattering_angles=result, is_clear=False
@@ -830,21 +509,16 @@ class BrillouinCalculatorTab(TabInterface):
                 self.tab_widget.setCurrentIndex(0)
                 return
 
-            # Determine which angle to fix based on radio button selection
-            fixed_angle_name = "chi" if self.fix_chi_radio.isChecked() else "phi"
-            fixed_angle_value = (
-                self.chi_input.value()
-                if self.fix_chi_radio.isChecked()
-                else self.phi_input.value()
-            )
+            # Get parameters from the controls component
+            params = self.hkl_to_angles_controls.get_calculation_parameters()
 
             # Calculate angles
             result = self.calculator.calculate_angles(
-                H=self.H_input.value(),
-                K=self.K_input.value(),
-                L=self.L_input.value(),
-                fixed_angle=fixed_angle_value,
-                fixed_angle_name=fixed_angle_name,
+                H=params["H"],
+                K=params["K"],
+                L=params["L"],
+                fixed_angle=params["fixed_angle_value"],
+                fixed_angle_name=params["fixed_angle_name"],
             )
 
             success = result.get("success", False)
@@ -860,45 +534,26 @@ class BrillouinCalculatorTab(TabInterface):
             phi_values = result["phi"]
             chi_values = result["chi"]
 
-            # Store the current row count to know where the new results start
-            start_row = self.angles_results_table.rowCount()
-            num_solutions = len(tth_values)
+            # Format results for the results widget
+            solutions = []
+            for i in range(len(tth_values)):
+                solutions.append({
+                    "tth": tth_values[i],
+                    "theta": theta_values[i],
+                    "phi": phi_values[i],
+                    "chi": chi_values[i],
+                    "is_primary": True  # Mark as primary solutions
+                })
 
-            # First, clear highlighting from all existing rows (set to white background)
-            for row in range(start_row):
-                for col in range(self.angles_results_table.columnCount()):
-                    item = self.angles_results_table.item(row, col)
-                    if item:
-                        item.setBackground(QBrush(QColor(255, 255, 255)))  # White background
-
-            # Append new solutions to the table
-            for i in range(num_solutions):
-                row_position = self.angles_results_table.rowCount()
-                self.angles_results_table.insertRow(row_position)
-
-                # Add items to the row with highlighting
-                tth_item = QTableWidgetItem(f"{tth_values[i]:.1f}")
-                theta_item = QTableWidgetItem(f"{theta_values[i]:.1f}")
-                phi_item = QTableWidgetItem(f"{phi_values[i]:.1f}")
-                chi_item = QTableWidgetItem(f"{chi_values[i]:.1f}")
-                
-                # Set background color for new items (230, 230, 240)
-                highlight_color = QBrush(QColor(230, 230, 240))
-                tth_item.setBackground(highlight_color)
-                theta_item.setBackground(highlight_color)
-                phi_item.setBackground(highlight_color)
-                chi_item.setBackground(highlight_color)
-
-                self.angles_results_table.setItem(row_position, 0, tth_item)
-                self.angles_results_table.setItem(row_position, 1, theta_item)
-                self.angles_results_table.setItem(row_position, 2, phi_item)
-                self.angles_results_table.setItem(row_position, 3, chi_item)
-
-            # Scroll to the bottom to show the new results
-            self.angles_results_table.scrollToBottom()
+            # Display results using the new results widget
+            formatted_result = {
+                "success": True,
+                "solutions": solutions
+            }
+            self.hkl_to_angles_results.display_results(formatted_result)
 
             # If we have at least one solution, visualize the first one
-            if num_solutions > 0:
+            if len(tth_values) > 0:
                 first_solution = {
                     "tth": tth_values[0],
                     "theta": theta_values[0],
@@ -921,45 +576,6 @@ class BrillouinCalculatorTab(TabInterface):
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
 
     @pyqtSlot()
-    def _update_fixed_angle_ui_tth(self):
-        """Update UI based on which angle is fixed."""
-        self.chi_input_tth.setEnabled(not self.chi_toggle.isChecked())
-        self.phi_input_tth.setEnabled(not self.phi_toggle.isChecked())
-
-    @pyqtSlot()
-    def _update_free_index_ui(self):
-        """Update UI based on which index is free."""
-        self.H_input_tth.setEnabled(not self.H_toggle.isChecked())
-        self.K_input_tth.setEnabled(not self.K_toggle.isChecked())
-        self.L_input_tth.setEnabled(not self.L_toggle.isChecked())
-
-    @pyqtSlot()
-    def _ensure_one_free_index(self, index, checked):
-        """Ensure only one index is free at a time."""
-        if checked:
-            # If this index is now free, uncheck the others
-            if index != "H":
-                self.H_toggle.setChecked(False)
-            if index != "K":
-                self.K_toggle.setChecked(False)
-            if index != "L":
-                self.L_toggle.setChecked(False)
-        else:
-            # If this index is now fixed, ensure at least one other is free
-            if not (
-                self.H_toggle.isChecked()
-                or self.K_toggle.isChecked()
-                or self.L_toggle.isChecked()
-            ):
-                # If no index is free, re-check this one
-                if index == "H":
-                    self.H_toggle.setChecked(True)
-                elif index == "K":
-                    self.K_toggle.setChecked(True)
-                else:
-                    self.L_toggle.setChecked(True)
-
-    @pyqtSlot()
     def calculate_angles_tth_fixed(self):
         """Calculate angles from HK with fixed tth."""
         try:
@@ -971,28 +587,17 @@ class BrillouinCalculatorTab(TabInterface):
                 self.tab_widget.setCurrentIndex(0)
                 return
 
-            # Determine which index to fix
-            fixed_index = None
-            if self.H_toggle.isChecked():
-                fixed_index = "H"
-            elif self.K_toggle.isChecked():
-                fixed_index = "K"
-            else:  # L_toggle is checked
-                fixed_index = "L"
-
-            # Determine which angle to fix
-            fixed_angle_name = "phi" if self.chi_toggle.isChecked() else "chi"
-            fixed_angle_value = (
-                self.phi_input_tth.value()
-                if self.chi_toggle.isChecked()
-                else self.chi_input_tth.value()
-            )
-
-            # Get input values
-            tth = self.tth_fixed_input.value()
-            H = self.H_input_tth.value() if fixed_index != "H" else None
-            K = self.K_input_tth.value() if fixed_index != "K" else None
-            L = self.L_input_tth.value() if fixed_index != "L" else None
+            # Get parameters from the controls component
+            params = self.hk_angles_controls.get_calculation_parameters()
+            
+            # Extract values for calculation
+            tth = params["tth"]
+            H = params["H"]
+            K = params["K"]
+            L = params["L"]
+            fixed_index = params["fixed_index"]
+            fixed_angle_name = params["fixed_angle_name"]
+            fixed_angle_value = params["fixed_angle_value"]
 
             # Calculate angles
             result = self.calculator.calculate_angles_tth_fixed(
@@ -1017,62 +622,31 @@ class BrillouinCalculatorTab(TabInterface):
             phi_values = result["phi"]
             chi_values = result["chi"]
 
-            # Store the current row count to know where the new results start
-            start_row = self.angles_results_table_tth.rowCount()
-            num_solutions = len(tth_values)
+            # Format results for the results widget
+            solutions = []
+            for i in range(len(tth_values)):
+                solutions.append({
+                    "tth": tth_values[i],
+                    "theta": theta_values[i],
+                    "phi": phi_values[i],
+                    "chi": chi_values[i],
+                    "is_primary": True  # Mark as primary solutions
+                })
 
-            # First, clear highlighting from all existing rows (set to white background)
-            for row in range(start_row):
-                for col in range(self.angles_results_table_tth.columnCount()):
-                    item = self.angles_results_table_tth.item(row, col)
-                    if item:
-                        item.setBackground(QBrush(QColor(255, 255, 255)))  # White background
-
-            # Append new solutions to the table
-            for i in range(num_solutions):
-                row_position = self.angles_results_table_tth.rowCount()
-                self.angles_results_table_tth.insertRow(row_position)
-
-                # Add items to the row with highlighting
-                tth_item = QTableWidgetItem(f"{tth_values[i]:.1f}")
-                theta_item = QTableWidgetItem(f"{theta_values[i]:.1f}")
-                phi_item = QTableWidgetItem(f"{phi_values[i]:.1f}")
-                chi_item = QTableWidgetItem(f"{chi_values[i]:.1f}")
-                
-                # Set background color for new items (230, 230, 240)
-                highlight_color = QBrush(QColor(230, 230, 240))
-                tth_item.setBackground(highlight_color)
-                theta_item.setBackground(highlight_color)
-                phi_item.setBackground(highlight_color)
-                chi_item.setBackground(highlight_color)
-
-                self.angles_results_table_tth.setItem(row_position, 0, tth_item)
-                self.angles_results_table_tth.setItem(row_position, 1, theta_item)
-                self.angles_results_table_tth.setItem(row_position, 2, phi_item)
-                self.angles_results_table_tth.setItem(row_position, 3, chi_item)
-
-            # Scroll to the bottom to show the new results
-            self.angles_results_table_tth.scrollToBottom()
+            # Display results using the new results widget
+            formatted_result = {
+                "success": True,
+                "solutions": solutions
+            }
+            self.hk_angles_results.display_results(formatted_result)
 
             # If we have at least one solution, update the HKL values and visualize it
-            if num_solutions > 0:
+            if len(tth_values) > 0:
                 # Update the HKL values
                 H_result = result["H"]
                 K_result = result["K"]
                 L_result = result["L"]
 
-                # Update the input fields without triggering signals
-                self.H_input_tth.blockSignals(True)
-                self.K_input_tth.blockSignals(True)
-                self.L_input_tth.blockSignals(True)
-
-                self.H_input_tth.setValue(H_result)
-                self.K_input_tth.setValue(K_result)
-                self.L_input_tth.setValue(L_result)
-
-                self.H_input_tth.blockSignals(False)
-                self.K_input_tth.blockSignals(False)
-                self.L_input_tth.blockSignals(False)
 
                 # Create a first solution for visualization
                 first_solution = {
@@ -1097,102 +671,54 @@ class BrillouinCalculatorTab(TabInterface):
             QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
 
     @pyqtSlot()
-    def _ensure_one_angle_deactivated(self, angle, checked):
-        """Ensure only one angle is deactivated at a time."""
-        if checked:
-            # If this angle is now deactivated, activate the other
-            if angle == "chi":
-                self.phi_toggle.setChecked(False)
-            else:
-                self.chi_toggle.setChecked(False)
-        else:
-            # If this angle is now activated, ensure at least one other is deactivated
-            if not (self.chi_toggle.isChecked() or self.phi_toggle.isChecked()):
-                # If no angle is deactivated, deactivate this one
-                if angle == "chi":
-                    self.chi_toggle.setChecked(True)
-                else:
-                    self.phi_toggle.setChecked(True)
-
-    @pyqtSlot()
-    def on_angle_solution_selected(self):
-        """Handle selection of a specific angle solution from the results table."""
-        selected_items = self.angles_results_table.selectedItems()
-        if not selected_items:
-            return
-
-        # Get the row of the first selected item
-        row = selected_items[0].row()
-
-        # Get values from the selected row - convert from text to float
-        tth = float(self.angles_results_table.item(row, 0).text())
-        theta = float(self.angles_results_table.item(row, 1).text())
-        phi = float(self.angles_results_table.item(row, 2).text())
-        chi = float(self.angles_results_table.item(row, 3).text())
-
-        # Create a solution dictionary
-        solution = {
-            "tth": tth,
-            "theta": theta,
-            "phi": phi,
-            "chi": chi,
-            "H": self.H_input.value(),
-            "K": self.K_input.value(),
-            "L": self.L_input.value(),
-        }
+    def on_angle_solution_selected(self, solution):
+        """Handle selection of a specific angle solution from the results widget."""
+        # Get HKL values from the controls component
+        params = self.hkl_to_angles_controls.get_calculation_parameters()
+        
+        # Add HKL values to the solution for visualization
+        complete_solution = dict(solution)
+        complete_solution["H"] = params["H"]
+        complete_solution["K"] = params["K"]
+        complete_solution["L"] = params["L"]
 
         # Update visualization with the selected solution
         self.hkl_to_angles_visualizer.visualize_lab_system(
-            is_clear=True, chi=chi, phi=phi
+            is_clear=True, chi=solution["chi"], phi=solution["phi"]
         )
         self.hkl_to_angles_visualizer.visualize_scattering_geometry(
-            scattering_angles=solution, is_clear=False
+            scattering_angles=complete_solution, is_clear=False
         )
 
     @pyqtSlot()
-    def on_angle_solution_selected_tth(self):
-        """Handle selection of a specific angle solution from the results table."""
-        selected_items = self.angles_results_table_tth.selectedItems()
-        if not selected_items:
-            return
-
-        # Get the row of the first selected item
-        row = selected_items[0].row()
-
-        # Get values from the selected row - convert from text to float
-        tth = float(self.angles_results_table_tth.item(row, 0).text())
-        theta = float(self.angles_results_table_tth.item(row, 1).text())
-        phi = float(self.angles_results_table_tth.item(row, 2).text())
-        chi = float(self.angles_results_table_tth.item(row, 3).text())
-
-        # Create a solution dictionary
-        solution = {
-            "tth": tth,
-            "theta": theta,
-            "phi": phi,
-            "chi": chi,
-            "H": self.H_input_tth.value(),
-            "K": self.K_input_tth.value(),
-            "L": self.L_input_tth.value(),
-        }
+    def on_angle_solution_selected_tth(self, solution):
+        """Handle selection of a specific angle solution from the results widget."""
+        # Get HKL values from the controls component
+        params = self.hk_angles_controls.get_calculation_parameters()
+        
+        # Add HKL values to the solution for visualization
+        complete_solution = dict(solution)
+        complete_solution["H"] = params["H"] if params["H"] is not None else 0.0
+        complete_solution["K"] = params["K"] if params["K"] is not None else 0.0
+        complete_solution["L"] = params["L"] if params["L"] is not None else 0.0
 
         # Update visualization with the selected solution
         self.hk_fixed_tth_visualizer.visualize_lab_system(
-            is_clear=True, chi=chi, phi=phi
+            is_clear=True, chi=solution["chi"], phi=solution["phi"]
         )
         self.hk_fixed_tth_visualizer.visualize_scattering_geometry(
-            scattering_angles=solution, is_clear=False
+            scattering_angles=complete_solution, is_clear=False
         )
 
     @pyqtSlot()
     def clear_hkl_to_angles_results(self):
         """Clear all results from the HKL to angles table."""
-        self.angles_results_table.setRowCount(0)
+        self.hkl_to_angles_results.clear_results()
 
     @pyqtSlot()
     def clear_hk_tth_fixed_results(self):
         """Clear all results from the HK to angles (tth fixed) table."""
-        self.angles_results_table_tth.setRowCount(0)
+        self.hk_angles_results.clear_results()
 
     def get_module_instance(self):
         """Get the backend module instance."""
