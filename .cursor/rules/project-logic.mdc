@@ -407,6 +407,41 @@ class VisualizationTab(TabInterface):
         
         self.canvas.draw()
 ```
+
+**Horizontal Layout Pattern with Multiple Visualizers**:
+```python
+from packages.visualizer.unitcell_visualizer import UnitcellVisualizer
+
+class ComplexVisualizationTab(TabInterface):
+    def init_ui(self):
+        # Main horizontal layout
+        main_layout = QHBoxLayout(self)
+        
+        # Left column - controls and inputs
+        left_column = QWidget()
+        left_layout = QVBoxLayout(left_column)
+        left_layout.addWidget(input_group)
+        left_layout.addWidget(calculate_button)
+        left_layout.addWidget(results_group)
+        left_layout.addStretch()  # Push content to top
+        
+        # Right column - visualizations
+        right_column = QWidget()
+        right_layout = QVBoxLayout(right_column)
+        right_layout.addWidget(self.primary_visualizer)
+        right_layout.addWidget(self.unitcell_visualizer)
+        
+        # Add columns with proportional sizing
+        main_layout.addWidget(left_column, 1)      # 1 part
+        main_layout.addWidget(right_column, 1.5)   # 1.5 parts
+    
+    def set_parameters(self, params: dict):
+        """Initialize visualizers with CIF file if provided."""
+        cif_file = params.get('cif_file')
+        if cif_file:
+            self.unitcell_visualizer.set_parameters({"cif_file": cif_file})
+            self.unitcell_visualizer.visualize_unitcell()
+```
 ### 5. Structure Factor UI/Visualization specifics
 
 - The `StructureFactorTab` uses subtabs: "In use" and "Deprecated".

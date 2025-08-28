@@ -155,7 +155,7 @@ class UnitcellVisualizer(FigureCanvas):
             
             # Plot atoms as scatter points
             self.axes.scatter(xyz[iii, 0], xyz[iii, 1], xyz[iii, 2], 
-                            s=1.5 * sizes[n], c=col, label=labels[n], alpha=0.85,
+                            s=1 * sizes[n], c=col, label=labels[n], alpha=1,
                             edgecolors='white', linewidth=0.1)
             
             # Plot magnetic vectors (arrows) if they exist

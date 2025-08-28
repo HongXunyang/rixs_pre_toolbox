@@ -114,6 +114,7 @@ class ModuleCalculator:
 ### Visualization (`packages/visualizer/`)
 - **[scattering_visualizer.py](mdc:packages/visualizer/scattering_visualizer.py)**: Scattering geometry plots
 - **[coordinate_visualizer.py](mdc:packages/visualizer/coordinate_visualizer.py)**: Coordinate system visualization
+- **[unitcell_visualizer.py](mdc:packages/visualizer/unitcell_visualizer.py)**: Crystal unit cell visualization from CIF files
 - **[structure_factor_visualizer.py](mdc:packages/visualizer/structure_factor_visualizer.py)**: 3D structure factors and translucent HKL planes (class `StructureFactorVisualizer3D`)
 - **[structure_factor_visualizer_2d.py](mdc:packages/visualizer/structure_factor_visualizer_2d.py)**: 2D sliced planes (HK/HL/KL) without colorbar
 

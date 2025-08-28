@@ -145,7 +145,7 @@ class StructureFactorTab(TabInterface):
 
         # Controls for HK plane (L fixed)
         self.hk_ctrl_group = self._create_fixed_index_controls(
-            label_prefix="HK plane", fixed_name="L", default_value=1
+            label_prefix="HK plane", fixed_name="L", default_value=0
         )
         self.hk_ctrl_group["spin"].valueChanged.connect(
             lambda v: self._sync_slider_and_update(
@@ -167,7 +167,7 @@ class StructureFactorTab(TabInterface):
 
         # Controls for HL plane (K fixed)
         self.hl_ctrl_group = self._create_fixed_index_controls(
-            label_prefix="HL plane", fixed_name="K", default_value=2
+            label_prefix="HL plane", fixed_name="K", default_value=0
         )
         self.hl_ctrl_group["spin"].valueChanged.connect(
             lambda v: self._sync_slider_and_update(
@@ -188,7 +188,7 @@ class StructureFactorTab(TabInterface):
 
         # Controls for KL plane (H fixed)
         self.kl_ctrl_group = self._create_fixed_index_controls(
-            label_prefix="KL plane", fixed_name="H", default_value=1
+            label_prefix="KL plane", fixed_name="H", default_value=0
         )
         self.kl_ctrl_group["spin"].valueChanged.connect(
             lambda v: self._sync_slider_and_update(
