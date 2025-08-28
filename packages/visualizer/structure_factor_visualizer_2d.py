@@ -13,7 +13,7 @@ class StructureFactorVisualizer2D(FigureCanvas):
     """
 
     def __init__(self, width: float = 5.0, height: float = 4.0, dpi: int = 100):
-        self.fig = Figure(figsize=(width, height), dpi=dpi, tight_layout=True)
+        self.fig = Figure(figsize=(float(width), float(height)), dpi=int(dpi), tight_layout=True)
         super().__init__(self.fig)
         self.axes = self.fig.add_subplot(111)
         self._colorbar = None

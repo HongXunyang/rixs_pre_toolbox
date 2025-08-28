@@ -203,6 +203,8 @@ class BrillouinCalculatorTab(TabInterface):
         cif_file = params.get('cif_file')
         if cif_file:
             self._update_unitcell_visualizers(cif_file)
+            
+        # HKL scan visualizer uses trajectory-only mode, no structure factor calculator needed
 
         print("params set!!!!!!!!")
 
@@ -384,13 +386,16 @@ class BrillouinCalculatorTab(TabInterface):
         self.hkl_scan_controls.calculateClicked.connect(self.calculate_hkl_scan)
         scan_layout.addWidget(self.hkl_scan_controls, 1)
 
-        # Create results table & 2d visualization, need a QVbox
+        # Create results table & 2d visualization
         results_layout = QVBoxLayout()
 
+        # Results table
         self.hkl_scan_results_table = HKLScanResultsTable(parent=self)
-        results_layout.addWidget(self.hkl_scan_results_table)
-        self.hkl_scan_visualizer = None
-        results_layout.addWidget(self.hkl_scan_visualizer)
+        results_layout.addWidget(self.hkl_scan_results_table, 1)
+        
+        # 2D visualizer section
+        self.hkl_scan_visualizer = HKLScan2DVisualizer(parent=self)
+        results_layout.addWidget(self.hkl_scan_visualizer, 1)
 
         # Add to layout
         scan_layout.addLayout(results_layout, 1.5)
@@ -433,9 +438,43 @@ class BrillouinCalculatorTab(TabInterface):
 
             # Display results in table
             self.hkl_scan_results_table.display_results(result)
+            
+            # Update visualization
+            self.update_hkl_visualization(result)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculating HKL scan: {str(e)}")
+
+    @pyqtSlot()
+    def update_hkl_visualization(self, scan_results=None):
+        """Update the HKL scan visualization with auto-detected ranges and results."""
+        try:
+            # Structure factor calculator not needed for trajectory-only visualization
+            
+            # Use the provided scan results or the last stored results
+            if scan_results is None:
+                scan_results = getattr(self.hkl_scan_visualizer, 'last_scan_results', None)
+            
+            if scan_results:
+                # Determine plane type from deactivated index
+                deactivated_index = scan_results.get("deactivated_index", "L")
+                if deactivated_index == "L":
+                    plane_type = "HK"
+                elif deactivated_index == "K":
+                    plane_type = "HL"
+                elif deactivated_index == "H":
+                    plane_type = "KL"
+                else:
+                    plane_type = "HK"  # Default
+                
+                # Visualize results (ranges will be auto-detected)
+                self.hkl_scan_visualizer.visualize_results(scan_results, plane_type)
+            else:
+                # No scan results yet, just clear the plot
+                self.hkl_scan_visualizer.clear_plot()
+                
+        except Exception as e:
+            print(f"Error updating HKL visualization: {e}")
 
     @pyqtSlot()
     def browse_cif_file(self):

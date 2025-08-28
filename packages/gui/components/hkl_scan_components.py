@@ -23,6 +23,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QBrush
 import csv
 import os
+import numpy as np
 from packages.visualizer.structure_factor_visualizer_2d import StructureFactorVisualizer2D
 
 
@@ -627,11 +628,499 @@ class HKLScanResultsTable(QTableWidget):
 
 
 class HKLScan2DVisualizer(StructureFactorVisualizer2D):
-    """Visualizer for HKL scan results."""
+    """2D visualizer for HKL scan results with structure factor display and trajectory line."""
+
+    def __init__(self, parent=None):
+        super().__init__()  # Call parent with default parameters
+        self.setParent(parent)  # Set PyQt parent separately
+        
+        # No structure factor calculator needed for trajectory-only visualization
+        self.sf_calculator = None
+        self._sf_calculator_initialized = False
+        
+        # Default range settings: H,K in (-1,1), L in (-2,2)
+        self.default_h_range = (-1.0, 1.0)
+        self.default_k_range = (-1.0, 1.0)
+        self.default_l_range = (-2.0, 2.0)
+        
+        # Current range settings
+        self.h_range = self.default_h_range
+        self.k_range = self.default_k_range
+        self.l_range = self.default_l_range
+        
+        # Store last scan results for trajectory
+        self.last_scan_results = None
+
+    def _auto_detect_ranges(self, scan_results):
+        """Auto-detect HKL ranges based on scan results.
+        
+        Args:
+            scan_results: Dictionary containing H, K, L arrays from scan
+            
+        Returns:
+            tuple: (h_range, k_range, l_range) where each range is (min, max)
+        """
+        import math
+        
+        try:
+            # Extract HKL values from scan results
+            h_vals = np.array(scan_results.get("H", []), dtype=np.float64)
+            k_vals = np.array(scan_results.get("K", []), dtype=np.float64)
+            l_vals = np.array(scan_results.get("L", []), dtype=np.float64)
+            
+            # Find max absolute values and round up to ceiling
+            if len(h_vals) > 0:
+                h_max = math.ceil(np.max(np.abs(h_vals)))
+                h_range = (-h_max, h_max)
+            else:
+                h_range = self.default_h_range
+                
+            if len(k_vals) > 0:
+                k_max = math.ceil(np.max(np.abs(k_vals)))
+                k_range = (-k_max, k_max)
+            else:
+                k_range = self.default_k_range
+                
+            if len(l_vals) > 0:
+                l_max = math.ceil(np.max(np.abs(l_vals)))
+                l_range = (-l_max, l_max)
+            else:
+                l_range = self.default_l_range
+                
+            return h_range, k_range, l_range
+            
+        except Exception as e:
+            print(f"Error auto-detecting ranges: {e}")
+            return self.default_h_range, self.default_k_range, self.default_l_range
+
+    def set_ranges(self, h_range=None, k_range=None, l_range=None):
+        """Set the plotting ranges for H, K, L indices.
+        
+        Args:
+            h_range: tuple (min, max) for H range, or None to keep current
+            k_range: tuple (min, max) for K range, or None to keep current  
+            l_range: tuple (min, max) for L range, or None to keep current
+        """
+        if h_range is not None:
+            self.h_range = h_range
+        if k_range is not None:
+            self.k_range = k_range
+        if l_range is not None:
+            self.l_range = l_range
+
+    def initialize_structure_factor_calculator(self, cif_file_path: str, energy: float):
+        """Structure factor calculator not used in trajectory-only mode."""
+        print("Structure factor calculator not needed for trajectory visualization")
+        return True
+
+    def _generate_hkl_grid(self, deactivated_index=None):
+        """Generate HKL grid points within the current ranges.
+        
+        Args:
+            deactivated_index: The index that varies in the scan ("H", "K", or "L")
+            
+        Returns:
+            list of [H, K, L] points
+        """
+        import numpy as np
+        
+        # Create ranges with reasonable step size for visualization
+        h_vals = np.arange(float(self.h_range[0]), float(self.h_range[1]) + 0.5, 0.5, dtype=np.float64)
+        k_vals = np.arange(float(self.k_range[0]), float(self.k_range[1]) + 0.5, 0.5, dtype=np.float64)
+        l_vals = np.arange(float(self.l_range[0]), float(self.l_range[1]) + 0.5, 0.5, dtype=np.float64)
+        
+        hkl_points = []
+        for h in h_vals:
+            for k in k_vals:
+                for l in l_vals:
+                    hkl_points.append([h, k, l])
+        
+        return hkl_points
+
+    def _get_plane_points(self, plane_type, deactivated_index):
+        """Get the 2D plane points based on plane type.
+        
+        Args:
+            plane_type: "HK", "HL", or "KL"
+            deactivated_index: "H", "K", or "L" (the fixed index for the plane)
+            
+        Returns:
+            tuple: (x_coords, y_coords, x_label, y_label, fixed_label, fixed_value)
+        """
+        import numpy as np
+        
+        if plane_type == "HK":
+            # HK plane: H and K are active (use auto-detected ranges), L is fixed
+            fixed_value = float(self.l_range[0] + self.l_range[1]) / 2.0
+            h_vals = np.arange(float(self.h_range[0]), float(self.h_range[1]) + 0.5, 0.5, dtype=np.float64)
+            k_vals = np.arange(float(self.k_range[0]), float(self.k_range[1]) + 0.5, 0.5, dtype=np.float64)
+            return h_vals, k_vals, "H", "K", "L", fixed_value
+        elif plane_type == "HL":
+            # HL plane: H and L are active (use auto-detected ranges), K is fixed  
+            fixed_value = float(self.k_range[0] + self.k_range[1]) / 2.0
+            h_vals = np.arange(float(self.h_range[0]), float(self.h_range[1]) + 0.5, 0.5, dtype=np.float64)
+            l_vals = np.arange(float(self.l_range[0]), float(self.l_range[1]) + 0.5, 0.5, dtype=np.float64)
+            return h_vals, l_vals, "H", "L", "K", fixed_value
+        elif plane_type == "KL":
+            # KL plane: K and L are active (use auto-detected ranges), H is fixed
+            fixed_value = float(self.h_range[0] + self.h_range[1]) / 2.0
+            k_vals = np.arange(float(self.k_range[0]), float(self.k_range[1]) + 0.5, 0.5, dtype=np.float64)
+            l_vals = np.arange(float(self.l_range[0]), float(self.l_range[1]) + 0.5, 0.5, dtype=np.float64)
+            return k_vals, l_vals, "K", "L", "H", fixed_value
+        else:
+            raise ValueError(f"Unknown plane type: {plane_type}")
+
+    def visualize_results(self, scan_results, plane_type="HK"):
+        """Visualize HKL scan results with structure factors and trajectory line.
+        
+        Args:
+            scan_results: Dictionary containing scan results from BrillouinCalculator
+            plane_type: "HK", "HL", or "KL" - which plane to visualize
+        """
+        try:
+            if not scan_results or not scan_results.get("success", False):
+                self.clear_plot()
+                return False
+                
+            # Store scan results for trajectory
+            self.last_scan_results = scan_results
+            
+            # Auto-detect ranges based on scan results
+            h_range, k_range, l_range = self._auto_detect_ranges(scan_results)
+            self.set_ranges(h_range, k_range, l_range)
+            
+            # Extract deactivated index from scan results
+            deactivated_index = scan_results.get("deactivated_index", None)
+            
+            # Map plane type to match deactivated index
+            if deactivated_index == "L" and plane_type != "HK":
+                plane_type = "HK"  # L deactivated means HK plane
+            elif deactivated_index == "K" and plane_type != "HL":
+                plane_type = "HL"  # K deactivated means HL plane
+            elif deactivated_index == "H" and plane_type != "KL":
+                plane_type = "KL"  # H deactivated means KL plane
+            
+            # Get plane coordinates
+            x_vals, y_vals, x_label, y_label, fixed_label, fixed_value = self._get_plane_points(
+                plane_type, deactivated_index
+            )
+            
+            # Plot only the trajectory points as scatter
+            success = self._plot_trajectory_only(scan_results, plane_type, x_label, y_label, fixed_label, fixed_value)
+            
+            return success
+            
+        except Exception as e:
+            print(f"Error in visualize_results: {e}")
+            return False
+
+    def _plot_trajectory_only(self, scan_results, plane_type, x_label, y_label, fixed_label, fixed_value):
+        """Plot only the trajectory points as scatter without structure factor background.
+        
+        Args:
+            scan_results: Dictionary containing H, K, L arrays from scan
+            plane_type: "HK", "HL", or "KL"
+            x_label: X axis label ("H", "K", or "L")
+            y_label: Y axis label ("H", "K", or "L")
+            fixed_label: Fixed axis label ("H", "K", or "L")
+            fixed_value: Value of the fixed axis
+        """
+        try:
+            # Extract HKL coordinates from scan results
+            h_vals = np.array(scan_results.get("H", []), dtype=np.float64)
+            k_vals = np.array(scan_results.get("K", []), dtype=np.float64)  
+            l_vals = np.array(scan_results.get("L", []), dtype=np.float64)
+            
+            if len(h_vals) == 0:
+                self.clear_plot()
+                return False
+            
+            # Get the appropriate coordinates for the plane
+            if plane_type == "HK":
+                x_traj = h_vals
+                y_traj = k_vals
+            elif plane_type == "HL":
+                x_traj = h_vals
+                y_traj = l_vals
+            elif plane_type == "KL":
+                x_traj = k_vals
+                y_traj = l_vals
+            else:
+                self.clear_plot()
+                return False
+
+            # Reset axes
+            if self._colorbar is not None:
+                self._colorbar.remove()
+                self._colorbar = None
+            self.fig.clear()
+            ax = self.fig.add_subplot(111)
+            self.axes = ax
+
+            # Plot trajectory as scatter points
+            # Use different colors for start, middle, and end points
+            if len(x_traj) > 0:
+                # Plot all points in blue
+                scatter = ax.scatter(x_traj, y_traj, c='dodgerblue', s=15, alpha=0.7, 
+                                   label='Scan points', zorder=3)
+                
+
+
+
+            ax.set_xlabel(f"{x_label} (r.l.u.)")
+            ax.set_ylabel(f"{y_label} (r.l.u.)")
+            ax.set_title(f"{x_label}{y_label} plane | {fixed_label} = {fixed_value:.1f}")
+
+            # Set limits based on auto-detected ranges for the current plane
+            if plane_type == "HK":
+                x_min, x_max = self.h_range[0], self.h_range[1]
+                y_min, y_max = self.k_range[0], self.k_range[1]
+            elif plane_type == "HL":
+                x_min, x_max = self.h_range[0], self.h_range[1]
+                y_min, y_max = self.l_range[0], self.l_range[1]
+            elif plane_type == "KL":
+                x_min, x_max = self.k_range[0], self.k_range[1]
+                y_min, y_max = self.l_range[0], self.l_range[1]
+            else:
+                # Fallback to trajectory data range
+                x_min, x_max = x_traj.min(), x_traj.max()
+                y_min, y_max = y_traj.min(), y_traj.max()
+                
+            ax.set_xlim(x_min, x_max)
+            ax.set_ylim(y_min, y_max)
+            
+            # Add grid and legend
+            ax.grid(True, alpha=0.3)
+            
+            try:
+                from matplotlib.ticker import MaxNLocator
+                ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+                ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+            except Exception:
+                pass
+
+            self.draw()
+            return True
+            
+        except Exception as e:
+            print(f"Error in _plot_trajectory_only: {e}")
+            return False
+
+    def _visualize_plane_with_ranges(self, x_coords, y_coords, sf_values, 
+                                   x_label, y_label, fixed_label, fixed_value, value_max,
+                                   plane_type):
+        """Visualize plane with proper range limits based on auto-detected ranges.
+        
+        Args:
+            x_coords: X coordinates for plotting
+            y_coords: Y coordinates for plotting  
+            sf_values: Structure factor values
+            x_label: X axis label ("H", "K", or "L")
+            y_label: Y axis label ("H", "K", or "L")
+            fixed_label: Fixed axis label ("H", "K", or "L")
+            fixed_value: Value of the fixed axis
+            value_max: Maximum value for color scaling
+            plane_type: Type of plane ("HK", "HL", "KL")
+        """
+        try:
+            x = np.asarray(x_coords)
+            y = np.asarray(y_coords)
+            f = np.asarray(sf_values)
+            
+            if value_max is None:
+                value_max = f.max() if len(f) > 0 else 1.0
+            if len(x) == 0 or len(y) == 0 or len(f) == 0 or len(x) != len(y) or len(x) != len(f):
+                return False
+
+            # Reset axes
+            if self._colorbar is not None:
+                self._colorbar.remove()
+                self._colorbar = None
+            self.fig.clear()
+            ax = self.fig.add_subplot(111)
+            self.axes = ax
+
+            # Normalize for size
+            min_size, max_size = 0, 300
+            if value_max > 0:
+                sizes = min_size + (max_size - min_size) * (f / value_max)
+            else:
+                sizes = np.full_like(f, min_size, dtype=float)
+
+            mask = sizes < 1
+            sizes = sizes[~mask]
+            x_plot = x[~mask]
+            y_plot = y[~mask]
+            f_plot = f[~mask]
+
+            sc = ax.scatter(x_plot, y_plot, c=f_plot, s=sizes, cmap="viridis", alpha=0.9, vmax=value_max)
+
+            # Add labels for each point
+            x_key = x_label.upper()
+            y_key = y_label.upper()
+            f_key = fixed_label.upper()
+            
+            for i, (xi, yi) in enumerate(zip(x, y)):
+                if mask[i]:
+                    color_font = "silver"
+                else:
+                    color_font = "black"
+                values = {"H": None, "K": None, "L": None}
+                values[x_key] = int(round(float(xi)))
+                values[y_key] = int(round(float(yi)))
+                values[f_key] = int(fixed_value)
+                ax.text(
+                    xi + 0.05,
+                    yi + 0.05,
+                    f"{values['H']} {values['K']} {values['L']}",
+                    fontsize=7,
+                    color=color_font,
+                )
+
+            ax.set_xlabel(f"{x_label} (r.l.u.)")
+            ax.set_ylabel(f"{y_label} (r.l.u.)")
+            ax.set_title(f"{x_label}{y_label} plane | {fixed_label} = {fixed_value}")
+
+            # Set limits based on auto-detected ranges for the current plane
+            if plane_type == "HK":
+                x_min, x_max = self.h_range[0] - 0.5, self.h_range[1] + 0.5
+                y_min, y_max = self.k_range[0] - 0.5, self.k_range[1] + 0.5
+            elif plane_type == "HL":
+                x_min, x_max = self.h_range[0] - 0.5, self.h_range[1] + 0.5
+                y_min, y_max = self.l_range[0] - 0.5, self.l_range[1] + 0.5
+            elif plane_type == "KL":
+                x_min, x_max = self.k_range[0] - 0.5, self.k_range[1] + 0.5
+                y_min, y_max = self.l_range[0] - 0.5, self.l_range[1] + 0.5
+            else:
+                # Fallback to data range
+                x_min, x_max = x.min() - 0.5, x.max() + 0.5
+                y_min, y_max = y.min() - 0.5, y.max() + 0.5
+                
+            ax.set_xlim(x_min, x_max)
+            ax.set_ylim(y_min, y_max)
+            
+            try:
+                from matplotlib.ticker import MaxNLocator
+                ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+                ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+            except Exception:
+                pass
+
+            ax.grid(True, alpha=0.3)
+            self.draw()
+            return True
+            
+        except Exception as e:
+            print(f"Error in _visualize_plane_with_ranges: {e}")
+            return False
+
+
+
+
+class HKLRangeControls(QWidget):
+    """Widget for controlling the HKL visualization ranges."""
+    
+    # Signal emitted when ranges change
+    rangesChanged = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
-
-    def visualize_results(self, results):
-        """Visualize results."""
-        pass
+        self._init_ui()
+        
+    def _init_ui(self):
+        """Initialize the range control UI."""
+        layout = QFormLayout(self)
+        
+        # H range controls
+        h_layout = QHBoxLayout()
+        self.h_min_spin = QDoubleSpinBox()
+        self.h_min_spin.setRange(-10.0, 10.0)
+        self.h_min_spin.setValue(-1.0)
+        self.h_min_spin.setDecimals(1)
+        self.h_min_spin.setSingleStep(0.5)
+        
+        self.h_max_spin = QDoubleSpinBox()
+        self.h_max_spin.setRange(-10.0, 10.0)
+        self.h_max_spin.setValue(1.0)
+        self.h_max_spin.setDecimals(1)
+        self.h_max_spin.setSingleStep(0.5)
+        
+        h_layout.addWidget(QLabel("Min:"))
+        h_layout.addWidget(self.h_min_spin)
+        h_layout.addWidget(QLabel("Max:"))
+        h_layout.addWidget(self.h_max_spin)
+        layout.addRow("H Range:", h_layout)
+        
+        # K range controls
+        k_layout = QHBoxLayout()
+        self.k_min_spin = QDoubleSpinBox()
+        self.k_min_spin.setRange(-10.0, 10.0)
+        self.k_min_spin.setValue(-1.0)
+        self.k_min_spin.setDecimals(1)
+        self.k_min_spin.setSingleStep(0.5)
+        
+        self.k_max_spin = QDoubleSpinBox()
+        self.k_max_spin.setRange(-10.0, 10.0)
+        self.k_max_spin.setValue(1.0)
+        self.k_max_spin.setDecimals(1)
+        self.k_max_spin.setSingleStep(0.5)
+        
+        k_layout.addWidget(QLabel("Min:"))
+        k_layout.addWidget(self.k_min_spin)
+        k_layout.addWidget(QLabel("Max:"))
+        k_layout.addWidget(self.k_max_spin)
+        layout.addRow("K Range:", k_layout)
+        
+        # L range controls  
+        l_layout = QHBoxLayout()
+        self.l_min_spin = QDoubleSpinBox()
+        self.l_min_spin.setRange(-10.0, 10.0)
+        self.l_min_spin.setValue(-2.0)
+        self.l_min_spin.setDecimals(1)
+        self.l_min_spin.setSingleStep(0.5)
+        
+        self.l_max_spin = QDoubleSpinBox()
+        self.l_max_spin.setRange(-10.0, 10.0)
+        self.l_max_spin.setValue(2.0)
+        self.l_max_spin.setDecimals(1)
+        self.l_max_spin.setSingleStep(0.5)
+        
+        l_layout.addWidget(QLabel("Min:"))
+        l_layout.addWidget(self.l_min_spin)
+        l_layout.addWidget(QLabel("Max:"))
+        l_layout.addWidget(self.l_max_spin)
+        layout.addRow("L Range:", l_layout)
+        
+        # Connect signals
+        for spin in [self.h_min_spin, self.h_max_spin, self.k_min_spin, 
+                     self.k_max_spin, self.l_min_spin, self.l_max_spin]:
+            spin.valueChanged.connect(self.rangesChanged.emit)
+    
+    def get_ranges(self):
+        """Get the current range values.
+        
+        Returns:
+            tuple: (h_range, k_range, l_range) where each range is (min, max)
+        """
+        h_range = (self.h_min_spin.value(), self.h_max_spin.value())
+        k_range = (self.k_min_spin.value(), self.k_max_spin.value())
+        l_range = (self.l_min_spin.value(), self.l_max_spin.value())
+        return h_range, k_range, l_range
+    
+    def set_ranges(self, h_range=None, k_range=None, l_range=None):
+        """Set the range values.
+        
+        Args:
+            h_range: tuple (min, max) for H range, or None to keep current
+            k_range: tuple (min, max) for K range, or None to keep current
+            l_range: tuple (min, max) for L range, or None to keep current
+        """
+        if h_range is not None:
+            self.h_min_spin.setValue(h_range[0])
+            self.h_max_spin.setValue(h_range[1])
+        if k_range is not None:
+            self.k_min_spin.setValue(k_range[0])
+            self.k_max_spin.setValue(k_range[1])
+        if l_range is not None:
+            self.l_min_spin.setValue(l_range[0])
+            self.l_max_spin.setValue(l_range[1])
