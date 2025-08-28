@@ -23,6 +23,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QBrush
 import csv
 import os
+from packages.visualizer.structure_factor_visualizer_2d import StructureFactorVisualizer2D
 
 
 class RangeInputWidget(QWidget):
@@ -35,8 +36,9 @@ class RangeInputWidget(QWidget):
         layout = QFormLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Create group with label
+        # Create group with label but remove border styling
         group = QGroupBox(label)
+        group.setStyleSheet("QGroupBox { border: none; font-weight: bold; }")
         group_layout = QHBoxLayout(group)
         group_layout.setContentsMargins(10, 10, 10, 10)
 
@@ -85,6 +87,10 @@ class RangeInputWidget(QWidget):
         self.start_input.setEnabled(enabled)
         self.end_input.setEnabled(enabled)
 
+    def set_visible(self, visible):
+        """Show or hide widget."""
+        self.setVisible(visible)
+
 
 class HKLScanControls(QWidget):
     """Widget for HKL scan controls."""
@@ -117,12 +123,22 @@ class HKLScanControls(QWidget):
         angle_selection = QWidget()
         angle_selection_layout = QHBoxLayout(angle_selection)
 
-        self.fix_chi_radio = QRadioButton("Fix χ")
-        self.fix_phi_radio = QRadioButton("Fix φ")
-        self.fix_chi_radio.setChecked(True)  # Default to fixed chi
+        self.fix_chi_btn = QPushButton("Fix χ")
+        self.fix_phi_btn = QPushButton("Fix φ")
+        
+        # Make buttons checkable for toggle behavior
+        for btn in (self.fix_chi_btn, self.fix_phi_btn):
+            btn.setCheckable(True)
+        
+        self.fix_chi_btn.setChecked(True)  # Default to fixed chi
 
-        angle_selection_layout.addWidget(self.fix_chi_radio)
-        angle_selection_layout.addWidget(self.fix_phi_radio)
+        # Create a button group for mutual exclusion
+        self.angle_button_group = QButtonGroup(self)
+        self.angle_button_group.addButton(self.fix_chi_btn)
+        self.angle_button_group.addButton(self.fix_phi_btn)
+
+        angle_selection_layout.addWidget(self.fix_chi_btn)
+        angle_selection_layout.addWidget(self.fix_phi_btn)
 
         fixed_angle_layout.addWidget(angle_selection)
 
@@ -130,28 +146,28 @@ class HKLScanControls(QWidget):
         angle_values = QWidget()
         angle_values_layout = QHBoxLayout(angle_values)
         angle_values_layout.setContentsMargins(0, 0, 0, 0)
-
+        
         # Chi input
-        chi_widget = QWidget()
-        chi_layout = QFormLayout(chi_widget)
+        self.chi_widget = QWidget()
+        chi_layout = QFormLayout(self.chi_widget)
         chi_layout.setContentsMargins(0, 0, 0, 0)
         self.chi_input = QDoubleSpinBox()
         self.chi_input.setRange(-180.0, 180.0)
         self.chi_input.setValue(0.0)
         self.chi_input.setSuffix(" °")
         chi_layout.addRow("χ:", self.chi_input)
-        angle_values_layout.addWidget(chi_widget)
+        angle_values_layout.addWidget(self.chi_widget)
 
         # Phi input
-        phi_widget = QWidget()
-        phi_layout = QFormLayout(phi_widget)
+        self.phi_widget = QWidget()
+        phi_layout = QFormLayout(self.phi_widget)
         phi_layout.setContentsMargins(0, 0, 0, 0)
         self.phi_input = QDoubleSpinBox()
         self.phi_input.setRange(-180.0, 180.0)
         self.phi_input.setValue(0.0)
         self.phi_input.setSuffix(" °")
         phi_layout.addRow("φ:", self.phi_input)
-        angle_values_layout.addWidget(phi_widget)
+        angle_values_layout.addWidget(self.phi_widget)
 
         fixed_angle_layout.addWidget(angle_values)
         main_layout.addWidget(fixed_angle_group)
@@ -160,25 +176,30 @@ class HKLScanControls(QWidget):
         hkl_group = QGroupBox("HKL Scan")
         hkl_layout = QVBoxLayout(hkl_group)
 
-        # Index selection
+        # Plane selection - using plane-based naming like Structure Factor Calculator
         index_selection = QWidget()
         index_layout = QHBoxLayout(index_selection)
         index_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.h_toggle = QRadioButton("Deactivate H")
-        self.k_toggle = QRadioButton("Deactivate K")
-        self.l_toggle = QRadioButton("Deactivate L")
-        self.l_toggle.setChecked(True)  # Default to deactivated L
+        self.hk_plane_toggle = QPushButton("HK plane")
+        self.hl_plane_toggle = QPushButton("HL plane")
+        self.kl_plane_toggle = QPushButton("KL plane")
+        
+        # Make buttons checkable for toggle behavior
+        for btn in (self.hk_plane_toggle, self.hl_plane_toggle, self.kl_plane_toggle):
+            btn.setCheckable(True)
+        
+        self.hk_plane_toggle.setChecked(True)  # Default to HK plane (L deactivated)
 
         # Create a button group for mutual exclusion
         index_button_group = QButtonGroup(self)
-        index_button_group.addButton(self.h_toggle)
-        index_button_group.addButton(self.k_toggle)
-        index_button_group.addButton(self.l_toggle)
+        index_button_group.addButton(self.hk_plane_toggle)
+        index_button_group.addButton(self.hl_plane_toggle)
+        index_button_group.addButton(self.kl_plane_toggle)
 
-        index_layout.addWidget(self.h_toggle)
-        index_layout.addWidget(self.k_toggle)
-        index_layout.addWidget(self.l_toggle)
+        index_layout.addWidget(self.hk_plane_toggle)
+        index_layout.addWidget(self.hl_plane_toggle)
+        index_layout.addWidget(self.kl_plane_toggle)
 
         hkl_layout.addWidget(index_selection)
 
@@ -217,44 +238,118 @@ class HKLScanControls(QWidget):
         main_layout.addWidget(self.calculate_button)
 
         # Connect signals
-        self.h_toggle.toggled.connect(self._update_widget_states)
-        self.k_toggle.toggled.connect(self._update_widget_states)
-        self.l_toggle.toggled.connect(self._update_widget_states)
-        self.fix_chi_radio.toggled.connect(self._update_fixed_angle_ui)
-        self.fix_phi_radio.toggled.connect(self._update_fixed_angle_ui)
+        self.hk_plane_toggle.clicked.connect(lambda: self._set_active_plane("HK"))
+        self.hl_plane_toggle.clicked.connect(lambda: self._set_active_plane("HL"))
+        self.kl_plane_toggle.clicked.connect(lambda: self._set_active_plane("KL"))
+        self.fix_chi_btn.clicked.connect(lambda: self._set_active_fixed_angle("chi"))
+        self.fix_phi_btn.clicked.connect(lambda: self._set_active_fixed_angle("phi"))
 
         # Initialize widget states
-        self._update_widget_states()
-        self._update_fixed_angle_ui()
+        self._set_active_plane("HK")  # Set initial plane and apply styling
+        self._set_active_fixed_angle("chi")  # Set initial fixed angle and apply styling
 
     def _update_widget_states(self):
-        """Update enabled state of widgets based on current selection."""
-        self.h_range.set_enabled(not self.h_toggle.isChecked())
-        self.k_range.set_enabled(not self.k_toggle.isChecked())
-        self.l_range.set_enabled(not self.l_toggle.isChecked())
+        """Update visibility of widgets based on current plane selection.
+        
+        HK plane: H and K ranges visible, L range hidden
+        HL plane: H and L ranges visible, K range hidden  
+        KL plane: K and L ranges visible, H range hidden
+        """
+        if self.hk_plane_toggle.isChecked():
+            # HK plane: H and K ranges visible, L range hidden
+            self.h_range.set_visible(True)
+            self.k_range.set_visible(True)
+            self.l_range.set_visible(False)
+        elif self.hl_plane_toggle.isChecked():
+            # HL plane: H and L ranges visible, K range hidden
+            self.h_range.set_visible(True)
+            self.k_range.set_visible(False)
+            self.l_range.set_visible(True)
+        elif self.kl_plane_toggle.isChecked():
+            # KL plane: K and L ranges visible, H range hidden
+            self.h_range.set_visible(False)
+            self.k_range.set_visible(True)
+            self.l_range.set_visible(True)
 
     def _update_fixed_angle_ui(self):
-        """Update UI based on which angle is fixed."""
-        is_chi_fixed = self.fix_chi_radio.isChecked()
-        self.chi_input.setEnabled(is_chi_fixed)
+        """Update UI based on which angle is fixed.
+        
+        If chi is fixed: Show chi input, hide phi input
+        If phi is fixed: Show phi input, hide chi input
+        """
+        is_chi_fixed = self.fix_chi_btn.isChecked()
+        # set both invisible first
+        self.chi_widget.setVisible(False)
+        self.phi_widget.setVisible(False)
+        self.chi_widget.setVisible(is_chi_fixed)
+        self.phi_widget.setVisible(not is_chi_fixed)
         self.phi_input.setEnabled(not is_chi_fixed)
+        self.chi_input.setEnabled(is_chi_fixed)
+
+    def _update_fixed_angle_styles(self, active: str):
+        """Update fixed angle button colors based on active selection."""
+        active_css = "background-color: #2ecc71; color: white; font-weight: bold;"
+        inactive_css = "background-color: #bdc3c7; color: #333333;"
+        mapping = {
+            "chi": self.fix_chi_btn,
+            "phi": self.fix_phi_btn,
+        }
+        for name, btn in mapping.items():
+            if name == active:
+                btn.setChecked(True)
+                btn.setStyleSheet(active_css)
+            else:
+                btn.setChecked(False)
+                btn.setStyleSheet(inactive_css)
+
+    def _set_active_fixed_angle(self, angle: str):
+        """Set the active fixed angle and update widget states and styling."""
+        angle = angle.lower()
+        self._update_fixed_angle_styles(angle)
+        self._update_fixed_angle_ui()
+
+    def _update_toggle_styles(self, active: str):
+        """Update toggle button colors based on active plane."""
+        active_css = "background-color: #2ecc71; color: white; font-weight: bold;"
+        inactive_css = "background-color: #bdc3c7; color: #333333;"
+        mapping = {
+            "HK": self.hk_plane_toggle,
+            "HL": self.hl_plane_toggle,
+            "KL": self.kl_plane_toggle,
+        }
+        for name, btn in mapping.items():
+            if name == active:
+                btn.setChecked(True)
+                btn.setStyleSheet(active_css)
+            else:
+                btn.setChecked(False)
+                btn.setStyleSheet(inactive_css)
+
+    def _set_active_plane(self, plane: str):
+        """Set the active plane and update widget states and styling."""
+        plane = plane.upper()
+        self._update_toggle_styles(plane)
+        self._update_widget_states()
 
     def get_scan_parameters(self):
         """Get parameters for scan."""
-        # Get deactivated index
+        # Get deactivated index based on plane selection
+        # HK plane means L is fixed (deactivated)
+        # HL plane means K is fixed (deactivated)
+        # KL plane means H is fixed (deactivated)
         deactivated_index = None
-        if self.h_toggle.isChecked():
-            deactivated_index = "H"
-        elif self.k_toggle.isChecked():
-            deactivated_index = "K"
-        else:  # l_toggle is checked
-            deactivated_index = "L"
+        if self.hk_plane_toggle.isChecked():
+            deactivated_index = "L"  # HK plane: L is fixed
+        elif self.hl_plane_toggle.isChecked():
+            deactivated_index = "K"  # HL plane: K is fixed
+        elif self.kl_plane_toggle.isChecked():
+            deactivated_index = "H"  # KL plane: H is fixed
 
         # Get fixed angle
-        fixed_angle_name = "chi" if self.fix_chi_radio.isChecked() else "phi"
+        fixed_angle_name = "chi" if self.fix_chi_btn.isChecked() else "phi"
         fixed_angle_value = (
             self.chi_input.value()
-            if self.fix_chi_radio.isChecked()
+            if self.fix_chi_btn.isChecked()
             else self.phi_input.value()
         )
 
@@ -526,3 +621,14 @@ class HKLScanResultsTable(QTableWidget):
         container = QWidget()
         container.setLayout(self.layout_wrapper)
         return container
+
+
+class HKLScan2DVisualizer(StructureFactorVisualizer2D):
+    """Visualizer for HKL scan results."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def visualize_results(self, results):
+        """Visualize results."""
+        pass

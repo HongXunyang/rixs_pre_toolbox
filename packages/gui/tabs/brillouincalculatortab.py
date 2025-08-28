@@ -44,7 +44,9 @@ from packages.helpers.tips import Tips, set_tip
 from packages.gui.components.hkl_scan_components import (
     HKLScanControls,
     HKLScanResultsTable,
+    HKLScan2DVisualizer,
 )
+
 
 class DragDropLineEdit(QLineEdit):
     """Custom QLineEdit that accepts drag and drop events."""
@@ -697,16 +699,20 @@ class BrillouinCalculatorTab(TabInterface):
         scan_layout = QHBoxLayout(scan_tab)
 
         # Create controls widget
-        self.hkl_scan_controls = HKLScanControls()
+        self.hkl_scan_controls = HKLScanControls(parent=self)
         self.hkl_scan_controls.calculateClicked.connect(self.calculate_hkl_scan)
         scan_layout.addWidget(self.hkl_scan_controls, 1)
 
-        # Create results table
-        self.hkl_scan_results_table = HKLScanResultsTable()
-        scan_layout.addWidget(
-            self.hkl_scan_results_table.get_widget(), 3.3
-        )  # Increased from 3 to 3.3 for 10% wider
+        # Create results table & 2d visualization, need a QVbox
+        results_layout = QVBoxLayout()
 
+        self.hkl_scan_results_table = HKLScanResultsTable(parent=self)
+        results_layout.addWidget(self.hkl_scan_results_table)
+        self.hkl_scan_visualizer = None
+        results_layout.addWidget(self.hkl_scan_visualizer)
+
+        # Add to layout
+        scan_layout.addLayout(results_layout, 1.5)
         # Add to tab widget
         self.tab_widget.addTab(scan_tab, "HKL Scan | tth fixed")
 
