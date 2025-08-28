@@ -294,7 +294,7 @@ def _calculate_angles_chi_fixed(
     for batch in range(number_batch):
         lab = Lab()
         theta = np.random.uniform(0, 180)
-        phi = np.random.uniform(0, 180)
+        phi = np.random.uniform(-90, 90)
 
         lab.initialize(
             a, b, c, alpha, beta, gamma, roll, pitch, yaw, theta, phi, chi_fixed
@@ -358,7 +358,7 @@ def _calculate_angles_phi_fixed(
     phi_fixed,
     target_objective=1e-7,
     num_steps=1000,
-    number_batch=10,
+    number_batch=5,
     learning_rate=100,
 ):
     """Calculate scattering angles with phi angle fixed.
