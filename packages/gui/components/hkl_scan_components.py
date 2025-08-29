@@ -237,6 +237,7 @@ class HKLScanControls(QWidget):
         # Calculate button
         self.calculate_button = QPushButton("Calculate")
         self.calculate_button.clicked.connect(self.calculateClicked.emit)
+        self.calculate_button.setObjectName("calculateButton")
         main_layout.addWidget(self.calculate_button)
 
         # Connect signals

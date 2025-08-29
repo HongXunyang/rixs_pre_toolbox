@@ -81,6 +81,7 @@ class MainWindow(QMainWindow):
         # Create main tab widget
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabPosition(QTabWidget.West)
+        self.tab_widget.setIconSize(QSize(100,100))
         self.tab_widget.setMovable(True)
         self.tab_widget.setDocumentMode(True)
         self.stacked_widget.addWidget(self.tab_widget)
@@ -247,9 +248,11 @@ class MainWindow(QMainWindow):
             print(f"Loading icon from: {icon_path}")
 
             if os.path.exists(icon_path):
-                self.tab_widget.addTab(tab_instance, QIcon(icon_path), tab_info["name"])
+                # self.tab_widget.addTab(tab_instance, QIcon(icon_path), tab_info["name"])
+                self.tab_widget.addTab(tab_instance, QIcon(icon_path), "")
             else:
                 self.tab_widget.addTab(tab_instance, tab_info["name"])
+
             print(f"Added tab to widget: {tab_info['name']}")
 
             # Set tooltip

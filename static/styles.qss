@@ -10,10 +10,10 @@ QTabWidget::pane {
 }
 
 QTabBar::tab {
-    background-color: #E0E0E0;
+    background-color:rgb(233, 233, 233);
     border: 1px solid #C4C4C4;
     border-bottom: none;
-    min-width: 160px;
+    min-width: 100px;
     padding: 6px 12px;
     font-weight: bold;
 }

@@ -6,7 +6,7 @@
             "description": "Calculate and visualize H, K, L indices from angles and vice versa",
             "module_package": "brillouin_calculator",
             "tab_class": "BrillouinCalculatorTab",
-            "icon": "icons/calculator.png",
+            "icon": "icons/bz_calculator.png",
             "enabled": true,
             "order": 1
         },
@@ -16,7 +16,7 @@
             "description": "Calculate X-ray structure factors from CIF files using Dans_Diffraction",
             "module_package": "structure_factor_calculator",
             "tab_class": "StructureFactorTab",
-            "icon": "icons/structure.png",
+            "icon": "icons/sf_calculator.png",
             "enabled": true,
             "order": 2
         },
