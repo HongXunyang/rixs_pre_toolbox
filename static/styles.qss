@@ -251,7 +251,7 @@ QPushButton#clearButton:pressed {
 QPushButton[class="activeToggle"] {
     background-color: #a8e6c1; /* Pastel green - same hue as #2ecc71 but softer */
     color: #2d5a3d; /* Darker green text for better contrast */
-    border: 1px solid #90d4a8;
+    border: 1px solid #FFFFF;
     border-radius: 3px;
     padding: 3px 6px;
     font-weight: bold;
@@ -271,9 +271,9 @@ QPushButton[class="activeToggle"]:pressed {
 QPushButton[class="inactiveToggle"] {
     background-color: #e8eaec; /* Pastel gray - same hue as #bdc3c7 but softer */
     color: #5a6270; /* Darker gray text for better contrast */
-    border: 1px solid #d4d8dc;
+    border: 1px solid #FFFFFF;
     border-radius: 3px;
-    padding: 6px 12px;
+    padding: 3px 6px;
     font-size: 12px;
 }
 

@@ -398,7 +398,7 @@ class BrillouinCalculatorTab(TabInterface):
         results_layout.addWidget(self.hkl_scan_visualizer, 1)
 
         # Add to layout
-        scan_layout.addLayout(results_layout, 1.5)
+        scan_layout.addLayout(results_layout, 2)
         # Add to tab widget
         self.tab_widget.addTab(scan_tab, "HKL Scan | tth fixed")
 
