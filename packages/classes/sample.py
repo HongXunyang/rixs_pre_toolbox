@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from packages.utils import (
     euler_to_matrix,
 )
-from packages.classes.lattice import Lattice
+from .lattice import Lattice
 
 class Sample:
     """This is a class for the sample."""

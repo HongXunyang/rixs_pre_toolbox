@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from packages.classes.sample import Sample
+from .sample import Sample
 from packages.utils import angle_to_matrix
 
 
