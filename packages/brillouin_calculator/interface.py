@@ -8,7 +8,7 @@ from scipy.optimize import fsolve
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from packages.classes import Lab
 from packages.utils import angle_to_matrix
-from packages.brillouin_calculator.core import (
+from .core import (
     _calculate_angles_factory,
     _calculate_angles_tth_fixed,
     _calculate_hkl,
