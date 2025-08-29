@@ -38,12 +38,11 @@ from matplotlib.figure import Figure
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from .tab_interface import TabInterface
 from packages.brillouin_calculator.interface import BrillouinCalculator
-from packages.visualizer import ScatteringVisualizer, UnitcellVisualizer
+from packages.visualizer import ScatteringVisualizer, UnitcellVisualizer, HKLScan2DVisualizer
 from packages.helpers.tips import Tips, set_tip
 from ..components import (
     HKLScanControls,
     HKLScanResultsTable,
-    HKLScan2DVisualizer,
     HKAnglesControls,
     HKAnglesResultsWidget,
     AnglesToHKLControls,

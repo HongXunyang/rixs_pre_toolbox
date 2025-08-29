@@ -1,7 +1,6 @@
 from .hkl_scan_components import (
     HKLScanControls,
     HKLScanResultsTable,
-    HKLScan2DVisualizer,
 )
 
 from .hk_angles_components import (
