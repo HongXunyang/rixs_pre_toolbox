@@ -15,6 +15,13 @@ from packages.brillouin_calculator.core import (
 )
 
 
+def is_feasible(theta, tth):
+    """Check if the given theta is feasible. criteria: theta>0 and theta<tth
+    """
+    theta = np.array(theta)
+    tth = np.array(tth)
+    return (theta > 0) & (theta < tth)
+
 class BrillouinCalculator:
     """Interface for the Brillouin zone calculator.
 
@@ -182,6 +189,7 @@ class BrillouinCalculator:
             "L": L,
             "success": True,
             "error": None,
+            "feasible": is_feasible(theta_result, tth_result),
         }
 
     def calculate_angles_tth_fixed(
@@ -229,6 +237,7 @@ class BrillouinCalculator:
             "L": L,
             "success": True,
             "error": None,
+            "feasible": is_feasible(theta_result, tth_result),
         }
         return result
 
@@ -344,7 +353,6 @@ class BrillouinCalculator:
                 "success": False,
                 "error": "No valid solutions found for any point in the scan",
             }
-
         return {
             "tth": all_tth,
             "theta": all_theta,
@@ -356,6 +364,7 @@ class BrillouinCalculator:
             "deactivated_index": deactivated_index,  # Store which index was deactivated
             "success": True,
             "error": None,
+            "feasible": is_feasible(all_theta, all_tth),
         }
 
     def is_initialized(self):

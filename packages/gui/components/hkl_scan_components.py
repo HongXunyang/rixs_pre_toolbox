@@ -381,8 +381,8 @@ class HKLScanResultsTable(QTableWidget):
         super().__init__(parent)
 
         # Set up table
-        self.setColumnCount(6)
-        self.setHorizontalHeaderLabels(["H", "K", "L", "θ (°)", "φ (°)", "χ (°)"])
+        self.setColumnCount(7)
+        self.setHorizontalHeaderLabels(["H", "K", "L", "θ (°)", "φ (°)", "χ (°)", "β (°)"])
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         # Hide vertical header (row numbers)
@@ -392,6 +392,7 @@ class HKLScanResultsTable(QTableWidget):
         self.group_colors = [
             QColor(255, 255, 255),  # White
             QColor(230, 230, 240),  # Gray
+            QColor(166, 45, 45),  # Red
         ]
 
         # Enable sorting
@@ -429,140 +430,39 @@ class HKLScanResultsTable(QTableWidget):
         h_values = results["H"]
         k_values = results["K"]
         l_values = results["L"]
-        tth_values = results["tth"]  # Still get tth for export, just don't display it
+        tth_values = results["tth"]
         theta_values = results["theta"]
         phi_values = results["phi"]
         chi_values = results["chi"]
 
-        # Group rows by common HK/KL/HL values
-        deactivated_index = results.get("deactivated_index", None)
-        groups = self._group_by_hkl(h_values, k_values, l_values, deactivated_index)
+        # Add a row for each result with alternating colors
+        for i in range(len(h_values)):
+            row_position = self.rowCount()
+            self.insertRow(row_position)
 
-        # Color counter for alternating group colors
-        current_color_idx = 0
+            # Add HKL values
+            self.setItem(row_position, 0, QTableWidgetItem(f"{h_values[i]:.4f}"))
+            self.setItem(row_position, 1, QTableWidgetItem(f"{k_values[i]:.4f}"))
+            self.setItem(row_position, 2, QTableWidgetItem(f"{l_values[i]:.4f}"))
 
-        # Process each group and add to table with merged HKL values
-        for group_indices in groups:
-            if not group_indices:  # Skip empty groups
-                continue
+            # Add angle values
+            self.setItem(row_position, 3, QTableWidgetItem(f"{theta_values[i]:.1f}"))
+            self.setItem(row_position, 4, QTableWidgetItem(f"{phi_values[i]:.1f}"))
+            self.setItem(row_position, 5, QTableWidgetItem(f"{chi_values[i]:.1f}"))
+            self.setItem(row_position, 6, QTableWidgetItem(f"{tth_values[0]-theta_values[i]:.1f}"))
 
-            # Select color for this group
-            group_color = self.group_colors[current_color_idx % len(self.group_colors)]
-            current_color_idx += 1
-
-            # For each group, we should combine identical HKL values
-            unique_hkls = {}  # Dictionary to track unique HKL combinations
-
-            # First, identify unique HKL combinations within this group
-            for i in group_indices:
-                hkl_key = (
-                    round(h_values[i], 6),
-                    round(k_values[i], 6),
-                    round(l_values[i], 6),
-                )
-                if hkl_key not in unique_hkls:
-                    unique_hkls[hkl_key] = []
-                unique_hkls[hkl_key].append(i)
-
-            # Now add rows for each unique HKL combination
-            for hkl_key, indices in unique_hkls.items():
-                h, k, l = hkl_key
-                first_row = self.rowCount()
-
-                # Add a row for each angle solution for this HKL
-                for j, i in enumerate(indices):
-                    row_position = self.rowCount()
-                    self.insertRow(row_position)
-
-                    # For the first row of this HKL, add the HKL values
-                    if j == 0:
-                        h_item = QTableWidgetItem(f"{h:.4f}")
-                        k_item = QTableWidgetItem(f"{k:.4f}")
-                        l_item = QTableWidgetItem(f"{l:.4f}")
-
-                        self.setItem(row_position, 0, h_item)
-                        self.setItem(row_position, 1, k_item)
-                        self.setItem(row_position, 2, l_item)
-
-                    # Add angle values
-                    self.setItem(
-                        row_position, 3, QTableWidgetItem(f"{theta_values[i]:.1f}")
-                    )
-                    self.setItem(
-                        row_position, 4, QTableWidgetItem(f"{phi_values[i]:.1f}")
-                    )
-                    self.setItem(
-                        row_position, 5, QTableWidgetItem(f"{chi_values[i]:.1f}")
-                    )
-
-                    # Apply color to all cells in the row
-                    for col in range(self.columnCount()):
-                        item = self.item(row_position, col)
-                        if item:
-                            item.setBackground(QBrush(group_color))
-
-                # If there are multiple solutions for this HKL, set row spans
-                if len(indices) > 1:
-                    self.setSpan(first_row, 0, len(indices), 1)  # H column
-                    self.setSpan(first_row, 1, len(indices), 1)  # K column
-                    self.setSpan(first_row, 2, len(indices), 1)  # L column
+            # Apply alternating row colors
+            row_color = self.group_colors[i % 2] if results["feasible"][i] else self.group_colors[2]
+            for col in range(self.columnCount()):
+                item = self.item(row_position, col)
+                if item:
+                    item.setBackground(QBrush(row_color))
 
         # Re-enable sorting and export button
-        self.setSortingEnabled(
-            False
-        )  # Keep sorting disabled as it interferes with row spans
+        self.setSortingEnabled(True)
         self.export_button.setEnabled(True)
 
-    def _group_by_hkl(self, h_values, k_values, l_values, deactivated_index=None):
-        """Group indices by common HK/KL/HL values."""
-        groups = []
 
-        # If deactivated_index is None, try to guess it based on constant values
-        if deactivated_index is None:
-            if len(set(h_values)) == 1:
-                deactivated_index = "H"
-            elif len(set(k_values)) == 1:
-                deactivated_index = "K"
-            elif len(set(l_values)) == 1:
-                deactivated_index = "L"
-
-        # If still None, default to grouping by all three
-        if deactivated_index is None:
-            # Group by all HKL values
-            hkl_dict = {}
-            for i in range(len(h_values)):
-                key = (
-                    round(h_values[i], 6),
-                    round(k_values[i], 6),
-                    round(l_values[i], 6),
-                )
-                if key not in hkl_dict:
-                    hkl_dict[key] = []
-                hkl_dict[key].append(i)
-
-            # Convert dictionary to list of groups
-            for indices in hkl_dict.values():
-                groups.append(indices)
-        else:
-            # Group by the two indices that are not deactivated
-            group_dict = {}
-            for i in range(len(h_values)):
-                if deactivated_index == "H":
-                    key = (round(k_values[i], 6), round(l_values[i], 6))
-                elif deactivated_index == "K":
-                    key = (round(h_values[i], 6), round(l_values[i], 6))
-                else:  # deactivated_index == 'L'
-                    key = (round(h_values[i], 6), round(k_values[i], 6))
-
-                if key not in group_dict:
-                    group_dict[key] = []
-                group_dict[key].append(i)
-
-            # Convert dictionary to list of groups
-            for indices in group_dict.values():
-                groups.append(indices)
-
-        return groups
 
     def export_to_csv(self):
         """Export results to a CSV file."""
@@ -662,7 +562,7 @@ class HKLScan2DVisualizer(StructureFactorVisualizer2D):
             tuple: (h_range, k_range, l_range) where each range is (min, max)
         """
         import math
-        
+        epsilon = 1e-6
         try:
             # Extract HKL values from scan results
             h_vals = np.array(scan_results.get("H", []), dtype=np.float64)
@@ -671,19 +571,19 @@ class HKLScan2DVisualizer(StructureFactorVisualizer2D):
             
             # Find max absolute values and round up to ceiling
             if len(h_vals) > 0:
-                h_max = math.ceil(np.max(np.abs(h_vals)))
+                h_max = math.ceil(np.max(np.abs(h_vals)) + epsilon)
                 h_range = (-h_max, h_max)
             else:
                 h_range = self.default_h_range
                 
             if len(k_vals) > 0:
-                k_max = math.ceil(np.max(np.abs(k_vals)))
+                k_max = math.ceil(np.max(np.abs(k_vals)) + epsilon)
                 k_range = (-k_max, k_max)
             else:
                 k_range = self.default_k_range
                 
             if len(l_vals) > 0:
-                l_max = math.ceil(np.max(np.abs(l_vals)))
+                l_max = math.ceil(np.max(np.abs(l_vals)) + epsilon)
                 l_range = (-l_max, l_max)
             else:
                 l_range = self.default_l_range
