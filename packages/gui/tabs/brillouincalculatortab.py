@@ -196,7 +196,6 @@ class BrillouinCalculatorTab(TabInterface):
             
         # HKL scan visualizer uses trajectory-only mode, no structure factor calculator needed
 
-        print("params set!!!!!!!!")
 
     def _update_unitcell_visualizers(self, cif_file_path: str):
         """Update all unit cell visualizers with the CIF file."""
@@ -212,7 +211,7 @@ class BrillouinCalculatorTab(TabInterface):
                 viz.visualize_unitcell()
                 
         except Exception as e:
-            print(f"Error updating unit cell visualizers: {e}")
+            print(f"**Error** updating unit cell visualizers: {e}")
 
     def _update_parameter_display(self):
         """Update the parameter display in the header."""
@@ -434,7 +433,7 @@ class BrillouinCalculatorTab(TabInterface):
             self.update_hkl_visualization(result)
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error calculating HKL scan: {str(e)}")
+            QMessageBox.critical(self, "Error", f"**Error** calculating HKL scan: {str(e)}")
 
     @pyqtSlot()
     def update_hkl_visualization(self, scan_results=None):
@@ -465,7 +464,7 @@ class BrillouinCalculatorTab(TabInterface):
                 self.hkl_scan_visualizer.clear_plot()
                 
         except Exception as e:
-            print(f"Error updating HKL visualization: {e}")
+            print(f"**Error** updating HKL visualization: {e}")
 
     @pyqtSlot()
     def browse_cif_file(self):
@@ -518,7 +517,7 @@ class BrillouinCalculatorTab(TabInterface):
             )
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error calculating HKL: {str(e)}")
+            QMessageBox.critical(self, "Error", f"**Error** calculating HKL: {str(e)}")
 
     @pyqtSlot()
     def _update_fixed_angle_ui(self):
@@ -603,7 +602,7 @@ class BrillouinCalculatorTab(TabInterface):
                 )
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
+            QMessageBox.critical(self, "Error", f"**Error** calculating angles: {str(e)}")
 
     @pyqtSlot()
     def calculate_angles_tth_fixed(self):
@@ -698,7 +697,7 @@ class BrillouinCalculatorTab(TabInterface):
                 )
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error calculating angles: {str(e)}")
+            QMessageBox.critical(self, "Error", f"**Error** calculating angles: {str(e)}")
 
     @pyqtSlot()
     def on_angle_solution_selected(self, solution):

@@ -189,8 +189,7 @@ class MainWindow(QMainWindow):
 
     def load_tabs(self):
         """Load tabs from the registry."""
-        registry_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
-                                    "config", "tab_registry.json")
+        registry_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config", "tab_registry.json")
         print(f"Loading tabs from registry: {registry_path}")
 
         try:
@@ -199,7 +198,6 @@ class MainWindow(QMainWindow):
 
             # Sort tabs by order
             tabs_info = sorted(registry.get("tabs", []), key=lambda x: x.get("order", 999))
-            print(f"Found {len(tabs_info)} tabs in registry")
 
             # Load each enabled tab
             for tab_info in tabs_info:
@@ -208,8 +206,8 @@ class MainWindow(QMainWindow):
                     self.load_tab(tab_info)
 
         except Exception as e:
-            print(f"Error loading tabs: {str(e)}")
-            self.statusBar().showMessage(f"Error loading tabs: {str(e)}")
+            print(f"**Error** loading tabs: {str(e)}")
+            self.statusBar().showMessage(f"**Error** loading tabs: {str(e)}")
             if self.config.get("debug_mode", False):
                 raise e
 
@@ -219,33 +217,26 @@ class MainWindow(QMainWindow):
             # Get tab info
             module_name = f"packages.{tab_info['module_package']}"
             tab_class_name = tab_info["tab_class"]
-            print(f"Attempting to load tab: {module_name}.{tab_class_name}")
 
             # Try to load the tab module
             try:
                 # First try to load from gui.tabs package
                 # Convert class name to lowercase and remove 'Tab' suffix for file name
                 file_name = tab_class_name.lower()
-                print(f"Trying to load from gui.tabs: {file_name}")
                 module = importlib.import_module(f"packages.gui.tabs.{file_name}")
             except ImportError as e:
-                print(f"Failed to load from gui.tabs: {str(e)}")
+                print(f"**Error** Failed to load from gui.tabs: {str(e)}")
                 # If not found, try loading directly from the module package
-                print(f"Trying to load from module package: {module_name}.gui")
                 module = importlib.import_module(f"{module_name}.gui")
 
             # Get tab class
             tab_class = getattr(module, tab_class_name)
-            print(f"Successfully loaded tab class: {tab_class_name}")
 
             # Create tab instance
             tab_instance = tab_class(main_window=self)
-            print(f"Created tab instance: {tab_instance}")
 
             # Add tab to widget
-            icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
-                                    "static", tab_info.get("icon", ""))
-            print(f"Loading icon from: {icon_path}")
+            icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),"static", tab_info.get("icon", ""))
 
             if os.path.exists(icon_path):
                 # self.tab_widget.addTab(tab_instance, QIcon(icon_path), tab_info["name"])
@@ -253,15 +244,14 @@ class MainWindow(QMainWindow):
             else:
                 self.tab_widget.addTab(tab_instance, tab_info["name"])
 
-            print(f"Added tab to widget: {tab_info['name']}")
 
             # Set tooltip
             index = self.tab_widget.count() - 1
             self.tab_widget.setTabToolTip(index, tab_info.get("description", ""))
 
         except Exception as e:
-            print(f"Error loading tab {tab_info.get('name')}: {str(e)}")
-            self.statusBar().showMessage(f"Error loading tab {tab_info.get('name')}: {str(e)}")
+            print(f"**Error** loading tab {tab_info.get('name')}: {str(e)}")
+            self.statusBar().showMessage(f"**Error** loading tab {tab_info.get('name')}: {str(e)}")
             if self.config.get("debug_mode", False):
                 raise e
 
@@ -273,7 +263,7 @@ class MainWindow(QMainWindow):
             with open(config_path, 'r') as f:
                 return json.load(f)
         except Exception as e:
-            print(f"Error loading config: {str(e)}")
+            print(f"**Error** loading config: {str(e)}")
             return {
                 "app_name": "RIXS Preparation Toolbox",
                 "window_size": {"width": 1200, "height": 800}
