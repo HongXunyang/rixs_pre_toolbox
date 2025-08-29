@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
         # Create main tab widget
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabPosition(QTabWidget.West)
-        self.tab_widget.setIconSize(QSize(100,100))
+        self.tab_widget.setIconSize(QSize(105,80))
         self.tab_widget.setMovable(True)
         self.tab_widget.setDocumentMode(True)
         self.stacked_widget.addWidget(self.tab_widget)
