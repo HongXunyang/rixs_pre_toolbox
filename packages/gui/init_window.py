@@ -196,6 +196,7 @@ class InitWindow(QWidget):
         euler_layout = QFormLayout(euler_group)
 
         self.roll_input = QDoubleSpinBox()
+        self.roll_input.setObjectName("eulerAngleSpinBox")
         self.roll_input.setRange(-180.0, 180.0)
         self.roll_input.setValue(0.0)
         self.roll_input.setSuffix(" °")
@@ -204,6 +205,7 @@ class InitWindow(QWidget):
         euler_layout.addRow("Roll:", self.roll_input)
 
         self.pitch_input = QDoubleSpinBox()
+        self.pitch_input.setObjectName("eulerAngleSpinBox")
         self.pitch_input.setRange(-180.0, 180.0)
         self.pitch_input.setValue(0.0)
         self.pitch_input.setSuffix(" °")
@@ -212,6 +214,7 @@ class InitWindow(QWidget):
         euler_layout.addRow("Pitch:", self.pitch_input)
 
         self.yaw_input = QDoubleSpinBox()
+        self.yaw_input.setObjectName("eulerAngleSpinBox")
         self.yaw_input.setRange(-180.0, 180.0)
         self.yaw_input.setValue(0.0)
         self.yaw_input.setSuffix(" °")
