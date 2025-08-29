@@ -1,1 +1,1 @@
-# This file marks the packages directory as a Python package 
+from .gui import MainWindow

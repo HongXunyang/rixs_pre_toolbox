@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 
-from packages.gui.init_window import InitWindow
+from .init_window import InitWindow
 
 class MainWindow(QMainWindow):
     """Main application window with tab-based interface."""

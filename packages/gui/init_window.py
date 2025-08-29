@@ -22,8 +22,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
-from packages.visualizer.coordinate_visualizer import CoordinateVisualizer
-from packages.visualizer.unitcell_visualizer import UnitcellVisualizer
+from packages.visualizer import CoordinateVisualizer, UnitcellVisualizer
 from packages.helpers import UnitConverter
 from CifFile import ReadCif
 

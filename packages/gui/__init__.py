@@ -1,1 +1,2 @@
-# This file marks the GUI package as a Python package 
+from .main_window import MainWindow
+from .init_window import InitWindow

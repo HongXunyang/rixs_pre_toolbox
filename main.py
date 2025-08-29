@@ -5,7 +5,7 @@ import sys
 import os
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
-from packages.gui.main_window import MainWindow
+from packages import MainWindow
 
 
 def load_stylesheet():

@@ -29,12 +29,9 @@ import numpy as np
 
 # Add parent directory to path to allow imports from sibling packages
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from packages.gui.tabs.tab_interface import TabInterface
-from packages.structure_factor_calculator.interface import StructureFactorCalculator
-from packages.visualizer.structure_factor_visualizer import StructureFactorVisualizer3D
-from packages.visualizer.structure_factor_visualizer_2d import (
-    StructureFactorVisualizer2D,
-)
+from .tab_interface import TabInterface
+from packages.structure_factor_calculator import StructureFactorCalculator
+from packages.visualizer import StructureFactorVisualizer3D, StructureFactorVisualizer2D
 from packages.helpers.tips import Tips, set_tip
 
 
