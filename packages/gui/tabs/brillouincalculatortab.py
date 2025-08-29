@@ -36,30 +36,21 @@ from matplotlib.figure import Figure
 
 # Add parent directory to path to allow imports from sibling packages
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from packages.gui.tabs.tab_interface import TabInterface
+from .tab_interface import TabInterface
 from packages.brillouin_calculator.interface import BrillouinCalculator
-from packages.visualizer.scattering_visualizer import ScatteringVisualizer
-from packages.visualizer.unitcell_visualizer import UnitcellVisualizer
+from packages.visualizer import ScatteringVisualizer, UnitcellVisualizer
 from packages.helpers.tips import Tips, set_tip
-from packages.gui.components.hkl_scan_components import (
+from ..components import (
     HKLScanControls,
     HKLScanResultsTable,
     HKLScan2DVisualizer,
-)
-from packages.gui.components.hk_angles_components import (
     HKAnglesControls,
     HKAnglesResultsWidget,
-)
-from packages.gui.components.angles_to_hkl_components import (
     AnglesToHKLControls,
     AnglesToHKLResults,
-)
-from packages.gui.components.hkl_to_angles_components import (
     HKLToAnglesControls,
     HKLToAnglesResultsWidget,
 )
-
-
 class DragDropLineEdit(QLineEdit):
     """Custom QLineEdit that accepts drag and drop events."""
 
