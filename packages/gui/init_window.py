@@ -164,18 +164,29 @@ class InitWindow(QWidget):
         energy_layout = QFormLayout(energy_group)
 
         self.energy_input = QDoubleSpinBox()
-        self.energy_input.setRange(1.0, 20000.0)
+        self.energy_input.setRange(0, 10000)
         self.energy_input.setValue(950.0)
         self.energy_input.setSuffix(" eV")
         self.energy_input.valueChanged.connect(self.on_energy_changed)
         energy_layout.addRow("Energy:", self.energy_input)
 
         self.wavelength_input = QDoubleSpinBox()
-        self.wavelength_input.setRange(0.1, 100.0)
+        self.wavelength_input.setRange(0, 1000)
+        self.wavelength_input.setDecimals(3)
         self.wavelength_input.setValue(self.unit_converter.ev_to_angstrom(950.0))
         self.wavelength_input.setSuffix(" Å")
         self.wavelength_input.valueChanged.connect(self.on_wavelength_changed)
-        energy_layout.addRow("Wavelength:", self.wavelength_input)
+        energy_layout.addRow("λ:", self.wavelength_input)
+        
+        # wavevector
+        self.wavevector_input = QDoubleSpinBox()
+        self.wavevector_input.setRange(0, 100)
+        self.wavevector_input.setDecimals(3)
+        self.wavevector_input.setValue(2 * 3.1415926 / self.wavelength_input.value())
+        self.wavevector_input.setSuffix(" Å⁻¹")
+        self.wavevector_input.valueChanged.connect(self.on_wavevector_changed)
+        energy_layout.addRow("|k|:", self.wavevector_input)
+
 
         # Add energy group to main layout at (0,1)
         layout.addWidget(energy_group, 0, 1)
@@ -500,11 +511,15 @@ class InitWindow(QWidget):
         try:
             # Block signals to prevent infinite loop
             self.wavelength_input.blockSignals(True)
+            self.wavevector_input.blockSignals(True)
             # Convert energy to wavelength
             wavelength = self.unit_converter.ev_to_angstrom(self.energy_input.value())
             self.wavelength_input.setValue(wavelength)
+            wavevector = 2 * 3.1415926 / wavelength
+            self.wavevector_input.setValue(wavevector)
             # Unblock signals
             self.wavelength_input.blockSignals(False)
+            self.wavevector_input.blockSignals(False)
         except Exception as e:
             QMessageBox.warning(self, "Warning", f"Error converting energy: {str(e)}")
 
@@ -514,12 +529,32 @@ class InitWindow(QWidget):
         try:
             # Block signals to prevent infinite loop
             self.energy_input.blockSignals(True)
+            self.wavevector_input.blockSignals(True)
             # Convert wavelength to energy
             energy = self.unit_converter.angstrom_to_ev(self.wavelength_input.value())
             self.energy_input.setValue(energy)
+            wavevector = 2 * 3.1415926 / wavelength
+            self.wavevector_input.setValue(wavevector)
             # Unblock signals
             self.energy_input.blockSignals(False)
+            self.wavevector_input.blockSignals(False)
         except Exception as e:
             QMessageBox.warning(
                 self, "Warning", f"Error converting wavelength: {str(e)}"
             )
+    def on_wavevector_changed(self):
+        """Update energy and wavelength when wavevector changes."""
+        try:
+            # Block signals to prevent infinite loop
+            self.energy_input.blockSignals(True)
+            self.wavelength_input.blockSignals(True)
+            # Convert wavevector to energy
+            wavelength = 2 * 3.1415926 / self.wavevector_input.value()
+            self.wavelength_input.setValue(wavelength)
+            energy = self.unit_converter.angstrom_to_ev(wavelength)
+            self.energy_input.setValue(energy)
+            # Unblock signals
+            self.energy_input.blockSignals(False)
+            self.wavelength_input.blockSignals(False)
+        except Exception as e:
+            QMessageBox.warning(self, "Warning", f"Error converting wavevector: {str(e)}")

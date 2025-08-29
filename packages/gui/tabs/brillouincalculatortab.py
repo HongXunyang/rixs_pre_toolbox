@@ -154,7 +154,7 @@ class BrillouinCalculatorTab(TabInterface):
         xray_title.setObjectName("parameterSectionTitle")
         header_layout.addWidget(xray_title)
 
-        self.xray_info_label = QLabel("Energy: -- eV\nWavelength: -- Å")
+        self.xray_info_label = QLabel("Energy: -- eV\nλ: -- Å\n|k|: -- Å⁻¹")
         self.xray_info_label.setObjectName("parameterText")
         self.xray_info_label.setWordWrap(True)
         header_layout.addWidget(self.xray_info_label)
@@ -234,7 +234,8 @@ class BrillouinCalculatorTab(TabInterface):
         energy = self.parameters.get("energy", 0)
         # Convert eV to Angstrom: λ = hc/E = 12398.4 / E(eV)
         wavelength = 12398.4 / energy if energy > 0 else 0
-        xray_text = f"Energy: {energy:.2f} eV\nWavelength: {wavelength:.3f} Å"
+        wavevector = 2 * 3.1415926 / wavelength
+        xray_text = f"Energy: {energy:.2f} eV\nλ: {wavelength:.3f} Å\n|k|: {wavevector:.3f} Å⁻¹"
         self.xray_info_label.setText(xray_text)
 
     @pyqtSlot()

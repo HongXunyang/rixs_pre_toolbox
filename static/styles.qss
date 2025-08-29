@@ -31,6 +31,7 @@ QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {
     border: 1px solid #C4C4C4;
     border-radius: 3px;
     padding: 4px;
+    padding-right: 12x;
     min-height: 24px;
     background-color: #FFFFFF;
 }
@@ -65,6 +66,30 @@ QPushButton:disabled {
     color: #888888;
     background-color: #F8F8F8;
 }
+
+/* Hide spin box arrows for QDoubleSpinBox and QSpinBox */
+QDoubleSpinBox::up-button, QSpinBox::up-button {
+    width: 0px;
+    border: none;
+}
+
+QDoubleSpinBox::down-button, QSpinBox::down-button {
+    width: 0px;
+    border: none;
+}
+
+QDoubleSpinBox::up-arrow, QSpinBox::up-arrow {
+    width: 0px;
+    height: 0px;
+}
+
+QDoubleSpinBox::down-arrow, QSpinBox::down-arrow {
+    width: 0px;
+    height: 0px;
+}
+
+
+
 
 /* Toggle button styles */
 QPushButton[text="De-activate"] {

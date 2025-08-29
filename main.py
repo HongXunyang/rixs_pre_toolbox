@@ -4,9 +4,8 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QLocale
 from packages import MainWindow
-
 
 def load_stylesheet():
     """Load QSS stylesheet for the application."""
@@ -26,7 +25,7 @@ def main():
     # Create application
     app = QApplication(sys.argv)
     app.setApplicationName("RIXS Preparation Toolbox")
-    
+    QLocale.setDefault(QLocale(QLocale.English, QLocale.UnitedStates)) 
     # Apply stylesheet
     app.setStyleSheet(load_stylesheet())
     
