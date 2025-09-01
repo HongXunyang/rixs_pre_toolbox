@@ -272,8 +272,8 @@ class BrillouinCalculatorTab(TabInterface):
         right_layout = QVBoxLayout(right_column)
 
         # Scattering visualizer
-        self.angles_to_hkl_visualizer.visualize_lab_system(is_clear=True)
-        self.angles_to_hkl_visualizer.visualize_scattering_geometry(is_clear=False)
+        self.angles_to_hkl_visualizer.visualize_lab_system()
+        self.angles_to_hkl_visualizer.visualize_scattering_geometry()
         right_layout.addWidget(self.angles_to_hkl_visualizer)
         
         # Unit cell visualizer
@@ -312,8 +312,8 @@ class BrillouinCalculatorTab(TabInterface):
         right_layout = QVBoxLayout(right_column)
 
         # Scattering visualizer
-        self.hkl_to_angles_visualizer.visualize_lab_system(is_clear=True)
-        self.hkl_to_angles_visualizer.visualize_scattering_geometry(is_clear=False)
+        self.hkl_to_angles_visualizer.visualize_lab_system()
+        self.hkl_to_angles_visualizer.visualize_scattering_geometry()
         right_layout.addWidget(self.hkl_to_angles_visualizer)
         
         # Unit cell visualizer
@@ -352,8 +352,8 @@ class BrillouinCalculatorTab(TabInterface):
         right_layout = QVBoxLayout(right_column)
 
         # Scattering visualizer
-        self.hk_fixed_tth_visualizer.visualize_lab_system(is_clear=True)
-        self.hk_fixed_tth_visualizer.visualize_scattering_geometry(is_clear=False)
+        self.hk_fixed_tth_visualizer.visualize_lab_system()
+        self.hk_fixed_tth_visualizer.visualize_scattering_geometry()
         right_layout.addWidget(self.hk_fixed_tth_visualizer)
         
         # Unit cell visualizer
@@ -510,20 +510,20 @@ class BrillouinCalculatorTab(TabInterface):
 
             # Update visualization
             self.angles_to_hkl_visualizer.visualize_lab_system(
-                is_clear=True, chi=params["chi"], phi=params["phi"]
+                chi=params["chi"], phi=params["phi"]
             )
             self.angles_to_hkl_visualizer.visualize_scattering_geometry(
-                scattering_angles=result, is_clear=False
+                scattering_angles=result
             )
-            self.angles_to_hkl_unitcell_viz.clear_plot()
-            self.angles_to_hkl_unitcell_viz.visualize_unitcell(show_labels=False)
+            
+            self.angles_to_hkl_unitcell_viz.visualize_unitcell()
             self.angles_to_hkl_unitcell_viz.visualize_scattering_geometry(
-                scattering_angles=result, is_clear=False
-            )
+                scattering_angles=result
+            ) 
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"**Error** calculating HKL: {str(e)}")
-
+        
     @pyqtSlot()
     def _update_fixed_angle_ui(self):
         """Update UI based on which angle is fixed."""

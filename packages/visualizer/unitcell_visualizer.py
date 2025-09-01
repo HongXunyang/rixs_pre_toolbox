@@ -79,11 +79,11 @@ class UnitcellVisualizer(FigureCanvas):
             print(f"Error loading crystal structure from {cif_file_path}: {e}")
             self.is_initialized = False
 
-    def visualize_unitcell(self, show_labels=False):
+    def visualize_unitcell(self, show_labels=False, is_clear=True):
         """ read the atom position from the cif file and visualize the unit cell using integrated Dans_Diffraction logic
         """ 
         if not self.is_initialized or self.crystal is None:
-            print("Unit cell visualizer is not initialized. Please set parameters first.")
+            print("Unitcell visualizer not initialized.")
             return
         
         # Clear the current plot
@@ -260,6 +260,9 @@ class UnitcellVisualizer(FigureCanvas):
     def visualize_scattering_geometry(self, scattering_angles=None, is_clear=False):
         """ plotting the scattering plane and the beam as done in the ScatteringVisualizer
         """ 
+        if not self.is_initialized or self.crystal is None:
+            print("Unitcell visualizer not initialized.")
+            return 
         if is_clear:
             # Clear previous plot
             self.axes.clear()

@@ -195,7 +195,7 @@ class ScatteringVisualizer(FigureCanvas):
         self.fig.tight_layout()
         self.draw()
 
-    def visualize_scattering_geometry(self, scattering_angles=None, is_clear=True):
+    def visualize_scattering_geometry(self, scattering_angles=None, is_clear=False):
         """Update the visualization with new scattering angles."""
         if is_clear:
             # Clear previous plot
