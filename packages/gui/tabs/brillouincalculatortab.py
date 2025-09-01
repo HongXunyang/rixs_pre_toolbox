@@ -510,12 +510,12 @@ class BrillouinCalculatorTab(TabInterface):
 
             # Update visualization
             self.angles_to_hkl_visualizer.visualize_lab_system(
-                chi=params["chi"], phi=params["phi"]
+                chi=params["chi"], phi=params["phi"], plot_k_basis=False, plot_basis=True
             )
             self.angles_to_hkl_visualizer.visualize_scattering_geometry(
                 scattering_angles=result
             )
-            
+
             self.angles_to_hkl_unitcell_viz.visualize_unitcell()
             self.angles_to_hkl_unitcell_viz.visualize_scattering_geometry(
                 scattering_angles=result

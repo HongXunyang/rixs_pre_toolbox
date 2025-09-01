@@ -14,6 +14,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from packages.utils import (
     get_reciprocal_space_vectors,
     sample_to_lab_conversion,
+    get_rotation,
 )
 from packages.classes.lab import Lab
 
@@ -50,8 +51,9 @@ class ScatteringVisualizer(FigureCanvas):
         )
         # calculate the corresponding a_star_lab, b_star_lab, c_star_lab
         self.a_star_lab, self.b_star_lab, self.c_star_lab = (
-            lab.get_reciprocal_space_vectors()
+            lab.get_reciprocal_space_vectors(is_normalized=True)
         )
+        self.a_lab, self.b_lab, self.c_lab = lab.get_real_space_vectors(is_normalized=True)
         self.visualize_lab_system()
         return True
 
@@ -108,17 +110,25 @@ class ScatteringVisualizer(FigureCanvas):
                 alpha=0.25,
             )
         )
-
-        # Normalize the vectors
-        a_star_norm = self.a_star_lab / np.linalg.norm(self.a_star_lab)
-        b_star_norm = self.b_star_lab / np.linalg.norm(self.b_star_lab)
-        c_star_norm = self.c_star_lab / np.linalg.norm(self.c_star_lab)
+        
+        a_star_norm = self.a_star_lab if plot_k_basis else [0, 0, 0]
+        a_star_label = "$a^*$" if plot_k_basis else None
+        b_star_norm = self.b_star_lab if plot_k_basis else [0, 0, 0]
+        b_star_label = "$b^*$" if plot_k_basis else None
+        c_star_norm = self.c_star_lab if plot_k_basis else [0, 0, 0]
+        c_star_label = "$c^*$" if plot_k_basis else None
+        a_norm = self.a_lab if plot_basis else [0, 0, 0]
+        a_label = "$a$" if plot_basis else None
+        b_norm = self.b_lab if plot_basis else [0, 0, 0]
+        b_label = "$b$" if plot_basis else None
+        c_norm = self.c_lab if plot_basis else [0, 0, 0]
+        c_label = "$c$" if plot_basis else None
 
         # Plot the normalized vectors
-        vectors = [a_star_norm, b_star_norm, c_star_norm]
+        vectors = [a_star_norm, b_star_norm, c_star_norm, a_norm, b_norm, c_norm]
         vectors = _rotate_vertices(vectors, phi, chi)
-        colors = ["r", "r", "r"]
-        labels = ["$a^*$", "$b^*$", "$c^*$"]
+        colors = ["tomato", "tomato", "tomato", "dodgerblue", "dodgerblue", "dodgerblue"]
+        labels = [a_star_label, b_star_label, c_star_label, a_label, b_label, c_label]
 
         for vec, color, label in zip(vectors, colors, labels):
             # Plot the vector
@@ -284,28 +294,11 @@ class ScatteringVisualizer(FigureCanvas):
         self.draw()
 
 
-def _rotate_vertices(vertices, phi, chi):
-    """Rotate the vertices of the cube by the given phi and chi angles."""
-    # Convert angles to radians
-    phi_rad = np.radians(phi)
-    chi_rad = np.radians(chi)
 
-    chi_mat_sample = np.array(
-        [
-            [1, 0, 0],
-            [0, np.cos(chi_rad), -np.sin(chi_rad)],
-            [0, np.sin(chi_rad), np.cos(chi_rad)],
-        ]
-    )
-    phi_mat_sample = np.array(
-        [
-            [np.cos(phi_rad), -np.sin(phi_rad), 0],
-            [np.sin(phi_rad), np.cos(phi_rad), 0],
-            [0, 0, 1],
-        ]
-    )
+def _rotate_vertices(vertices, phi, chi):
+    """Rotate the vertices of the sample with respect to the scattering plane by the given phi and chi angles."""
+    rotation_matrix = get_rotation(phi, chi)
     vertices = np.array(vertices)
     for i, vertex in enumerate(vertices):
-        vertex_temp = chi_mat_sample @ phi_mat_sample @ vertex
-        vertices[i] = vertex_temp
+        vertices[i] = rotation_matrix @ vertex
     return vertices

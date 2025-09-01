@@ -9,6 +9,7 @@ from .sample import Sample
 from packages.utils import angle_to_matrix
 
 
+
 class Lab:
     """This is a class for the lab."""
 
@@ -49,12 +50,16 @@ class Lab:
         """Get the parameters of the sample."""
         return self.sample.get_lattice_parameters()
 
-    def get_real_space_vectors(self):
+    def get_real_space_vectors(self, is_normalized=False):
         """Get the real space vectors in the lab frame."""
+        if is_normalized:
+            return self.a_vec_lab / np.linalg.norm(self.a_vec_lab), self.b_vec_lab / np.linalg.norm(self.b_vec_lab), self.c_vec_lab / np.linalg.norm(self.c_vec_lab)
         return self.a_vec_lab, self.b_vec_lab, self.c_vec_lab
 
-    def get_reciprocal_space_vectors(self):
+    def get_reciprocal_space_vectors(self, is_normalized=False):
         """Get the reciprocal space vectors in the lab frame."""
+        if is_normalized:
+            return self.a_star_vec_lab / np.linalg.norm(self.a_star_vec_lab), self.b_star_vec_lab / np.linalg.norm(self.b_star_vec_lab), self.c_star_vec_lab / np.linalg.norm(self.c_star_vec_lab)
         return self.a_star_vec_lab, self.b_star_vec_lab, self.c_star_vec_lab
 
     def calculate_real_space_vectors(self):

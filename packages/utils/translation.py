@@ -136,6 +136,35 @@ def angle_to_matrix(theta, phi, chi):
     return theta_mat @ chi_mat @ phi_mat
 
 
+def get_rotation(phi, chi, is_inverse = False):
+    """get the rotational matrix that rotates the sample with respct to the scattering plane.
+    therefore only phi and chi are needed."""
+    # Convert angles to radians
+    phi_rad = np.radians(phi)
+    chi_rad = np.radians(chi)
+
+    chi_mat_sample = np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(chi_rad), -np.sin(chi_rad)],
+            [0, np.sin(chi_rad), np.cos(chi_rad)],
+        ]
+    )
+    phi_mat_sample = np.array(
+        [
+            [np.cos(phi_rad), -np.sin(phi_rad), 0],
+            [np.sin(phi_rad), np.cos(phi_rad), 0],
+            [0, 0, 1],
+        ]
+    )
+    matrix = chi_mat_sample @ phi_mat_sample 
+    if is_inverse:
+        matrix = matrix.T
+    return matrix
+
+
+
+
 def sample_to_lab_conversion(
     a_vec_sample, b_vec_sample, c_vec_sample, roll, pitch, yaw
 ):
