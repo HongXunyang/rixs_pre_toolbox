@@ -515,6 +515,11 @@ class BrillouinCalculatorTab(TabInterface):
             self.angles_to_hkl_visualizer.visualize_scattering_geometry(
                 scattering_angles=result, is_clear=False
             )
+            self.angles_to_hkl_unitcell_viz.clear_plot()
+            self.angles_to_hkl_unitcell_viz.visualize_unitcell(show_labels=False)
+            self.angles_to_hkl_unitcell_viz.visualize_scattering_geometry(
+                scattering_angles=result, is_clear=False
+            )
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"**Error** calculating HKL: {str(e)}")

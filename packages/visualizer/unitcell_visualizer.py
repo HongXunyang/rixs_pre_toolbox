@@ -257,6 +257,117 @@ class UnitcellVisualizer(FigureCanvas):
                         fancybox=False, shadow=False)
         self.fig.tight_layout()
 
+    def visualize_scattering_geometry(self, scattering_angles=None, is_clear=False):
+        """ plotting the scattering plane and the beam as done in the ScatteringVisualizer
+        """ 
+        if is_clear:
+            # Clear previous plot
+            self.axes.clear()
+
+        # Get scale factor from unit cell if available
+        if self.is_initialized and self.crystal is not None:
+            lim = np.max(self.crystal.Cell.lp()[:3])
+            scale_factor = lim / 2  # Match the unit cell scale
+        else:
+            scale_factor = 1.0  # Default scale if no crystal loaded
+        scale_factor = scale_factor * 1.5
+        # Plot the  scattering plane - scale it to match unit cell
+        plane_width = 0.75 * scale_factor
+        plane_height_bottom = -0.25 * scale_factor
+        plane_height_top = 1.25 * scale_factor
+        
+        scatter_plane_vertices = np.array(
+            [
+                [plane_width, 0, plane_height_bottom],  # bottom right
+                [-plane_width, 0, plane_height_bottom],  # bottom left
+                [plane_width, 0, plane_height_top],  # top right
+                [-plane_width, 0, plane_height_top],  # top left
+            ]
+        )
+
+        scatter_plane_faces = np.array([[0, 1, 3, 2]])  # single face
+        self.axes.add_collection3d(
+            Poly3DCollection(
+                scatter_plane_vertices[scatter_plane_faces],
+                facecolors=[0.3510, 0.7850, 0.9330],  # light blue
+                edgecolors=[0.7, 0.7, 0.7],
+                alpha=0.3,
+            )
+        )
+
+        # Plot the x-ray beam
+        if scattering_angles is None:
+            scattering_angles = {
+                "theta": 50,
+                "tth": 150,
+            }
+
+        # Extract angles from data
+        theta = scattering_angles.get("theta", 50)  # theta angle
+        tth = scattering_angles.get("tth", 150)  # two theta angle
+
+        # Plot incident beam (k_in) - scale beam length to match unit cell
+        offset = 0
+        k_in_length = 1.3 * scale_factor
+        k_in_x = k_in_length * np.cos(np.radians(theta))
+        k_in_z = k_in_length * np.sin(np.radians(theta))
+        k_in_y = 0
+        # Draw colored arrow on top
+        self.axes.quiver(
+            k_in_x,
+            k_in_y + offset,
+            k_in_z,
+            -k_in_x,
+            -k_in_y,
+            -k_in_z,
+            color=(191 / 255, 44 / 255, 0),
+            alpha=1,
+            linewidth=5,
+            arrow_length_ratio=0.2,
+            zorder=10,
+        )
+
+        # Plot scattered beam (k_out) - scale beam length to match unit cell
+        k_out_length = 1.3 * scale_factor
+        k_out_x = -k_out_length * np.cos(np.radians(tth - theta))
+        k_out_z = k_out_length * np.sin(np.radians(tth - theta))
+        k_out_y = 0
+
+        # Draw colored arrow on top
+        self.axes.quiver(
+            0,
+            0 + offset,
+            0,
+            k_out_x,
+            k_out_y,
+            k_out_z,
+            color=(2 / 255, 78 / 255, 191 / 255),
+            linewidth=5,
+            arrow_length_ratio=0.2,
+            zorder=10,
+        )
+
+        # Set axis limits to match unit cell scale
+        if self.is_initialized and self.crystal is not None:
+            self.axes.set_xlim(-lim/2, lim/2)
+            self.axes.set_ylim(-lim/2, lim/2)
+            self.axes.set_zlim(-lim/2, lim/2)
+        else:
+            # Fallback to default limits
+            self.axes.set_xlim(-1, 1)
+            self.axes.set_ylim(-1, 1)
+            self.axes.set_zlim(-1, 1)
+
+        self.axes.set_axis_off()
+        self.fig.tight_layout()
+        # Update the canvas
+        self.draw()      
+    
+    def clear_plot(self):
+        """ clear the plot """
+        self.axes.clear()
+        self.draw()
+    
 if __name__ == "__main__":
     import matplotlib
     import matplotlib.pyplot as plt
