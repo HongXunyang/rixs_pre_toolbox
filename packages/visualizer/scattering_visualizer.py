@@ -55,7 +55,7 @@ class ScatteringVisualizer(FigureCanvas):
         self.visualize_lab_system()
         return True
 
-    def visualize_lab_system(self, chi=0, phi=0, is_clear=True):
+    def visualize_lab_system(self, chi=0, phi=0, plot_k_basis=True, plot_basis = False, is_clear=True):
         """Update the visualization with new crystal coordinates system."""
         if is_clear:
             # Clear previous plot
