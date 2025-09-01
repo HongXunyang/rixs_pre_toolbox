@@ -249,7 +249,6 @@ class UnitcellVisualizer(FigureCanvas):
                 "phi": 0,
                 "chi": 0,
             }
-        print(scattering_angles)
         tth, theta, phi, chi = scattering_angles.get("tth", 150), scattering_angles.get("theta", 50), scattering_angles.get("phi", 0), scattering_angles.get("chi", 0)
         a_vec = np.array([1, 0, 0])
         b_vec = np.array([0, 1, 0]) 

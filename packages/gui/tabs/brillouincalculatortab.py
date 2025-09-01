@@ -511,7 +511,7 @@ class BrillouinCalculatorTab(TabInterface):
 
             # Update visualization
             self.angles_to_hkl_visualizer.visualize_lab_system(
-                chi=params["chi"], phi=params["phi"], plot_k_basis=False, plot_basis=True
+                chi=params["chi"], phi=params["phi"], plot_k_basis=True, plot_basis=False
             )
             self.angles_to_hkl_visualizer.visualize_scattering_geometry(
                 scattering_angles=result
@@ -601,7 +601,7 @@ class BrillouinCalculatorTab(TabInterface):
 
                 # Update visualization with the first solution
                 self.hkl_to_angles_visualizer.visualize_lab_system(
-                    is_clear=True, chi=chi_values[0], phi=phi_values[0], plot_basis=True, plot_k_basis=False
+                    is_clear=True, chi=chi_values[0], phi=phi_values[0], plot_basis=False, plot_k_basis=True
                 )
                 self.hkl_to_angles_visualizer.visualize_scattering_geometry(
                     scattering_angles=first_solution, is_clear=False
@@ -699,7 +699,7 @@ class BrillouinCalculatorTab(TabInterface):
 
                 # Update visualization with the first solution
                 self.hk_fixed_tth_visualizer.visualize_lab_system(
-                    is_clear=True, chi=chi_values[0], phi=phi_values[0], plot_basis=True, plot_k_basis=False
+                    is_clear=True, chi=chi_values[0], phi=phi_values[0], plot_basis=False, plot_k_basis=True
                 )
                 self.hk_fixed_tth_visualizer.visualize_scattering_geometry(
                     scattering_angles=first_solution, is_clear=False
