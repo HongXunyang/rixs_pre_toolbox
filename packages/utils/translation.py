@@ -93,7 +93,7 @@ def euler_to_matrix(roll, pitch, yaw):
     return Rz @ Ry @ Rx  # ZYX order
 
 
-def angle_to_matrix(theta, phi, chi):
+def angle_to_matrix(theta, phi, chi, is_inverse = False):
     """Convert angles theta, phi, chi to rotation matrix.
     Pay attention to the direction of the rotation.
 
@@ -133,7 +133,10 @@ def angle_to_matrix(theta, phi, chi):
         ]
     )
 
-    return theta_mat @ chi_mat @ phi_mat
+    matrix = theta_mat @ chi_mat @ phi_mat
+    if is_inverse:
+        matrix = matrix.T
+    return matrix
 
 
 def get_rotation(phi, chi, is_inverse = False):

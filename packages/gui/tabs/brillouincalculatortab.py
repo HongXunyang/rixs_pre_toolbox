@@ -498,6 +498,7 @@ class BrillouinCalculatorTab(TabInterface):
                 phi=params["phi"],
                 chi=params["chi"],
             )
+            roll, pitch, yaw = self.parameters["roll"], self.parameters["pitch"], self.parameters["yaw"]
             success = result.get("success", False)
             if not success:
                 QMessageBox.warning(
@@ -600,12 +601,15 @@ class BrillouinCalculatorTab(TabInterface):
 
                 # Update visualization with the first solution
                 self.hkl_to_angles_visualizer.visualize_lab_system(
-                    is_clear=True, chi=chi_values[0], phi=phi_values[0]
+                    is_clear=True, chi=chi_values[0], phi=phi_values[0], plot_basis=True, plot_k_basis=False
                 )
                 self.hkl_to_angles_visualizer.visualize_scattering_geometry(
                     scattering_angles=first_solution, is_clear=False
                 )
-
+                self.hkl_to_angles_unitcell_viz.visualize_unitcell()
+                self.hkl_to_angles_unitcell_viz.visualize_scattering_geometry(
+                    scattering_angles=first_solution
+                ) 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"**Error** calculating angles: {str(e)}")
 
@@ -695,12 +699,15 @@ class BrillouinCalculatorTab(TabInterface):
 
                 # Update visualization with the first solution
                 self.hk_fixed_tth_visualizer.visualize_lab_system(
-                    is_clear=True, chi=chi_values[0], phi=phi_values[0]
+                    is_clear=True, chi=chi_values[0], phi=phi_values[0], plot_basis=True, plot_k_basis=False
                 )
                 self.hk_fixed_tth_visualizer.visualize_scattering_geometry(
                     scattering_angles=first_solution, is_clear=False
                 )
-
+            self.hk_fixed_tth_unitcell_viz.visualize_unitcell()
+            self.hk_fixed_tth_unitcell_viz.visualize_scattering_geometry(
+                scattering_angles=first_solution
+            ) 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"**Error** calculating angles: {str(e)}")
 

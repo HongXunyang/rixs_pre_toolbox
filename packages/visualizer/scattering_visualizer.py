@@ -13,7 +13,6 @@ from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from packages.utils import (
     get_reciprocal_space_vectors,
-    sample_to_lab_conversion,
     get_rotation,
 )
 from packages.classes.lab import Lab

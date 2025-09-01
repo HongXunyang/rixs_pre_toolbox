@@ -19,6 +19,8 @@ from Dans_Diffraction import functions_general as fg
 from Dans_Diffraction import functions_plotting as fp
 from Dans_Diffraction import functions_crystallography as fc
 
+
+
 # Apply the colormap patch for Dans_Diffraction compatibility
 _old_ensure_cmap = cm._ensure_cmap
 
@@ -157,20 +159,7 @@ class UnitcellVisualizer(FigureCanvas):
             self.axes.scatter(xyz[iii, 0], xyz[iii, 1], xyz[iii, 2], 
                             s=1 * sizes[n], c=col, label=labels[n], alpha=1,
                             edgecolors='white', linewidth=0.1)
-            
-            # Plot magnetic vectors (arrows) if they exist
-            for m in range(len(R)): 
-                if invidx[m] == n and I[m]:
-                    xyz_pos = R[m, :]
-                    vec = V[m, :]
-                    if fg.mag(vec) < 0.1: 
-                        continue
-                    # Simple arrow implementation (could be enhanced)
-                    start = xyz_pos - vec / 2
-                    end = xyz_pos + vec / 2
-                    self.axes.plot([start[0], end[0]], [start[1], end[1]], [start[2], end[2]], 
-                                 'r-', linewidth=3, alpha=0.8)
-        
+           
         # Labels
         if show_labels:
             uvw_st, type_st, label_st, occ_st, uiso_st, mxmymz_st = self.crystal.Structure.get()
@@ -186,20 +175,6 @@ class UnitcellVisualizer(FigureCanvas):
                            [0, 0, 1]])
         bpos = self.crystal.Cell.calculateR(uvw_box) - cen
         self.axes.plot(bpos[:, 0], bpos[:, 1], bpos[:, 2], c='gray', linewidth=1, alpha=0.85)  # cell box
-        
-        # Plot lattice vector arrows (a=red, b=green, c=blue)
-        # a vector (red)
-        self.axes.plot([bpos[0, 0], bpos[1, 0]], [bpos[0, 1], bpos[1, 1]], [bpos[0, 2], bpos[1, 2]], 
-                      'r-', linewidth=4, alpha=0.0)
-        # b vector (green)  
-        self.axes.plot([bpos[0, 0], bpos[5, 0]], [bpos[0, 1], bpos[5, 1]], [bpos[0, 2], bpos[5, 2]], 
-                      'g-', linewidth=4, alpha=0.0)
-        # c vector (blue)
-        self.axes.plot([bpos[0, 0], bpos[7, 0]], [bpos[0, 1], bpos[7, 1]], [bpos[0, 2], bpos[7, 2]], 
-                      'b-', linewidth=4, alpha=0.0)
-        
-        
-        
         # Create coordinate basis arrows outside the cell box
         # Position them in a corner away from the main structure
         arrow_origin = np.array([-lim*0.4, -lim*0.4, -lim*0.4])  # Bottom-left-front corner
@@ -221,21 +196,18 @@ class UnitcellVisualizer(FigureCanvas):
         c_norm = c_real / np.linalg.norm(c_real) * arrow_scale
         
         # Draw coordinate arrows with labels
-        # a vector (red)
         self.axes.quiver(arrow_origin[0], arrow_origin[1], arrow_origin[2]+ 2*bpos[7, 2],
                         a_norm[0], a_norm[1], a_norm[2],
                         color='dodgerblue', arrow_length_ratio=0.15, linewidth=2, alpha=0.9)
         self.axes.text(arrow_origin[0] + a_norm[0]*1.2, arrow_origin[1] + a_norm[1]*1, 
                       arrow_origin[2] + a_norm[2]*1.2 + 2*bpos[7, 2], 'a', color='dodgerblue', fontsize=14, fontweight='bold')
         
-        # b vector (green)
         self.axes.quiver(arrow_origin[0], arrow_origin[1], arrow_origin[2]+ 2*bpos[7, 2],
                         b_norm[0], b_norm[1], b_norm[2],
                         color='dodgerblue', arrow_length_ratio=0.15, linewidth=2, alpha=0.9)
         self.axes.text(arrow_origin[0] + b_norm[0]*1.2, arrow_origin[1] + b_norm[1]*1.2, 
                       arrow_origin[2] + b_norm[2]*1.2 + 2*bpos[7, 2], 'b', color='dodgerblue', fontsize=14, fontweight='bold')
         
-        # c vector (blue)
         self.axes.quiver(arrow_origin[0], arrow_origin[1], arrow_origin[2]+ 2*bpos[7, 2],
                         c_norm[0], c_norm[1], -c_norm[2],
                         color='dodgerblue', arrow_length_ratio=0.15, linewidth=2, alpha=0.9)
@@ -251,11 +223,14 @@ class UnitcellVisualizer(FigureCanvas):
         self.axes.set_axis_off()
         # change view angles
         # Add legend positioned closer to the unit cell
-        self.axes.legend(fontsize=13, frameon=False, loc='upper right', 
+        self.axes.legend(fontsize=13, frameon=False, loc='upper left', 
                         bbox_to_anchor=(0.98, 0.98), handletextpad=0.3, 
                         handlelength=1.5, columnspacing=0.5, 
                         fancybox=False, shadow=False)
         self.fig.tight_layout()
+
+
+
 
     def visualize_scattering_geometry(self, scattering_angles=None, is_clear=False):
         """ plotting the scattering plane and the beam as done in the ScatteringVisualizer
@@ -266,28 +241,62 @@ class UnitcellVisualizer(FigureCanvas):
         if is_clear:
             # Clear previous plot
             self.axes.clear()
+        # Plot the x-ray beam
+        if scattering_angles is None:
+            scattering_angles = {
+                "theta": 50,
+                "tth": 150,
+                "phi": 0,
+                "chi": 0,
+            }
+        print(scattering_angles)
+        tth, theta, phi, chi = scattering_angles.get("tth", 150), scattering_angles.get("theta", 50), scattering_angles.get("phi", 0), scattering_angles.get("chi", 0)
+        a_vec = np.array([1, 0, 0])
+        b_vec = np.array([0, 1, 0]) 
+        c_vec = np.array([0, 0, 1])
+        
+        # Transform to real space coordinates
+        a_real = self.crystal.Cell.calculateR(a_vec.reshape(1, -1))[0]
+        b_real = self.crystal.Cell.calculateR(b_vec.reshape(1, -1))[0]
+        c_real = self.crystal.Cell.calculateR(c_vec.reshape(1, -1))[0]
+
+
 
         # Get scale factor from unit cell if available
         if self.is_initialized and self.crystal is not None:
             lim = np.max(self.crystal.Cell.lp()[:3])
-            scale_factor = lim / 2  # Match the unit cell scale
+            scale_factor = lim / 2 * 1.5  # Match the unit cell scale
         else:
-            scale_factor = 1.0  # Default scale if no crystal loaded
-        scale_factor = scale_factor * 1.5
+            scale_factor = 1.5  # Default scale if no crystal loaded
         # Plot the  scattering plane - scale it to match unit cell
         plane_width = 0.75 * scale_factor
         plane_height_bottom = -0.25 * scale_factor
         plane_height_top = 1.25 * scale_factor
         
-        scatter_plane_vertices = np.array(
-            [
-                [plane_width, 0, plane_height_bottom],  # bottom right
-                [-plane_width, 0, plane_height_bottom],  # bottom left
-                [plane_width, 0, plane_height_top],  # top right
-                [-plane_width, 0, plane_height_top],  # top left
-            ]
-        )
+        x_basis = a_real / np.linalg.norm(a_real)
+        # y_basis = cross(a,b)
+        z_basis = np.cross(a_real, b_real) / np.linalg.norm(np.cross(a_real, b_real))
+        y_basis = np.cross(z_basis, x_basis) / np.linalg.norm(np.cross(z_basis, x_basis))
 
+        # Define vertices in local plane coordinates (x_basis, z_basis plane)
+        local_vertices = np.array([
+            [plane_width, 0, plane_height_bottom],   # bottom right in local coords
+            [-plane_width, 0, plane_height_bottom],  # bottom left in local coords
+            [plane_width, 0, plane_height_top],      # top right in local coords
+            [-plane_width, 0, plane_height_top],     # top left in local coords
+        ])
+        
+        # Transform vertices to real space using crystal basis vectors
+        scatter_plane_vertices = np.zeros_like(local_vertices)
+        for i, vertex in enumerate(local_vertices):
+            # Transform each vertex using the basis vectors
+            # x component uses x_basis, y component uses y_basis (normal to plane), z component uses z_basis
+            scatter_plane_vertices[i] = (vertex[0] * x_basis + 
+                                       vertex[1] * y_basis + 
+                                       vertex[2] * z_basis)
+        # coordinate change matrix: change to scattering plane system
+        ccm = np.array([x_basis, y_basis, z_basis]).T
+        scatter_plane_vertices = _rotate_vertices_wrt_plane(scatter_plane_vertices, ccm, phi, chi)
         scatter_plane_faces = np.array([[0, 1, 3, 2]])  # single face
         self.axes.add_collection3d(
             Poly3DCollection(
@@ -298,31 +307,21 @@ class UnitcellVisualizer(FigureCanvas):
             )
         )
 
-        # Plot the x-ray beam
-        if scattering_angles is None:
-            scattering_angles = {
-                "theta": 50,
-                "tth": 150,
-            }
 
-        # Extract angles from data
-        theta = scattering_angles.get("theta", 50)  # theta angle
-        tth = scattering_angles.get("tth", 150)  # two theta angle
 
         # Plot incident beam (k_in) - scale beam length to match unit cell
         offset = 0
         k_in_length = 1.3 * scale_factor
-        k_in_x = k_in_length * np.cos(np.radians(theta))
-        k_in_z = k_in_length * np.sin(np.radians(theta))
-        k_in_y = 0
+        k_in_vec = - k_in_length * x_basis
+        k_in_vec = rotate_vector(k_in_vec, ccm, theta, phi, chi)
         # Draw colored arrow on top
         self.axes.quiver(
-            k_in_x,
-            k_in_y + offset,
-            k_in_z,
-            -k_in_x,
-            -k_in_y,
-            -k_in_z,
+            -k_in_vec[0],
+            -k_in_vec[1] - offset,
+            -k_in_vec[2],
+            k_in_vec[0],
+            k_in_vec[1],
+            k_in_vec[2],
             color=(191 / 255, 44 / 255, 0),
             alpha=1,
             linewidth=5,
@@ -332,18 +331,16 @@ class UnitcellVisualizer(FigureCanvas):
 
         # Plot scattered beam (k_out) - scale beam length to match unit cell
         k_out_length = 1.3 * scale_factor
-        k_out_x = -k_out_length * np.cos(np.radians(tth - theta))
-        k_out_z = k_out_length * np.sin(np.radians(tth - theta))
-        k_out_y = 0
-
+        k_out_vec = ccm @ np.array([-np.cos(np.radians(tth)), 0, np.sin(np.radians(tth))]) * k_out_length
+        k_out_vec = rotate_vector(k_out_vec, ccm, theta, phi, chi)
         # Draw colored arrow on top
         self.axes.quiver(
             0,
             0 + offset,
             0,
-            k_out_x,
-            k_out_y,
-            k_out_z,
+            k_out_vec[0],
+            k_out_vec[1],
+            k_out_vec[2],
             color=(2 / 255, 78 / 255, 191 / 255),
             linewidth=5,
             arrow_length_ratio=0.2,
@@ -371,6 +368,72 @@ class UnitcellVisualizer(FigureCanvas):
         self.axes.clear()
         self.draw()
     
+
+def rotate_vector(vec, ccm, theta, phi, chi):
+    """Convert angles theta, phi, chi to rotation matrix.
+    Pay attention to the direction of the rotation.
+
+    Args:
+        vec (np.ndarray): vector to rotate
+        ccm (np.ndarray): coordinate change matrix
+        theta (float): rotation about the y-axis in degrees, right-hand rule
+        phi (float): rotation about the z-axis in degrees, right-hand rule
+        chi (float): rotation about the x-axis in degrees, right-hand rule
+
+    Returns:
+        rotated_vec (np.ndarray): Rotated vector
+    """
+
+    theta_rad, phi_rad, chi_rad = (np.radians(theta), np.radians(phi), np.radians(chi))
+
+    # theta rotation around the y-axis
+    theta_mat = np.array(
+        [
+            [np.cos(theta_rad), 0, np.sin(theta_rad)],
+            [0, 1, 0],
+            [-np.sin(theta_rad), 0, np.cos(theta_rad)],
+        ]
+    )
+    # chi rotation around the x-axis
+    chi_mat = np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(chi_rad), -np.sin(chi_rad)],
+            [0, np.sin(chi_rad), np.cos(chi_rad)],
+        ]
+    )
+
+    # phi rotation around the z-axis
+    phi_mat = np.array(
+        [
+            [np.cos(phi_rad), -np.sin(phi_rad), 0],
+            [np.sin(phi_rad), np.cos(phi_rad), 0],
+            [0, 0, 1],
+        ]
+    )
+
+    matrix = theta_mat @ chi_mat @ phi_mat
+    matrix = ccm @ matrix.T @ ccm.T
+    return matrix @ vec
+
+def _rotate_vertices_wrt_plane(vertices, ccm, phi, chi):
+    """Rotate the vertices of the sample with respect to the scattering plane"""
+    phi_rad = np.radians(phi)
+    chi_rad = np.radians(chi)
+    component_phi = np.array([[np.cos(phi_rad), np.sin(phi_rad), 0], [-np.sin(phi_rad), np.cos(phi_rad), 0], [0, 0, 1]])
+    component_chi = np.array([[1, 0, 0], [0, np.cos(chi_rad), np.sin(chi_rad)], [0, -np.sin(chi_rad), np.cos(chi_rad)]])
+    rotation_matrix = component_phi @ component_chi
+    rotation_matrix = ccm @ rotation_matrix @ ccm.T
+    vertices = np.array(vertices)
+    for i, vertex in enumerate(vertices):
+        vertices[i] = rotation_matrix @ vertex
+    return vertices
+
+
+
+
+
+
 if __name__ == "__main__":
     import matplotlib
     import matplotlib.pyplot as plt
@@ -413,3 +476,5 @@ if __name__ == "__main__":
             print(f"CIF file not found: {cif_file}")
     
     print("Test completed successfully!")
+
+
