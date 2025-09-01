@@ -196,23 +196,23 @@ class UnitcellVisualizer(FigureCanvas):
         c_norm = c_real / np.linalg.norm(c_real) * arrow_scale
         
         # Draw coordinate arrows with labels
-        self.axes.quiver(arrow_origin[0], arrow_origin[1], arrow_origin[2]+ 2*bpos[7, 2],
+        self.axes.quiver(arrow_origin[0], arrow_origin[1], arrow_origin[2]+ 1.6*bpos[7, 2],
                         a_norm[0], a_norm[1], a_norm[2],
                         color='dodgerblue', arrow_length_ratio=0.15, linewidth=2, alpha=0.9)
         self.axes.text(arrow_origin[0] + a_norm[0]*1.2, arrow_origin[1] + a_norm[1]*1, 
-                      arrow_origin[2] + a_norm[2]*1.2 + 2*bpos[7, 2], 'a', color='dodgerblue', fontsize=14, fontweight='bold')
+                      arrow_origin[2] + a_norm[2]*1.2 + 1.6*bpos[7, 2], 'a', color='dodgerblue', fontsize=14, fontweight='bold')
         
-        self.axes.quiver(arrow_origin[0], arrow_origin[1], arrow_origin[2]+ 2*bpos[7, 2],
+        self.axes.quiver(arrow_origin[0], arrow_origin[1], arrow_origin[2]+ 1.6*bpos[7, 2],
                         b_norm[0], b_norm[1], b_norm[2],
                         color='dodgerblue', arrow_length_ratio=0.15, linewidth=2, alpha=0.9)
         self.axes.text(arrow_origin[0] + b_norm[0]*1.2, arrow_origin[1] + b_norm[1]*1.2, 
-                      arrow_origin[2] + b_norm[2]*1.2 + 2*bpos[7, 2], 'b', color='dodgerblue', fontsize=14, fontweight='bold')
+                      arrow_origin[2] + b_norm[2]*1.2 + 1.6*bpos[7, 2], 'b', color='dodgerblue', fontsize=14, fontweight='bold')
         
-        self.axes.quiver(arrow_origin[0], arrow_origin[1], arrow_origin[2]+ 2*bpos[7, 2],
-                        c_norm[0], c_norm[1], -c_norm[2],
+        self.axes.quiver(arrow_origin[0], arrow_origin[1], arrow_origin[2]+ 1.6*bpos[7, 2],
+                        c_norm[0], c_norm[1], c_norm[2],
                         color='dodgerblue', arrow_length_ratio=0.15, linewidth=2, alpha=0.9)
         self.axes.text(arrow_origin[0] + c_norm[0]*1.2, arrow_origin[1] + c_norm[1]*1.2, 
-                      arrow_origin[2] - c_norm[2]*1.2 + 2*bpos[7, 2], 'c', color='dodgerblue', fontsize=14, fontweight='bold')
+                      arrow_origin[2] + c_norm[2]*1.2 + 1.6*bpos[7, 2], 'c', color='dodgerblue', fontsize=14, fontweight='bold')
         
         # Set axis limits based on lattice
         self.axes.set_xlim(-lim/2, lim/2)
@@ -220,12 +220,12 @@ class UnitcellVisualizer(FigureCanvas):
         self.axes.set_zlim(-lim/2, lim/2)
         
         # Turn off axis (removes background, grids, ticks, labels) - like Dans_Diffraction
-        self.axes.set_axis_off()
+        #self.axes.set_axis_off()
         # change view angles
         # Add legend positioned closer to the unit cell
-        self.axes.legend(fontsize=13, frameon=False, loc='upper left', 
+        self.axes.legend(fontsize=10, frameon=False, loc='upper left', 
                         bbox_to_anchor=(0.98, 0.98), handletextpad=0.3, 
-                        handlelength=1.5, columnspacing=0.5, 
+                        handlelength=1.5, columnspacing=0.1, 
                         fancybox=False, shadow=False)
         self.fig.tight_layout()
 
@@ -358,8 +358,7 @@ class UnitcellVisualizer(FigureCanvas):
             self.axes.set_ylim(-1, 1)
             self.axes.set_zlim(-1, 1)
 
-        self.axes.set_axis_off()
-        self.fig.tight_layout()
+        #self.axes.set_axis_off()
         # Update the canvas
         self.draw()      
     
