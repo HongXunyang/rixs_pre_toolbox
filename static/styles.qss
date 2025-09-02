@@ -363,4 +363,16 @@ QPushButton[class="inactiveToggle"]:hover {
 QPushButton[class="inactiveToggle"]:pressed {
     background-color: #d2d8de; /* Even darker when pressed */
     border: 1px solid #bec6ce;
-} 
+}
+
+
+/* HKL Results Table Styling */
+QTableWidgetItem[feasible="True"] {
+    background-color: #ffffff;  /* White background for feasible solutions */
+    color: #333333;
+}
+
+QTableWidgetItem[feasible="False"] {
+    background-color: #a62d2d;  /* Red background for infeasible solutions */
+    color: #333333;
+}

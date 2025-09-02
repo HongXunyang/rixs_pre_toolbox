@@ -1,0 +1,7 @@
+{
+
+    "background_colors": {
+        "feasible": [255, 255, 255],
+        "infeasible": [166, 45, 45]
+    }
+}

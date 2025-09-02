@@ -556,44 +556,16 @@ class BrillouinCalculatorTab(TabInterface):
                 fixed_angle_name=params["fixed_angle_name"],
             )
 
-            success = result.get("success", False)
-            if not success:
-                QMessageBox.warning(
-                    self, "Warning", result.get("error", "Unknown error")
-                )
-                return
 
-            # Extract results - these are now lists
-            tth_values = result["tth"]
-            theta_values = result["theta"]
-            phi_values = result["phi"]
-            chi_values = result["chi"]
-
-            # Format results for the results widget
-            solutions = []
-            for i in range(len(tth_values)):
-                solutions.append({
-                    "tth": tth_values[i],
-                    "theta": theta_values[i],
-                    "phi": phi_values[i],
-                    "chi": chi_values[i],
-                    "is_primary": True  # Mark as primary solutions
-                })
-
-            # Display results using the new results widget
-            formatted_result = {
-                "success": True,
-                "solutions": solutions
-            }
-            self.hkl_to_angles_results.display_results(formatted_result)
+            self.hkl_to_angles_results.display_results(result)
 
             # If we have at least one solution, visualize the first one
-            if len(tth_values) > 0:
+            if len(result["tth"]) > 0:
                 first_solution = {
-                    "tth": tth_values[0],
-                    "theta": theta_values[0],
-                    "phi": phi_values[0],
-                    "chi": chi_values[0],
+                    "tth": result["tth"][0],
+                    "theta": result["theta"][0],
+                    "phi": result["phi"][0],
+                    "chi": result["chi"][0],
                     "H": result["H"],
                     "K": result["K"],
                     "L": result["L"],
@@ -601,7 +573,7 @@ class BrillouinCalculatorTab(TabInterface):
 
                 # Update visualization with the first solution
                 self.hkl_to_angles_visualizer.visualize_lab_system(
-                    is_clear=True, chi=chi_values[0], phi=phi_values[0], plot_basis=False, plot_k_basis=True
+                    is_clear=True, chi=result["chi"][0], phi=result["phi"][0], plot_basis=False, plot_k_basis=True
                 )
                 self.hkl_to_angles_visualizer.visualize_scattering_geometry(
                     scattering_angles=first_solution, is_clear=False
