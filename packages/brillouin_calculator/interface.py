@@ -160,25 +160,32 @@ class BrillouinCalculator:
         if not self.is_initialized():
             raise ValueError("Calculator not initialized")
 
+        
         calculate_angles = _calculate_angles_factory(fixed_angle_name)
         a, b, c, alpha, beta, gamma = self.lab.get_lattice_parameters()
         roll, pitch, yaw = self.lab.get_lattice_angles()
-        tth_result, theta_result, phi_result, chi_result = calculate_angles(
-            self.k_in,
-            H,
-            K,
-            L,
-            a,
-            b,
-            c,
-            alpha,
-            beta,
-            gamma,
-            roll,
-            pitch,
-            yaw,
-            fixed_angle,
-        )
+        try:
+            tth_result, theta_result, phi_result, chi_result = calculate_angles(
+                self.k_in,
+                H,
+                K,
+                L,
+                a,
+                b,
+                c,
+                alpha,
+                beta,
+                gamma,
+                roll,
+                pitch,
+                yaw,
+                fixed_angle,
+            )
+        except Exception as e:
+            return {
+                "success": False,
+                "error": "No solution found: " + str(e),
+            }
         return {
             "tth": tth_result,
             "theta": theta_result,
@@ -204,29 +211,36 @@ class BrillouinCalculator:
         a, b, c, alpha, beta, gamma = self.lab.get_lattice_parameters()
         roll, pitch, yaw = self.lab.get_lattice_angles()
 
-        tth_result, theta_result, phi_result, chi_result, momentum = (
-            _calculate_angles_tth_fixed(
-                self.k_in,
-                tth,
-                a,
-                b,
-                c,
-                alpha,
-                beta,
-                gamma,
-                roll,
-                pitch,
-                yaw,
-                H,
-                K,
-                L,
-                fixed_angle_name,
-                fixed_angle,
+        try:
+            tth_result, theta_result, phi_result, chi_result, momentum = (
+                _calculate_angles_tth_fixed(
+                    self.k_in,
+                    tth,
+                    a,
+                    b,
+                    c,
+                    alpha,
+                    beta,
+                    gamma,
+                    roll,
+                    pitch,
+                    yaw,
+                    H,
+                    K,
+                    L,
+                    fixed_angle_name,
+                    fixed_angle,
+                )
             )
-        )
-        H = momentum if H is None else H
-        K = momentum if K is None else K
-        L = momentum if L is None else L
+            H = momentum if H is None else H
+            K = momentum if K is None else K
+            L = momentum if L is None else L
+        except Exception as e:
+            return {
+                "success": False,
+                "error": "No solution found: " + str(e),
+            }
+
         result = {
             "tth": tth_result,
             "theta": theta_result,

@@ -553,6 +553,11 @@ class BrillouinCalculatorTab(TabInterface):
             fixed_angle=params["fixed_angle_value"],
             fixed_angle_name=params["fixed_angle_name"],
         )
+        if not result["success"]:
+            QMessageBox.warning(
+                self, "Warning", result.get("error", "No solution found")
+            )
+            return
         self.hkl_to_angles_results.display_results(result)
         # Update visualization with the first solution
         self.hkl_to_angles_visualizer.visualize_lab_system(
@@ -598,6 +603,11 @@ class BrillouinCalculatorTab(TabInterface):
             fixed_angle=fixed_angle_value,
         )
         print("result", result)
+        if not result["success"]:
+            QMessageBox.warning(
+                self, "Warning", result.get("error", "No solution found")
+            )
+            return
         self.hk_angles_results.display_results(result)
 
         # Update visualization with the first solution
