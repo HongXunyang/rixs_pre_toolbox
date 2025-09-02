@@ -229,10 +229,10 @@ class HKLToAnglesResultsTable(QTableWidget):
         self.insertRow(row_position)
 
         # Add solution data
-        self.setItem(row_position, 0, QTableWidgetItem(f"{results['tth'][0]:.1f}"))
-        self.setItem(row_position, 1, QTableWidgetItem(f"{results['theta'][0]:.1f}"))
-        self.setItem(row_position, 2, QTableWidgetItem(f"{results['phi'][0]:.1f}"))
-        self.setItem(row_position, 3, QTableWidgetItem(f"{results['chi'][0]:.1f}"))
+        self.setItem(row_position, 0, QTableWidgetItem(f"{results['tth']:.1f}"))
+        self.setItem(row_position, 1, QTableWidgetItem(f"{results['theta']:.1f}"))
+        self.setItem(row_position, 2, QTableWidgetItem(f"{results['phi']:.1f}"))
+        self.setItem(row_position, 3, QTableWidgetItem(f"{results['chi']:.1f}"))
 
         # Highlight new solutions with light blue background
         feasible_brush = style_config.get_background_qbrush("feasible")

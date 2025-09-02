@@ -332,16 +332,15 @@ class BrillouinCalculator:
                 if not result.get("success", False):
                     # Skip points that fail to calculate but don't fail completely
                     continue
-
+                
                 # Each calculation can return multiple solutions
-                for j in range(len(result["tth"])):
-                    all_tth.append(result["tth"][j])
-                    all_theta.append(result["theta"][j])
-                    all_phi.append(result["phi"][j])
-                    all_chi.append(result["chi"][j])
-                    all_h.append(result["H"])
-                    all_k.append(result["K"])
-                    all_l.append(result["L"])
+                all_tth.append(result["tth"])
+                all_theta.append(result["theta"])
+                all_phi.append(result["phi"])
+                all_chi.append(result["chi"])
+                all_h.append(result["H"])
+                all_k.append(result["K"])
+                all_l.append(result["L"])
             except Exception as e:
                 # Log the error but continue with other points
                 print(f"Error calculating point {(h, k, l)}: {str(e)}")

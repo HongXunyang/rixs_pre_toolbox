@@ -334,10 +334,10 @@ def _calculate_angles_chi_fixed(
         phi_best = phi
         _is_valid_solution = is_valid_solution(phi_best)
 
-    theta_result = [np.round(theta_best, 1)]
-    phi_result = [np.round(phi_best, 1)]
-    tth_result = [np.round(process_angle(tth), 1)]
-    chi_result = [np.round(chi_fixed, 1)]
+    theta_result = np.round(theta_best, 1)
+    phi_result = np.round(phi_best, 1)
+    tth_result = np.round(process_angle(tth), 1)
+    chi_result = np.round(chi_fixed, 1)
 
     return tth_result, theta_result, phi_result, chi_result
 
@@ -442,10 +442,10 @@ def _calculate_angles_phi_fixed(
         _is_valid_solution = is_valid_solution(chi_best)
 
     # round up to 0.1, discard duplicates, theta and chi should match the order of the list
-    theta_result = [np.round(theta_best, 1)]
-    chi_result = [np.round(chi_best, 1)]
-    tth_result = [np.round(process_angle(tth), 1)]
-    phi_result = [np.round(phi_fixed, 1)]
+    theta_result = np.round(theta_best, 1)
+    chi_result = np.round(chi_best, 1)
+    tth_result = np.round(process_angle(tth), 1)
+    phi_result = np.round(phi_fixed, 1)
     return tth_result, theta_result, phi_result, chi_result
 
 

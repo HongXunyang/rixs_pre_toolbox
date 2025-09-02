@@ -302,7 +302,7 @@ class BrillouinCalculatorTab(TabInterface):
 
         # Create results widget
         self.hkl_to_angles_results = HKLToAnglesResultsWidget(parent=self)
-        self.hkl_to_angles_results.solutionSelected.connect(self.on_angle_solution_selected)
+        # self.hkl_to_angles_results.solutionSelected.connect(self.on_angle_solution_selected)
         left_layout.addWidget(self.hkl_to_angles_results)
 
         left_layout.addStretch()  # Add stretch to push content to top
@@ -342,7 +342,7 @@ class BrillouinCalculatorTab(TabInterface):
 
         # Create results widget
         self.hk_angles_results = HKAnglesResultsWidget(parent=self)
-        self.hk_angles_results.solutionSelected.connect(self.on_angle_solution_selected_tth)
+        # self.hk_angles_results.solutionSelected.connect(self.on_angle_solution_selected_tth)
         left_layout.addWidget(self.hk_angles_results)
 
         left_layout.addStretch()  # Add stretch to push content to top
@@ -535,154 +535,82 @@ class BrillouinCalculatorTab(TabInterface):
     @pyqtSlot()
     def calculate_angles(self):
         """Calculate angles from HKL."""
-        try:
-            # Check if calculator is initialized
-            if not self.calculator.is_initialized():
-                QMessageBox.warning(
-                    self, "Warning", "Please initialize the calculator first!"
-                )
-                self.tab_widget.setCurrentIndex(0)
-                return
-
-            # Get parameters from the controls component
-            params = self.hkl_to_angles_controls.get_calculation_parameters()
-
-            # Calculate angles
-            result = self.calculator.calculate_angles(
-                H=params["H"],
-                K=params["K"],
-                L=params["L"],
-                fixed_angle=params["fixed_angle_value"],
-                fixed_angle_name=params["fixed_angle_name"],
+        if not self.calculator.is_initialized():
+            QMessageBox.warning(
+                self, "Warning", "Please initialize the calculator first!"
             )
+            self.tab_widget.setCurrentIndex(0)
+            return
 
+        # Get parameters from the controls component
+        params = self.hkl_to_angles_controls.get_calculation_parameters()
 
-            self.hkl_to_angles_results.display_results(result)
-
-            # If we have at least one solution, visualize the first one
-            if len(result["tth"]) > 0:
-                first_solution = {
-                    "tth": result["tth"][0],
-                    "theta": result["theta"][0],
-                    "phi": result["phi"][0],
-                    "chi": result["chi"][0],
-                    "H": result["H"],
-                    "K": result["K"],
-                    "L": result["L"],
-                }
-
-                # Update visualization with the first solution
-                self.hkl_to_angles_visualizer.visualize_lab_system(
-                    is_clear=True, chi=result["chi"][0], phi=result["phi"][0], plot_basis=False, plot_k_basis=True
-                )
-                self.hkl_to_angles_visualizer.visualize_scattering_geometry(
-                    scattering_angles=first_solution, is_clear=False
-                )
-                self.hkl_to_angles_unitcell_viz.visualize_unitcell()
-                self.hkl_to_angles_unitcell_viz.visualize_scattering_geometry(
-                    scattering_angles=first_solution
-                ) 
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"**Error** calculating angles: {str(e)}")
-
+        # Calculate angles
+        result = self.calculator.calculate_angles(
+            H=params["H"],
+            K=params["K"],
+            L=params["L"],
+            fixed_angle=params["fixed_angle_value"],
+            fixed_angle_name=params["fixed_angle_name"],
+        )
+        self.hkl_to_angles_results.display_results(result)
+        # Update visualization with the first solution
+        self.hkl_to_angles_visualizer.visualize_lab_system(
+            is_clear=True, chi=result["chi"], phi=result["phi"], plot_basis=False, plot_k_basis=True
+        )
+        self.hkl_to_angles_visualizer.visualize_scattering_geometry(
+            scattering_angles=result, is_clear=False
+        )
+        self.hkl_to_angles_unitcell_viz.visualize_unitcell()
+        self.hkl_to_angles_unitcell_viz.visualize_scattering_geometry(
+            scattering_angles=result
+        ) 
     @pyqtSlot()
     def calculate_angles_tth_fixed(self):
         """Calculate angles from HK with fixed tth."""
-        try:
-            # Check if calculator is initialized
-            if not self.calculator.is_initialized():
-                QMessageBox.warning(
-                    self, "Warning", "Please initialize the calculator first!"
-                )
-                self.tab_widget.setCurrentIndex(0)
-                return
-
-            # Get parameters from the controls component
-            params = self.hk_angles_controls.get_calculation_parameters()
-            
-            # Extract values for calculation
-            tth = params["tth"]
-            H = params["H"]
-            K = params["K"]
-            L = params["L"]
-            fixed_index = params["fixed_index"]
-            fixed_angle_name = params["fixed_angle_name"]
-            fixed_angle_value = params["fixed_angle_value"]
-
-            # Calculate angles
-            result = self.calculator.calculate_angles_tth_fixed(
-                tth=tth,
-                H=H,
-                K=K,
-                L=L,
-                fixed_angle_name=fixed_angle_name,
-                fixed_angle=fixed_angle_value,
+        # Check if calculator is initialized
+        if not self.calculator.is_initialized():
+            QMessageBox.warning(
+                self, "Warning", "Please initialize the calculator first!"
             )
+            self.tab_widget.setCurrentIndex(0)
+            return
 
-            success = result.get("success", False)
-            if not success:
-                QMessageBox.warning(
-                    self, "Warning", result.get("error", "Unknown error")
-                )
-                return
+        # Get parameters from the controls component
+        params = self.hk_angles_controls.get_calculation_parameters()
+        
+        # Extract values for calculation
+        tth = params["tth"]
+        H = params["H"]
+        K = params["K"]
+        L = params["L"]
+        fixed_index = params["fixed_index"]
+        fixed_angle_name = params["fixed_angle_name"]
+        fixed_angle_value = params["fixed_angle_value"]
 
-            # Extract results - these are now lists
-            tth_values = result["tth"]
-            theta_values = result["theta"]
-            phi_values = result["phi"]
-            chi_values = result["chi"]
+        # Calculate angles
+        result = self.calculator.calculate_angles_tth_fixed(
+            tth=tth,
+            H=H,
+            K=K,
+            L=L,
+            fixed_angle_name=fixed_angle_name,
+            fixed_angle=fixed_angle_value,
+        )
+        print("result", result)
+        self.hk_angles_results.display_results(result)
 
-            # Format results for the results widget
-            solutions = []
-            for i in range(len(tth_values)):
-                solutions.append({
-                    "tth": tth_values[i],
-                    "theta": theta_values[i],
-                    "phi": phi_values[i],
-                    "chi": chi_values[i],
-                    "is_primary": True  # Mark as primary solutions
-                })
-
-            # Display results using the new results widget
-            formatted_result = {
-                "success": True,
-                "solutions": solutions
-            }
-            self.hk_angles_results.display_results(formatted_result)
-
-            # If we have at least one solution, update the HKL values and visualize it
-            if len(tth_values) > 0:
-                # Update the HKL values
-                H_result = result["H"]
-                K_result = result["K"]
-                L_result = result["L"]
-
-
-                # Create a first solution for visualization
-                first_solution = {
-                    "tth": tth_values[0],
-                    "theta": theta_values[0],
-                    "phi": phi_values[0],
-                    "chi": chi_values[0],
-                    "H": H_result,
-                    "K": K_result,
-                    "L": L_result,
-                }
-
-                # Update visualization with the first solution
-                self.hk_fixed_tth_visualizer.visualize_lab_system(
-                    is_clear=True, chi=chi_values[0], phi=phi_values[0], plot_basis=False, plot_k_basis=True
-                )
-                self.hk_fixed_tth_visualizer.visualize_scattering_geometry(
-                    scattering_angles=first_solution, is_clear=False
-                )
-            self.hk_fixed_tth_unitcell_viz.visualize_unitcell()
-            self.hk_fixed_tth_unitcell_viz.visualize_scattering_geometry(
-                scattering_angles=first_solution
-            ) 
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"**Error** calculating angles: {str(e)}")
-
+        # Update visualization with the first solution
+        self.hk_fixed_tth_visualizer.visualize_lab_system(
+            is_clear=True, chi=result["chi"], phi=result["phi"], plot_basis=False, plot_k_basis=True
+        )
+        self.hk_fixed_tth_visualizer.visualize_scattering_geometry(
+            scattering_angles=result, is_clear=False
+        )
+        self.hk_fixed_tth_unitcell_viz.visualize_unitcell()
+        self.hk_fixed_tth_unitcell_viz.visualize_scattering_geometry(
+            scattering_angles=result
+        ) 
     @pyqtSlot()
     def on_angle_solution_selected(self, solution):
         """Handle selection of a specific angle solution from the results widget."""

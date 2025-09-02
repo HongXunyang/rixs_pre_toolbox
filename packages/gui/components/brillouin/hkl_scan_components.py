@@ -423,7 +423,6 @@ class HKLScanResultsTable(QTableWidget):
 
         # Store results for later export
         self.last_results = results
-
         # Get data from results
         h_values = results["H"]
         k_values = results["K"]

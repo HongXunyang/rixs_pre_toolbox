@@ -18,6 +18,8 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QBrush
+from config import StylingConfig
+style_config = StylingConfig()
 
 
 class HKAnglesControls(QWidget):
@@ -342,49 +344,34 @@ class HKAnglesResultsTable(QTableWidget):
         # Store the last results for reference
         self.last_results = None
 
-    def display_results(self, results):
+    def display_results(self, result):
         """Append calculation results to the table."""
         # Don't clear table - append new results
-        self.last_results = results
+        self.last_results = result
 
         # Check if we have results
-        if not results or not results.get("success", False):
+        if not result or not result.get("success", False):
             return
 
-        # Get solution data
-        solutions = results.get("solutions", [])
-        
-        if not solutions:
-            return
-
-        # Store the current row count to know where the new results start
-        start_row = self.rowCount()
-        num_solutions = len(solutions)
-
-        # First, clear highlighting from all existing rows (set to white background)
-        for row in range(start_row):
-            for col in range(self.columnCount()):
-                item = self.item(row, col)
-                if item:
-                    item.setBackground(QBrush(QColor(255, 255, 255)))  # White background
 
         # Add rows for each new solution
-        for i, solution in enumerate(solutions):
-            row_position = self.rowCount()
-            self.insertRow(row_position)
+        row_position = self.rowCount()
+        self.insertRow(row_position)
 
-            # Add solution data
-            self.setItem(row_position, 0, QTableWidgetItem(f"{solution['tth']:.1f}"))
-            self.setItem(row_position, 1, QTableWidgetItem(f"{solution['theta']:.1f}"))
-            self.setItem(row_position, 2, QTableWidgetItem(f"{solution['phi']:.1f}"))
-            self.setItem(row_position, 3, QTableWidgetItem(f"{solution['chi']:.1f}"))
+        # Add solution data
+        self.setItem(row_position, 0, QTableWidgetItem(f"{result['tth']:.1f}"))
+        self.setItem(row_position, 1, QTableWidgetItem(f"{result['theta']:.1f}"))
+        self.setItem(row_position, 2, QTableWidgetItem(f"{result['phi']:.1f}"))
+        self.setItem(row_position, 3, QTableWidgetItem(f"{result['chi']:.1f}"))
 
-            # Highlight new solutions with light blue background
-            highlight_color = QBrush(QColor(230, 230, 240))
-            for col in range(self.columnCount()):
-                item = self.item(row_position, col)
-                if item:
-                    item.setBackground(highlight_color)
+        # Highlight new solutions with light blue background
+        feasible_brush = style_config.get_background_qbrush("feasible")
+        infeasible_brush = style_config.get_background_qbrush("infeasible")
+        row_color = feasible_brush if result["feasible"] else infeasible_brush
+        for col in range(self.columnCount()):
+            item = self.item(row_position, col)
+            if item:
+                item.setBackground(row_color)
 
         # Scroll to the bottom to show the new results
         self.scrollToBottom()
@@ -393,9 +380,8 @@ class HKAnglesResultsTable(QTableWidget):
         """Handle selection change in the table."""
         current_row = self.currentRow()
         if current_row >= 0 and self.last_results:
-            solutions = self.last_results.get("solutions", [])
-            if current_row < len(solutions):
-                selected_solution = solutions[current_row]
+            if current_row < 1:
+                selected_solution = self.last_results
                 self.solutionSelected.emit(selected_solution)
 
     def clear_results(self):
