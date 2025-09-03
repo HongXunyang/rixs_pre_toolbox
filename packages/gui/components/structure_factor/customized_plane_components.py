@@ -41,6 +41,7 @@ class CustomizedPlaneControls(QWidget):
         
         # Configuration group
         config_group = QGroupBox("Configuration")
+        # set the width of the group box to 300px
         config_layout = QFormLayout(config_group)
         
         # Energy input (in keV, converted to eV internally)
@@ -56,14 +57,17 @@ class CustomizedPlaneControls(QWidget):
         self.u_line.setPlaceholderText("110")
         self.u_line.setText("110")
         
+        self.u_line.setFixedWidth(60)
         self.v_line = QLineEdit()
         self.v_line.setPlaceholderText("001")
         self.v_line.setText("001")
+        self.v_line.setFixedWidth(60)
         
         self.c_line = QLineEdit()
         self.c_line.setPlaceholderText("000")
         self.c_line.setText("000")
-        
+        self.c_line.setFixedWidth(60)
+
         uvc_layout.addWidget(QLabel("U"))
         uvc_layout.addWidget(self.u_line)
         uvc_layout.addWidget(QLabel("V"))
@@ -83,11 +87,11 @@ class CustomizedPlaneControls(QWidget):
         
         self.v_range_spin = QSpinBox()
         self.v_range_spin.setRange(0, 5)
-        self.v_range_spin.setValue(3)
+    
         
-        ranges_layout.addWidget(QLabel("u range"))
+        ranges_layout.addWidget(QLabel("U range"))
         ranges_layout.addWidget(self.u_range_spin)
-        ranges_layout.addWidget(QLabel("v range"))
+        ranges_layout.addWidget(QLabel("V range"))
         ranges_layout.addWidget(self.v_range_spin)
         config_layout.addRow("", ranges_row)
         
@@ -182,13 +186,9 @@ class CustomizedPlane3DWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         # Create group box
-        group = QGroupBox("3D Visualization")
-        group_layout = QGridLayout(group)
-        
         self.visualizer3d = StructureFactorVisualizer3D()
-        group_layout.addWidget(self.visualizer3d, 0, 0)
         
-        layout.addWidget(group)
+        layout.addWidget(self.visualizer3d)
         
     def visualize_structure_factors(self, hkl_list, sf_values):
         """Visualize structure factors in 3D."""
@@ -249,16 +249,23 @@ class CustomizedPlaneWidget(QWidget):
         
         # Left panel: configuration
         self.controls = CustomizedPlaneControls()
-        main_layout.addWidget(self.controls, 0, 0, 1, 1)
+        main_layout.addWidget(self.controls, 1, 0)
         
         # 2D plane visualizer below configuration for more space
         self.plane_2d = CustomizedPlane2DWidget()
-        main_layout.addWidget(self.plane_2d, 1, 0, 1, 1)
+        main_layout.addWidget(self.plane_2d, 0, 1, 1, 1)
         
         # Right panel: 3D spanning both rows
         self.plane_3d = CustomizedPlane3DWidget()
-        main_layout.addWidget(self.plane_3d, 0, 1, 2, 1)
-        
+        main_layout.addWidget(self.plane_3d, 0, 0)
+
+        # Set layout proportions
+        main_layout.setColumnStretch(0, 1)  # Left column
+        main_layout.setColumnStretch(1, 1)  # Right column
+        main_layout.setRowStretch(0, 3)     # More space for visualizers
+        main_layout.setRowStretch(1, 1)     # Less space for controls        
+
+
         # Connect signals
         self.controls.parametersChanged.connect(self.update_plots)
         self.controls.updatePlotsClicked.connect(self.update_plots)

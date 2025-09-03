@@ -58,7 +58,7 @@ class StructureFactorVisualizer3D(FigureCanvas):
             self.axes.set_xlabel("H (r.l.u.)", fontsize=10)
             self.axes.set_ylabel("K (r.l.u.)", fontsize=10)
             self.axes.set_zlabel("L (r.l.u.)", fontsize=10)
-            self.axes.set_title("Structure Factors in Reciprocal Space", fontsize=12)
+            #self.axes.set_title("Structure Factors in Reciprocal Space", fontsize=12)
 
             # Set default axis limits (0, 5) with ±0.5 padding
             self.axes.set_xlim(-0.5, 5.5)
