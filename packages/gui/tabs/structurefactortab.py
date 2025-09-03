@@ -35,6 +35,27 @@ from packages.visualizer import StructureFactorVisualizer3D, StructureFactorVisu
 from packages.helpers.tips import Tips, set_tip
 
 
+class EnergySpinBox(QDoubleSpinBox):
+    """Custom spinbox that displays keV but stores/returns eV internally."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setRange(0.001, 100.0)  # keV range: 1 eV to 100 keV
+        self.setDecimals(3)  # More precision for keV
+        self.setSuffix(" keV")
+        self.setValue(10.0)  # 10 keV default
+    
+    @property
+    def energy_ev(self):
+        """Get energy value in eV (internal storage unit)."""
+        return self.value() * 1000.0
+    
+    @energy_ev.setter
+    def energy_ev(self, value_ev):
+        """Set energy value from eV (converts to keV for display)."""
+        self.setValue(value_ev / 1000.0)
+
+
 class StructureFactorTab(TabInterface):
     """Tab for calculating structure factors using X-ray scattering."""
 
@@ -109,11 +130,7 @@ class StructureFactorTab(TabInterface):
         config_group = QGroupBox("Configuration")
         config_layout = QFormLayout(config_group)
 
-        self.energy_input_inuse = QDoubleSpinBox()
-        self.energy_input_inuse.setRange(1.0, 100000.0)
-        self.energy_input_inuse.setDecimals(1)
-        self.energy_input_inuse.setValue(10000.0)
-        self.energy_input_inuse.setSuffix(" eV")
+        self.energy_input_inuse = EnergySpinBox()
         config_layout.addRow("X-ray Energy:", self.energy_input_inuse)
 
         # Add plane toggle row
@@ -388,8 +405,7 @@ class StructureFactorTab(TabInterface):
                     "Please load a valid CIF file in the initialization window first.",
                 )
                 return
-            energy = self.energy_input_inuse.value()
-            self.calculator.initialize(cif_path, energy)
+            self.calculator.initialize(cif_path, self.energy_input_inuse.energy_ev)
 
             self.status_label_inuse.setText(
                 "Status: Calculator initialized successfully"
@@ -430,12 +446,8 @@ class StructureFactorTab(TabInterface):
         left_group = QGroupBox("Configuration")
         left_layout = QFormLayout(left_group)
 
-        # Energy input (in eV)
-        self.energy_input = QDoubleSpinBox()
-        self.energy_input.setRange(1.0, 100000.0)
-        self.energy_input.setDecimals(1)
-        self.energy_input.setValue(10000.0)
-        self.energy_input.setSuffix(" eV")
+        # Energy input (in keV, converted to eV internally)
+        self.energy_input = EnergySpinBox()
         left_layout.addRow("X-ray Energy:", self.energy_input)
 
         # Compact U, V, Center in one row using text inputs like 110, 010, 000
@@ -531,8 +543,7 @@ class StructureFactorTab(TabInterface):
                     "Please load a valid CIF file in the initialization window first.",
                 )
                 return
-            energy = self.energy_input.value()
-            self.calculator.initialize(cif_path, energy)
+            self.calculator.initialize(cif_path, self.energy_input.energy_ev)
             self._calculator_initialized = True
             self.status_label.setText("Status: Calculator initialized successfully")
             self.status_label.setStyleSheet("color: green; font-weight: bold;")
@@ -672,8 +683,8 @@ class StructureFactorTab(TabInterface):
 
     def clear(self):
         """Clear all inputs and results."""
-        # Clear customized tab-specific widgets
-        self.energy_input.setValue(10000.0)
+        # Clear customized tab-specific widgets  
+        self.energy_input.energy_ev = 10000.0  # Reset to 10 keV (10000 eV)
         self._calculator_initialized = False
         self.status_label.setText(
             "Status: Provide CIF in initialization window, then initialize"
@@ -687,8 +698,7 @@ class StructureFactorTab(TabInterface):
     def get_state(self):
         """Get the current state for session saving."""
         return {
-            "energy": self.energy_input.value(),
-            "custom_hkl": self.custom_hkl_input.toPlainText(),
+            "energy": self.energy_input.energy_ev,  # Already in eV via property
             "calculator_initialized": self._calculator_initialized,
         }
 
@@ -696,10 +706,8 @@ class StructureFactorTab(TabInterface):
         """Restore tab state from saved session."""
         try:
             if "energy" in state:
-                self.energy_input.setValue(state["energy"])
-
-            if "custom_hkl" in state:
-                self.custom_hkl_input.setPlainText(state["custom_hkl"])
+                # Set energy in eV, property handles conversion to keV for display
+                self.energy_input.energy_ev = state["energy"]
 
             if "calculator_initialized" in state and state["calculator_initialized"]:
                 # Try to reinitialize if we have the required data globally

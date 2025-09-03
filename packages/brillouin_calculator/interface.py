@@ -184,7 +184,7 @@ class BrillouinCalculator:
         except Exception as e:
             return {
                 "success": False,
-                "error": "No solution found: " + str(e),
+                "error": "No solution found; The Q point is possible not reachable at this energy and/or scattering angle tth. System message:" + str(e),
             }
         return {
             "tth": tth_result,
@@ -238,7 +238,7 @@ class BrillouinCalculator:
         except Exception as e:
             return {
                 "success": False,
-                "error": "No solution found: " + str(e),
+                "error": "No solution found; The Q point is possible not reachable at this energy and/or scattering angle tth. System message:" + str(e),
             }
 
         result = {

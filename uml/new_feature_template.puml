@@ -1,0 +1,76 @@
+@startuml New Feature Template
+
+' This is a template for creating UML diagrams for new features
+' Replace the placeholders with your actual feature details
+
+' Backend Calculator Class
+class NewFeatureCalculator {
+  - params: dict
+  - initialized: bool
+  - additional_attributes: type
+  
+  + initialize(params: dict): bool
+  + is_initialized(): bool
+  + calculate_something(param1: type, param2: type): dict
+  + another_calculation_method(param: type): dict
+}
+
+' Backend Visualizer Class (if needed)
+class NewFeatureVisualizer {
+  - fig: Figure
+  - canvas: FigureCanvas
+  - ax: Axes
+  - params: dict
+  - initialized: bool
+  
+  + initialize(params: dict): bool
+  + is_initialized(): bool
+  + visualize_something(data: dict, is_clear: bool): Axes
+  + visualize_something_else(other_data: dict, is_clear: bool): Axes
+}
+
+' Frontend Tab Class
+class NewFeatureTab {
+  - calculator: NewFeatureCalculator
+  - visualizer: NewFeatureVisualizer
+  - ui_components: list
+  
+  + __init__(main_window)
+  + init_ui()
+  + set_parameters(params: dict)
+  + create_input_panel()
+  + create_calculation_panel()
+  + create_visualization_panel()
+  + handle_user_input()
+  + perform_calculation()
+  + update_visualization()
+}
+
+' Inherit from TabInterface
+TabInterface <|-- NewFeatureTab
+
+' Show relationships
+NewFeatureTab *-- NewFeatureCalculator
+NewFeatureTab *-- NewFeatureVisualizer
+
+' Example sequence diagram for the new feature
+actor User
+participant "NewFeatureTab" as Tab
+participant "NewFeatureCalculator" as Calc
+participant "NewFeatureVisualizer" as Vis
+
+User -> Tab: Enter parameters
+User -> Tab: Click "Calculate"
+activate Tab
+Tab -> Calc: calculate_something(params)
+activate Calc
+Calc --> Tab: Return results
+deactivate Calc
+Tab -> Vis: visualize_something(results)
+activate Vis
+Vis --> Tab: Update visualization
+deactivate Vis
+Tab --> User: Display results
+deactivate Tab
+
+@enduml 

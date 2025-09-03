@@ -1,0 +1,62 @@
+@startuml RIXS Preparation Toolbox Structure
+
+package "RIXS Preparation Toolbox" {
+  
+  package "GUI (Frontend)" {
+    [MainWindow]
+    [InitWindow]
+    [TabInterface]
+    
+    package "Tabs" {
+      [BrillouinCalculatorTab]
+      [StructureFactorTab]
+      [FutureTab]
+    }
+  }
+  
+  package "Backend" {
+    package "Calculators" {
+      [BrillouinCalculator]
+      [StructureFactorCalculator]
+      [FutureCalculator]
+    }
+    
+    package "Visualizers" {
+      [ScatteringVisualizer]
+      [FutureVisualizer]
+    }
+    
+    package "Helpers" {
+      [Tips]
+    }
+
+    package "Core Classes" {
+      [Lab]
+      [Sample]
+      [Lattice]
+    }
+  }
+  
+  [TabInterface] <|-- [BrillouinCalculatorTab]
+  [TabInterface] <|-- [StructureFactorTab]
+  [TabInterface] <|-- [FutureTab]
+  
+  [MainWindow] --> [TabInterface]
+  [MainWindow] --> [InitWindow]
+  
+  [BrillouinCalculatorTab] --> [BrillouinCalculator] : uses
+  [BrillouinCalculatorTab] --> [ScatteringVisualizer] : uses
+  
+
+  [StructureFactorTab] --> [StructureFactorCalculator] : uses
+  
+  [BrillouinCalculator] --> [Lab] : uses
+  [StructureFactorCalculator] --> [Lab] : uses
+  
+  [FutureTab] --> [FutureCalculator] : uses
+
+  [Lab] *-- [Sample] 
+  [Sample] *-- [Lattice]
+}
+
+@enduml 

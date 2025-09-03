@@ -1,0 +1,69 @@
+@startuml Visualizer Module
+
+class ScatteringVisualizer {
+  - fig: Figure
+  - canvas: FigureCanvas
+  - ax: Axes
+  - params: dict
+  - initialized: bool
+  + initialize(params: dict): bool
+  + is_initialized(): bool
+  + visualize_lab_system(is_clear: bool, chi: float, phi: float): Axes
+  + visualize_scattering_geometry(scattering_angles: dict, is_clear: bool): Axes
+  - _draw_lab_coordinates(): None
+  - _draw_beam_path(chi: float, phi: float): None
+  - _draw_scattering_vector(scattering_angles: dict): None
+}
+
+class CoordinateVisualizer {
+  - fig: Figure
+  - canvas: FigureCanvas
+  - ax: Axes
+  - params: dict
+  - initialized: bool
+  + initialize(params: dict): bool
+  + is_initialized(): bool
+  + visualize_crystal_coordinate_system(is_clear: bool): Axes
+  + visualize_reciprocal_lattice(is_clear: bool): Axes
+  + visualize_brillouin_zone(is_clear: bool): Axes
+  - _draw_crystal_axes(): None
+  - _draw_reciprocal_axes(): None
+  - _draw_brillouin_zone_boundaries(): None
+}
+
+class FigureCanvas {
+  + figure: Figure
+}
+
+class Figure {
+  + add_subplot(): Axes
+}
+
+class Axes {
+  + plot(): Line2D
+  + scatter(): PathCollection
+  + set_xlabel(): None
+  + set_ylabel(): None
+  + set_zlabel(): None
+  + set_title(): None
+}
+
+ScatteringVisualizer *-- FigureCanvas
+CoordinateVisualizer *-- FigureCanvas
+
+FigureCanvas *-- Figure
+Figure *-- Axes
+
+note right of ScatteringVisualizer
+  Used for visualizing
+  scattering geometry and
+  laboratory coordinate system
+end note
+
+note right of CoordinateVisualizer
+  Used for visualizing crystal
+  and reciprocal space
+  coordinate systems
+end note
+
+@enduml 

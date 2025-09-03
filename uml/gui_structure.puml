@@ -1,0 +1,134 @@
+@startuml GUI Structure
+
+class MainWindow {
+  - config: dict
+  - parameters: dict
+  - tabs_loaded: bool
+  - stacked_widget: QStackedWidget
+  - tab_widget: QTabWidget
+  - init_window: InitWindow
+  + __init__()
+  + setup_window()
+  + setup_ui()
+  + create_menu_bar()
+  + create_toolbar()
+  + show_init_window()
+  + show_main_tabs()
+  + set_parameters(params: dict)
+  + get_parameters(): dict
+  + load_tabs()
+  + load_tab(tab_info: dict)
+  + open_file()
+  + save_file()
+  + reset_parameters()
+}
+
+class InitWindow {
+  - main_window: MainWindow
+  - lattice_params: dict
+  - energy_input: QDoubleSpinBox
+  + __init__(main_window)
+  + setup_ui()
+  + create_lattice_input_panel()
+  + create_energy_input_panel()
+  + create_file_input_panel()
+  + load_parameters_from_file()
+  + initialize_parameters()
+}
+
+class TabInterface {
+  # main_window: MainWindow
+  # layout: QGridLayout
+  + __init__(main_window)
+  + init_ui()
+  + set_parameters(params: dict)
+}
+
+class BrillouinCalculatorTab {
+  - calculator: BrillouinCalculator
+  - visualizers: list
+  + __init__(main_window)
+  + init_ui()
+  + set_parameters(params: dict)
+  + create_angles_to_hkl_tab()
+  + create_hkl_to_angles_tab()
+  + create_hk_to_angles_tth_fixed_tab()
+}
+
+class StructureFactorTab {
+  - calculator: StructureFactorCalculator
+  - figure: Figure
+  - canvas: FigureCanvas
+  - results_table: QTableWidget
+  + __init__(main_window)
+  + init_ui()
+  + set_parameters(params: dict)
+  - _create_structure_factors_ui()
+  + calculate_structure_factors()
+  - update_visualization(hkl_list, sf_values)
+  - update_results_table(hkl_list, sf_values)
+}
+
+class Tips {
+  - tips_dict: dict
+  + tip(name: str): str
+}
+
+class QMainWindow {
+}
+
+class QTabWidget {
+}
+
+class QStackedWidget {
+}
+
+class QGridLayout {
+}
+
+class QWidget {
+}
+
+QMainWindow <|-- MainWindow
+QWidget <|-- InitWindow
+QWidget <|-- TabInterface
+TabInterface <|-- BrillouinCalculatorTab
+TabInterface <|-- StructureFactorTab
+
+MainWindow *-- InitWindow
+MainWindow *-- TabInterface
+BrillouinCalculatorTab *-- Tips
+StructureFactorTab *-- Tips
+
+MainWindow *-- QTabWidget
+MainWindow *-- QStackedWidget
+TabInterface *-- QGridLayout
+
+note right of MainWindow
+  Main application window
+  that manages tabs and
+  initialization
+end note
+
+note right of InitWindow
+  Initial window for setting
+  lattice parameters before
+  showing calculation tabs
+end note
+
+note right of TabInterface
+  Base interface for all
+  tab implementations
+end note
+
+note right of BrillouinCalculatorTab
+  Tab for Brillouin zone
+  calculations
+end note
+
+note right of StructureFactorTab
+  Tab for calculating structure
+  factors for different HKL indices
+end note
+
+@enduml 
