@@ -34,6 +34,93 @@ class HKAnglesControls(QWidget):
         # Main layout
         main_layout = QVBoxLayout(self)
 
+
+
+        # HKL indices group
+        hkl_group = QGroupBox("HKL Indices")
+        hkl_layout = QFormLayout(hkl_group)
+
+        # Plane selection buttons
+        plane_selection = QWidget()
+        plane_layout = QHBoxLayout(plane_selection)
+        plane_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.hk_plane_btn = QPushButton("HK plane")
+        self.hl_plane_btn = QPushButton("HL plane")
+        self.kl_plane_btn = QPushButton("KL plane")
+        
+        # Make buttons checkable for toggle behavior
+        for btn in (self.hk_plane_btn, self.hl_plane_btn, self.kl_plane_btn):
+            btn.setCheckable(True)
+        
+        self.hk_plane_btn.setChecked(True)  # Default to HK plane (L fixed)
+
+        # Create a button group for mutual exclusion
+        self.hkl_plane_button_group = QButtonGroup(self)
+        self.hkl_plane_button_group.addButton(self.hk_plane_btn)
+        self.hkl_plane_button_group.addButton(self.hl_plane_btn)
+        self.hkl_plane_button_group.addButton(self.kl_plane_btn)
+
+        plane_layout.addWidget(self.hk_plane_btn)
+        plane_layout.addWidget(self.hl_plane_btn)
+        plane_layout.addWidget(self.kl_plane_btn)
+        # stretch buttons to be evenly distributed
+        plane_layout.addStretch()
+        hkl_layout.addRow("Plane:", plane_selection)
+        # Create HKL inputs
+        hkl_inputs_widget = QWidget()
+        hkl_inputs_layout = QHBoxLayout(hkl_inputs_widget)
+        hkl_inputs_layout.setContentsMargins(0, 0, 0, 0)
+
+        # H input row
+        self.h_row = QWidget()
+        h_layout = QHBoxLayout(self.h_row)
+        h_layout.setContentsMargins(0, 0, 0, 0)
+        h_form = QWidget()
+        h_form_layout = QFormLayout(h_form)
+        h_form_layout.setContentsMargins(0, 0, 0, 0)
+        self.H_input = QDoubleSpinBox()
+        self.H_input.setRange(-10.0, 10.0)
+        self.H_input.setDecimals(4)
+        self.H_input.setValue(0.15)
+        h_form_layout.addRow("H:", self.H_input)
+        h_layout.addWidget(h_form)
+        hkl_inputs_layout.addWidget(self.h_row)
+
+        # K input row
+        self.k_row = QWidget()
+        k_layout = QHBoxLayout(self.k_row)
+        k_layout.setContentsMargins(0, 0, 0, 0)
+        k_form = QWidget()
+        k_form_layout = QFormLayout(k_form)
+        k_form_layout.setContentsMargins(0, 0, 0, 0)
+        self.K_input = QDoubleSpinBox()
+        self.K_input.setRange(-10.0, 10.0)
+        self.K_input.setDecimals(4)
+        self.K_input.setValue(0.1)
+        k_form_layout.addRow("K:", self.K_input)
+        k_layout.addWidget(k_form)
+        hkl_inputs_layout.addWidget(self.k_row)
+
+        # L input row
+        self.l_row = QWidget()
+        l_layout = QHBoxLayout(self.l_row)
+        l_layout.setContentsMargins(0, 0, 0, 0)
+        l_form = QWidget()
+        l_form_layout = QFormLayout(l_form)
+        l_form_layout.setContentsMargins(0, 0, 0, 0)
+        self.L_input = QDoubleSpinBox()
+        self.L_input.setRange(-10.0, 10.0)
+        self.L_input.setDecimals(4)
+        self.L_input.setValue(-0.5)
+        l_form_layout.addRow("L:", self.L_input)
+        l_layout.addWidget(l_form)
+        hkl_inputs_layout.addWidget(self.l_row)
+
+        hkl_layout.addRow(hkl_inputs_widget)
+        main_layout.addWidget(hkl_group)
+
+
         # Unified Fixed Angles panel
         fixed_angles_group = QGroupBox("Fixed Angles")
         fixed_angles_layout = QVBoxLayout(fixed_angles_group)
@@ -102,91 +189,8 @@ class HKAnglesControls(QWidget):
 
         fixed_angles_layout.addWidget(angle_values)
 
-        main_layout.addWidget(fixed_angles_group)
+        main_layout.addWidget(fixed_angles_group) 
 
-        # HKL indices group
-        hkl_group = QGroupBox("HKL Indices")
-        hkl_layout = QFormLayout(hkl_group)
-
-        # Plane selection buttons
-        plane_selection = QWidget()
-        plane_layout = QHBoxLayout(plane_selection)
-        plane_layout.setContentsMargins(0, 0, 0, 0)
-
-        self.hk_plane_btn = QPushButton("HK plane")
-        self.hl_plane_btn = QPushButton("HL plane")
-        self.kl_plane_btn = QPushButton("KL plane")
-        
-        # Make buttons checkable for toggle behavior
-        for btn in (self.hk_plane_btn, self.hl_plane_btn, self.kl_plane_btn):
-            btn.setCheckable(True)
-        
-        self.hk_plane_btn.setChecked(True)  # Default to HK plane (L fixed)
-
-        # Create a button group for mutual exclusion
-        self.hkl_plane_button_group = QButtonGroup(self)
-        self.hkl_plane_button_group.addButton(self.hk_plane_btn)
-        self.hkl_plane_button_group.addButton(self.hl_plane_btn)
-        self.hkl_plane_button_group.addButton(self.kl_plane_btn)
-
-        plane_layout.addWidget(self.hk_plane_btn)
-        plane_layout.addWidget(self.hl_plane_btn)
-        plane_layout.addWidget(self.kl_plane_btn)
-
-        hkl_layout.addRow("Plane:", plane_selection)
-
-        # Create HKL inputs
-        hkl_inputs_widget = QWidget()
-        hkl_inputs_layout = QHBoxLayout(hkl_inputs_widget)
-        hkl_inputs_layout.setContentsMargins(0, 0, 0, 0)
-
-        # H input row
-        self.h_row = QWidget()
-        h_layout = QHBoxLayout(self.h_row)
-        h_layout.setContentsMargins(0, 0, 0, 0)
-        h_form = QWidget()
-        h_form_layout = QFormLayout(h_form)
-        h_form_layout.setContentsMargins(0, 0, 0, 0)
-        self.H_input = QDoubleSpinBox()
-        self.H_input.setRange(-10.0, 10.0)
-        self.H_input.setDecimals(4)
-        self.H_input.setValue(0.15)
-        h_form_layout.addRow("H:", self.H_input)
-        h_layout.addWidget(h_form)
-        hkl_inputs_layout.addWidget(self.h_row)
-
-        # K input row
-        self.k_row = QWidget()
-        k_layout = QHBoxLayout(self.k_row)
-        k_layout.setContentsMargins(0, 0, 0, 0)
-        k_form = QWidget()
-        k_form_layout = QFormLayout(k_form)
-        k_form_layout.setContentsMargins(0, 0, 0, 0)
-        self.K_input = QDoubleSpinBox()
-        self.K_input.setRange(-10.0, 10.0)
-        self.K_input.setDecimals(4)
-        self.K_input.setValue(0.1)
-        k_form_layout.addRow("K:", self.K_input)
-        k_layout.addWidget(k_form)
-        hkl_inputs_layout.addWidget(self.k_row)
-
-        # L input row
-        self.l_row = QWidget()
-        l_layout = QHBoxLayout(self.l_row)
-        l_layout.setContentsMargins(0, 0, 0, 0)
-        l_form = QWidget()
-        l_form_layout = QFormLayout(l_form)
-        l_form_layout.setContentsMargins(0, 0, 0, 0)
-        self.L_input = QDoubleSpinBox()
-        self.L_input.setRange(-10.0, 10.0)
-        self.L_input.setDecimals(4)
-        self.L_input.setValue(-0.5)
-        l_form_layout.addRow("L:", self.L_input)
-        l_layout.addWidget(l_form)
-        hkl_inputs_layout.addWidget(self.l_row)
-
-        hkl_layout.addRow(hkl_inputs_widget)
-        main_layout.addWidget(hkl_group)
 
         # Calculate button
         self.calculate_button = QPushButton("Calculate Angles")

@@ -34,28 +34,47 @@ class HKLToAnglesControls(QWidget):
 
         # HKL Input form
         form_group = QGroupBox("HKL Indices")
-        form_layout = QFormLayout(form_group)
+        form_layout = QVBoxLayout(form_group)
+
+        # Create HKL inputs horizontally aligned
+        hkl_inputs_widget = QWidget()
+        hkl_inputs_layout = QHBoxLayout(hkl_inputs_widget)
+        hkl_inputs_layout.setContentsMargins(0, 0, 0, 0)
 
         # H input
+        h_form = QWidget()
+        h_form_layout = QFormLayout(h_form)
+        h_form_layout.setContentsMargins(0, 0, 0, 0)
         self.H_input = QDoubleSpinBox()
         self.H_input.setRange(-10.0, 10.0)
         self.H_input.setDecimals(4)
         self.H_input.setValue(0.15)
-        form_layout.addRow("H:", self.H_input)
+        h_form_layout.addRow("H:", self.H_input)
+        hkl_inputs_layout.addWidget(h_form)
 
         # K input
+        k_form = QWidget()
+        k_form_layout = QFormLayout(k_form)
+        k_form_layout.setContentsMargins(0, 0, 0, 0)
         self.K_input = QDoubleSpinBox()
         self.K_input.setRange(-10.0, 10.0)
         self.K_input.setDecimals(4)
         self.K_input.setValue(0.1)
-        form_layout.addRow("K:", self.K_input)
+        k_form_layout.addRow("K:", self.K_input)
+        hkl_inputs_layout.addWidget(k_form)
 
         # L input
+        l_form = QWidget()
+        l_form_layout = QFormLayout(l_form)
+        l_form_layout.setContentsMargins(0, 0, 0, 0)
         self.L_input = QDoubleSpinBox()
         self.L_input.setRange(-10.0, 10.0)
         self.L_input.setDecimals(4)
         self.L_input.setValue(-0.5)
-        form_layout.addRow("L:", self.L_input)
+        l_form_layout.addRow("L:", self.L_input)
+        hkl_inputs_layout.addWidget(l_form)
+
+        form_layout.addWidget(hkl_inputs_widget)
 
         main_layout.addWidget(form_group)
 
