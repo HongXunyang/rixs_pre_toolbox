@@ -3,6 +3,7 @@
 /temp
 /reports
 .DS_Store
+**/.cursor/rules/
 /materials
 __pycache__/
 /docs
