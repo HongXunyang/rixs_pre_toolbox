@@ -1,10 +1,14 @@
 /data
+/figures    
 /temp
 /reports
 .DS_Store
 /materials
 __pycache__/
 /docs
+
+# ignore all __pycache__ folders in all subfolders
+**/__pycache__/
 
 # --- Python bytecode & caches ---
 __pycache__/
@@ -19,7 +23,6 @@ __pycache__/
 .mypy_cache/
 .coverage*
 htmlcov/
-
 # --- Virtual environments (common names) ---
 .venv/
 venv/
@@ -28,10 +31,10 @@ ENV/
 .virtualenv/
 .pythonenv/
 
-# --- PyInstaller outputs ---
+# --- Build outputs (if needed in future) ---
 /build/
 /dist/
-/*.spec    # keep if you want your build recipe tracked; remove this line to commit it
+/*.spec
 
 # --- Logs & local data ---
 *.log
