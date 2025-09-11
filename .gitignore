@@ -4,6 +4,7 @@
 /reports
 .DS_Store
 **/.cursor/rules/
+.cursor/rules/
 /materials
 __pycache__/
 /docs
