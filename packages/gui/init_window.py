@@ -24,7 +24,8 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 from packages.visualizer import CoordinateVisualizer, UnitcellVisualizer
 from packages.helpers import UnitConverter
-from CifFile import ReadCif
+from .utils.readcif import readcif
+
 
 class DragDropLineEdit(QLineEdit):
     """Custom QLineEdit that accepts drag and drop events."""
@@ -327,13 +328,10 @@ class InitWindow(QWidget):
                 self.clear_unitcell_visualization()
                 return
 
-            # Parse CIF using PyCifRW
-            cif = ReadCif(file_path)
+            # Parse CIF using custom readcif function
+            cif = readcif(file_path)
             if not cif or len(cif.keys()) == 0:
-                raise ValueError("No data blocks found in CIF file")
-
-            first_block_key = list(cif.keys())[0]
-            block = cif[first_block_key]
+                raise ValueError("No data found in CIF file")
 
             def parse_numeric(value) -> float:
                 s = str(value).strip()
@@ -342,7 +340,7 @@ class InitWindow(QWidget):
                 return float(s)
 
             def get_float(key: str) -> float:
-                value = block.get(key)
+                value = cif.get(key)
                 if value is None:
                     raise KeyError(f"Missing required CIF field: {key}")
                 return parse_numeric(value)

@@ -1,8 +1,6 @@
 PyQt5==5.15.11
 matplotlib==3.9.2
 numpy==2.0.2
-pandas==2.2.3
-PyCifRW==5.0.1
 scipy==1.13.1
 pytest==8.3.5
 Dans_Diffraction==3.3.3
