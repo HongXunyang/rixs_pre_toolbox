@@ -106,7 +106,8 @@ def calculate_k_vector_in_lab(k_in, tth):
     eta = 90 - tth / 2
     eta_rad = np.radians(eta)
     k_magnitude = calculate_k_magnitude(k_in, tth)
-    k_vector = k_magnitude * np.array([-np.cos(eta_rad), 0, -np.sin(eta_rad)])
+    #k_vector = k_magnitude * np.array([-np.cos(eta_rad), 0, -np.sin(eta_rad)])
+    k_vector = k_magnitude * np.array([-np.sin(eta_rad), -np.cos(eta_rad), 0])
     return k_vector
 
 
@@ -250,7 +251,6 @@ def _calculate_angles_chi_fixed(
     chi_fixed,
     target_objective=1e-7,
     num_steps=3000,
-    number_batch=10,
     learning_rate=100,
 ):
     """Calculate scattering angles with chi angle (in degrees) fixed.
@@ -268,7 +268,6 @@ def _calculate_angles_chi_fixed(
         chi_fixed (float): Fixed chi angle in degrees
         target_objective (float, optional): Convergence criterion for optimization. Defaults to 1e-5.
         num_steps (int, optional): Maximum number of optimization steps. Defaults to 1000.
-        number_batch (int, optional): Number of random starting points to try. Defaults to 10.
         learning_rate (float, optional): Learning rate for the gradient descent. Defaults to 100.
 
     Returns:
@@ -359,7 +358,6 @@ def _calculate_angles_phi_fixed(
     phi_fixed,
     target_objective=1e-7,
     num_steps=3000,
-    number_batch=10,
     learning_rate=100,
 ):
     """Calculate scattering angles with phi angle fixed.
@@ -377,7 +375,6 @@ def _calculate_angles_phi_fixed(
         phi_fixed (float): Fixed phi angle in degrees
         target_objective (float, optional): Convergence criterion for optimization. Defaults to 1e-5.
         num_steps (int, optional): Maximum number of optimization steps. Defaults to 1000.
-        number_batch (int, optional): Number of random starting points to try. Defaults to 10.
         learning_rate (float, optional): Learning rate for the gradient descent. Defaults to 100.
 
     Returns:
