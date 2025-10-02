@@ -19,6 +19,8 @@ class AnglesToHKLControls(QWidget):
 
     # Signal emitted when calculate button is clicked
     calculateClicked = pyqtSignal()
+    # Signal emitted when any angle value changes
+    anglesChanged = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -35,6 +37,7 @@ class AnglesToHKLControls(QWidget):
         self.tth_input.setRange(0.0, 180.0)
         self.tth_input.setValue(150.0)
         self.tth_input.setSuffix(" °")
+        self.tth_input.valueChanged.connect(self.anglesChanged.emit)
         form_layout.addRow("tth:", self.tth_input)
 
         # theta input
@@ -42,6 +45,7 @@ class AnglesToHKLControls(QWidget):
         self.theta_input.setRange(-180.0, 180.0)
         self.theta_input.setValue(50.0)
         self.theta_input.setSuffix(" °")
+        self.theta_input.valueChanged.connect(self.anglesChanged.emit)
         form_layout.addRow("θ:", self.theta_input)
 
         # phi input
@@ -49,6 +53,7 @@ class AnglesToHKLControls(QWidget):
         self.phi_input.setRange(-180.0, 180.0)
         self.phi_input.setValue(0.0)
         self.phi_input.setSuffix(" °")
+        self.phi_input.valueChanged.connect(self.anglesChanged.emit)
         form_layout.addRow("φ:", self.phi_input)
 
         # chi input
@@ -56,6 +61,7 @@ class AnglesToHKLControls(QWidget):
         self.chi_input.setRange(-180.0, 180.0)
         self.chi_input.setValue(0.0)
         self.chi_input.setSuffix(" °")
+        self.chi_input.valueChanged.connect(self.anglesChanged.emit)
         form_layout.addRow("χ:", self.chi_input)
 
         main_layout.addWidget(form_group)

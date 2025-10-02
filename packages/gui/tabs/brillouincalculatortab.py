@@ -259,6 +259,7 @@ class BrillouinCalculatorTab(TabInterface):
         # Create controls widget
         self.angles_to_hkl_controls = AnglesToHKLControls(parent=self)
         self.angles_to_hkl_controls.calculateClicked.connect(self.calculate_hkl)
+        self.angles_to_hkl_controls.anglesChanged.connect(self.calculate_hkl)  # Auto-calculate on angle change
         left_layout.addWidget(self.angles_to_hkl_controls)
 
         # Create results widget

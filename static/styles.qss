@@ -27,7 +27,7 @@ QTabBar::tab:hover:!selected {
 }
 
 /* Form elements */
-QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+QLineEdit, QComboBox {
     border: 1px solid #C4C4C4;
     border-radius: 3px;
     padding: 4px;
@@ -67,82 +67,51 @@ QPushButton:disabled {
     background-color: #F8F8F8;
 }
 
-/* Hide spin box arrows for QDoubleSpinBox and QSpinBox */
-QDoubleSpinBox::up-button, QSpinBox::up-button {
-    width: 0px;
-    border: none;
-}
-
-QDoubleSpinBox::down-button, QSpinBox::down-button {
-    width: 0px;
-    border: none;
-}
-
-QDoubleSpinBox::up-arrow, QSpinBox::up-arrow {
-    width: 0px;
-    height: 0px;
-}
-
-QDoubleSpinBox::down-arrow, QSpinBox::down-arrow {
-    width: 0px;
-    height: 0px;
-}
-
-/* Exception: Show arrows for Euler angle spin boxes */
-QDoubleSpinBox#eulerAngleSpinBox::up-button {
-    width: 16px;
+/* QDoubleSpinBox with plus/minus signs */
+QDoubleSpinBox {
     border: 1px solid #C4C4C4;
-    border-bottom: none;
-    background-color: #F0F0F0;
+    border-radius: 3px;
+    padding: 4px;
+    padding-right: 20px;
+    min-height: 24px;
+    background-color: #FFFFFF;
+}
+
+QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
     subcontrol-origin: border;
+    width: 18px;
+    border-left: 1px solid #C4C4C4;
+    background-color: #F0F0F0;
+}
+
+QDoubleSpinBox::up-button {
     subcontrol-position: top right;
 }
 
-QDoubleSpinBox#eulerAngleSpinBox::down-button {
-    width: 16px;
-    border: 1px solid #C4C4C4;
-    border-top: none;
-    background-color: #F0F0F0;
-    subcontrol-origin: border;
+QDoubleSpinBox::down-button {
     subcontrol-position: bottom right;
 }
 
-QDoubleSpinBox#eulerAngleSpinBox::up-arrow {
-    width: 7px;
-    height: 7px;
-    image: none;
-    border: 2px solid #666666;
-    border-left: none;
-    border-bottom: none;
-}
-
-QDoubleSpinBox#eulerAngleSpinBox::down-arrow {
-    width: 7px;
-    height: 7px;
-    image: none;
-    border: 2px solid #666666;
-    border-right: none;
-    border-top: none;
-}
-
-QDoubleSpinBox#eulerAngleSpinBox::up-button:hover {
+QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {
     background-color: #E6E6E6;
 }
 
-QDoubleSpinBox#eulerAngleSpinBox::down-button:hover {
-    background-color: #E6E6E6;
-}
-
-QDoubleSpinBox#eulerAngleSpinBox::up-button:pressed {
+QDoubleSpinBox::up-button:pressed, QDoubleSpinBox::down-button:pressed {
     background-color: #D6D6D6;
 }
 
-QDoubleSpinBox#eulerAngleSpinBox::down-button:pressed {
-    background-color: #D6D6D6;
+QDoubleSpinBox::up-arrow, QDoubleSpinBox::down-arrow {
+    width: 12px;
+    height: 12px;
 }
 
+QDoubleSpinBox::up-arrow {
+    image: url(static/icons/plus.svg);
+}
 
-
+QDoubleSpinBox::down-arrow {
+    image: url(static/icons/minus.svg);
+}
 
 /* Toggle button styles */
 QPushButton[text="De-activate"] {
