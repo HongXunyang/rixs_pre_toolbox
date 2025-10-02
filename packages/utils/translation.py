@@ -101,8 +101,8 @@ def angle_to_matrix(theta, phi, chi, is_inverse = False):
 
     Args:
         theta (float): rotation about the z-axis in degrees, right-hand rule
-        phi (float): rotation about the y-axis in degrees, right-hand rule
-        chi (float): rotation about the x-axis in degrees, right-hand rule
+        phi (float): rotation about the x-axis in degrees, right-hand rule
+        chi (float): rotation about the y-axis in degrees, right-hand rule
 
     Returns:
         rotation_matrix (np.ndarray): Rotation matrix
@@ -117,21 +117,21 @@ def angle_to_matrix(theta, phi, chi, is_inverse = False):
             [0, 0, 1],
         ]
     )
-    # chi rotation around the x-axis (in scattering plane)
+    # chi rotation around the y-axis (in scattering plane)
     chi_mat = np.array(
         [
-            [1, 0, 0],
-            [0, np.cos(chi_rad), -np.sin(chi_rad)],
-            [0, np.sin(chi_rad), np.cos(chi_rad)],
+            [np.cos(chi_rad), 0, -np.sin(chi_rad)],
+            [0, 1, 0],
+            [np.sin(chi_rad), 0, np.cos(chi_rad)],
         ]
     )
 
-    # phi rotation around the y-axis (in scattering plane)
+    # phi rotation around the x-axis (in scattering plane)
     phi_mat = np.array(
         [
-            [np.cos(phi_rad), 0, np.sin(phi_rad)],
-            [0, 1, 0],
-            [-np.sin(phi_rad), 0, np.cos(phi_rad)],
+            [1, 0, 0],
+            [0, np.cos(phi_rad), -np.sin(phi_rad)],
+            [0, np.sin(phi_rad), np.cos(phi_rad)],
         ]
     )
 
@@ -145,27 +145,27 @@ def get_rotation(phi, chi, is_inverse = False):
     """get the rotational matrix that rotates the sample with respect to the scattering plane.
     
     Updated for x-y scattering plane (z-axis is normal to scattering plane).
-    phi: rotation about y-axis (in scattering plane)
-    chi: rotation about x-axis (in scattering plane)
+    phi: rotation about x-axis (in scattering plane)
+    chi: rotation about y-axis (in scattering plane)
     """
     # Convert angles to radians
     phi_rad = np.radians(phi)
     chi_rad = np.radians(chi)
 
-    # chi rotation about x-axis (in scattering plane)
+    # chi rotation about y-axis (in scattering plane)
     chi_mat_sample = np.array(
         [
-            [1, 0, 0],
-            [0, np.cos(chi_rad), -np.sin(chi_rad)],
-            [0, np.sin(chi_rad), np.cos(chi_rad)],
+            [np.cos(chi_rad), 0, -np.sin(chi_rad)],
+            [0, 1, 0],
+            [np.sin(chi_rad), 0, np.cos(chi_rad)],
         ]
     )
-    # phi rotation about y-axis (in scattering plane)
+    # phi rotation about x-axis (in scattering plane)
     phi_mat_sample = np.array(
         [
-            [np.cos(phi_rad), 0, np.sin(phi_rad)],
-            [0, 1, 0],
-            [-np.sin(phi_rad), 0, np.cos(phi_rad)],
+            [1, 0, 0],
+            [0, np.cos(phi_rad), -np.sin(phi_rad)],
+            [0, np.sin(phi_rad), np.cos(phi_rad)],
         ]
     )
     matrix = chi_mat_sample @ phi_mat_sample 

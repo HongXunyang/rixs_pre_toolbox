@@ -26,8 +26,8 @@ class ScatteringVisualizer(FigureCanvas):
         self.axes = self.fig.add_subplot(111, projection="3d")
         super().__init__(self.fig)
 
-        # Set initial view (adjusted for x-y scattering plane)
-        self.axes.view_init(elev=20, azim=60, roll=0)
+        # Set initial view (adjusted for x-y scattering plane, beam from -y)
+        self.axes.view_init(elev=20, azim=30, roll=0)
         
         # Initialize reciprocal lattice vectors in lab frame
         self.a_star_lab = np.array([1, 0, 0])
@@ -63,16 +63,17 @@ class ScatteringVisualizer(FigureCanvas):
             self.axes.clear()
 
         # Define vertices of the sample (standing perpendicular to scattering plane)
+        # Rotated 90° so thin dimension (0.25) is along x-axis, facing beam from -y
         vertices_sample = np.array(
             [
-                [0.25, 0.125, 0.5],  # top front right
-                [0.25, -0.125, 0.5],  # top front left
-                [-0.25, -0.125, 0.5],  # top back left
-                [-0.25, 0.125, 0.5],  # top back right
-                [0.25, 0.125, -0.5],  # bottom front right
-                [0.25, -0.125, -0.5],  # bottom front left
-                [-0.25, -0.125, -0.5],  # bottom back left
-                [-0.25, 0.125, -0.5],  # bottom back right
+                [0.125, 0.25, 0.5],  # top front right
+                [0.125, -0.25, 0.5],  # top front left
+                [-0.125, -0.25, 0.5],  # top back left
+                [-0.125, 0.25, 0.5],  # top back right
+                [0.125, 0.25, -0.5],  # bottom front right
+                [0.125, -0.25, -0.5],  # bottom front left
+                [-0.125, -0.25, -0.5],  # bottom back left
+                [-0.125, 0.25, -0.5],  # bottom back right
             ]
         )
         vertices_sample = _rotate_vertices(vertices_sample, phi, chi)
@@ -210,13 +211,13 @@ class ScatteringVisualizer(FigureCanvas):
             # Clear previous plot
             self.axes.clear()
 
-        # Plot the scattering plane (x-y plane, z=0)
+        # Plot the scattering plane (x-y plane, z=0), adjusted for beam from -y
         scatter_plane_vertices = np.array(
             [
-                [0.75, -0.25, 0],  # bottom right
-                [-0.75, -0.25, 0],  # bottom left
-                [0.75, 1.25, 0],  # top right
-                [-0.75, 1.25, 0],  # top left
+                [1.25, -1.25, 0],  # bottom right
+                [-0.25, -1.25, 0],  # bottom left
+                [1.25, 1.25, 0],  # top right
+                [-0.25, 1.25, 0],  # top left
             ]
         )
 
@@ -241,20 +242,21 @@ class ScatteringVisualizer(FigureCanvas):
         theta = scattering_angles.get("theta", 50)  # theta angle
         tth = scattering_angles.get("tth", 150)  # two theta angle
 
-        # Plot incident beam (k_in) - now in x-y plane
+        # Plot incident beam (k_in) - coming from -y direction (x-y plane)
         offset = 0
         k_in_length = 1.3
-        k_in_x = k_in_length * np.cos(np.radians(theta))
-        k_in_y = k_in_length * np.sin(np.radians(theta))
+        # Rotated 90° so theta=0 means beam comes from -y direction
+        k_in_x = -k_in_length * np.sin(np.radians(theta))
+        k_in_y = -k_in_length * np.cos(np.radians(theta))
         k_in_z = 0
         # Draw colored arrow on top
         self.axes.quiver(
-            k_in_x,
-            k_in_y + offset,
-            k_in_z,
             -k_in_x,
-            -k_in_y,
+            -k_in_y + offset,
             -k_in_z,
+            k_in_x,
+            k_in_y,
+            k_in_z,
             color=(191 / 255, 44 / 255, 0),
             alpha=1,
             linewidth=5,
@@ -262,10 +264,11 @@ class ScatteringVisualizer(FigureCanvas):
             zorder=10,
         )
 
-        # Plot scattered beam (k_out) - now in x-y plane
+        # Plot scattered beam (k_out) - in x-y plane, rotated 90° from original
         k_out_length = 1.3
-        k_out_x = -k_out_length * np.cos(np.radians(tth - theta))
-        k_out_y = k_out_length * np.sin(np.radians(tth - theta))
+        # Rotated 90° to match incident beam coming from -y
+        k_out_x = k_out_length * np.sin(np.radians(tth - theta))
+        k_out_y = -k_out_length * np.cos(np.radians(tth - theta))
         k_out_z = 0
 
         # Draw colored arrow on top

@@ -267,9 +267,9 @@ class UnitcellVisualizer(FigureCanvas):
             scale_factor = lim / 2 * 1.5  # Match the unit cell scale
         else:
             scale_factor = 1.5  # Default scale if no crystal loaded
-        # Plot the  scattering plane - scale it to match unit cell
-        plane_width = 0.75 * scale_factor
-        plane_height_bottom = -0.25 * scale_factor
+        # Plot the scattering plane - scale it to match unit cell, adjusted for beam from -y
+        plane_width = 0.25 * scale_factor  # narrower in x (rotated 90°)
+        plane_height_bottom = -0.75 * scale_factor  # extends more in y direction
         plane_height_top = 1.25 * scale_factor
         
         x_basis = a_real / np.linalg.norm(a_real)
@@ -308,10 +308,11 @@ class UnitcellVisualizer(FigureCanvas):
 
 
 
-        # Plot incident beam (k_in) - scale beam length to match unit cell
+        # Plot incident beam (k_in) - coming from -y direction in local coords
         offset = 0
         k_in_length = 1.3 * scale_factor
-        k_in_vec = - k_in_length * x_basis
+        # In local scattering plane coords: -y_basis direction (rotated 90° from -x)
+        k_in_vec = - k_in_length * y_basis
         k_in_vec = rotate_vector(k_in_vec, ccm, theta, phi, chi)
         # Draw colored arrow on top
         self.axes.quiver(
@@ -328,9 +329,10 @@ class UnitcellVisualizer(FigureCanvas):
             zorder=10,
         )
 
-        # Plot scattered beam (k_out) - scale beam length to match unit cell (now in x-y plane)
+        # Plot scattered beam (k_out) - in x-y plane, rotated 90° to match -y incident beam
         k_out_length = 1.3 * scale_factor
-        k_out_vec = ccm @ np.array([-np.cos(np.radians(tth)), np.sin(np.radians(tth)), 0]) * k_out_length
+        # Rotated 90° in local coords: incident from -y, scattered at angle tth
+        k_out_vec = ccm @ np.array([-np.sin(np.radians(tth)), -np.cos(np.radians(tth)), 0]) * k_out_length
         k_out_vec = rotate_vector(k_out_vec, ccm, theta, phi, chi)
         # Draw colored arrow on top
         self.axes.quiver(

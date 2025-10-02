@@ -473,14 +473,14 @@ def _calculate_hkl(k_in, tth, theta, phi, chi, a_vec_lab, b_vec_lab, c_vec_lab):
         # Calculate momentum transfer magnitude
         k_magnitude = 2.0 * k_in * np.sin(np.radians(tth / 2.0))
 
-        # Calculate delta = theta - (tth/2)
-        delta = -(tth / 2.0)
+        # Calculate delta = theta + 90 - (tth/2)
+        delta = 90 -(tth / 2.0)
         sin_delta = np.sin(np.radians(delta))
         cos_delta = np.cos(np.radians(delta))
 
         # momentum transfer at theta, phi, chi = 0
         k_vec_initial = np.array(
-            [k_magnitude * sin_delta, 0.0, -k_magnitude * cos_delta]
+            [-k_magnitude * sin_delta, -k_magnitude * cos_delta, 0.0]
         )
 
         # rotation of the beam is the reverse rotation of the sample, thus the transpose
