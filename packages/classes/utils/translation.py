@@ -96,10 +96,12 @@ def euler_to_matrix(roll, pitch, yaw):
 def angle_to_matrix(theta, phi, chi):
     """Convert angles theta, phi, chi to rotation matrix.
     Pay attention to the direction of the rotation.
+    
+    Updated for x-y scattering plane (z-axis is normal to scattering plane).
 
     Args:
-        theta (float): rotation about the y-axis in degrees, right-hand rule
-        phi (float): rotation about the z-axis in degrees, right-hand rule
+        theta (float): rotation about the z-axis in degrees, right-hand rule
+        phi (float): rotation about the y-axis in degrees, right-hand rule
         chi (float): rotation about the x-axis in degrees, right-hand rule
 
     Returns:
@@ -107,15 +109,15 @@ def angle_to_matrix(theta, phi, chi):
     """
     theta_rad, phi_rad, chi_rad = (np.radians(theta), np.radians(phi), np.radians(chi))
 
-    # theta rotation around the y-axis
+    # theta rotation around the z-axis (perpendicular to scattering plane)
     theta_mat = np.array(
         [
-            [np.cos(theta_rad), 0, np.sin(theta_rad)],
-            [0, 1, 0],
-            [-np.sin(theta_rad), 0, np.cos(theta_rad)],
+            [np.cos(theta_rad), -np.sin(theta_rad), 0],
+            [np.sin(theta_rad), np.cos(theta_rad), 0],
+            [0, 0, 1],
         ]
     )
-    # chi rotation around the x-axis
+    # chi rotation around the x-axis (in scattering plane)
     chi_mat = np.array(
         [
             [1, 0, 0],
@@ -124,12 +126,12 @@ def angle_to_matrix(theta, phi, chi):
         ]
     )
 
-    # phi rotation around the z-axis
+    # phi rotation around the y-axis (in scattering plane)
     phi_mat = np.array(
         [
-            [np.cos(phi_rad), -np.sin(phi_rad), 0],
-            [np.sin(phi_rad), np.cos(phi_rad), 0],
-            [0, 0, 1],
+            [np.cos(phi_rad), 0, np.sin(phi_rad)],
+            [0, 1, 0],
+            [-np.sin(phi_rad), 0, np.cos(phi_rad)],
         ]
     )
 

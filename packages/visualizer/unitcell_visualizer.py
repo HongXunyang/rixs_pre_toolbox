@@ -277,19 +277,19 @@ class UnitcellVisualizer(FigureCanvas):
         z_basis = np.cross(a_real, b_real) / np.linalg.norm(np.cross(a_real, b_real))
         y_basis = np.cross(z_basis, x_basis) / np.linalg.norm(np.cross(z_basis, x_basis))
 
-        # Define vertices in local plane coordinates (x_basis, z_basis plane)
+        # Define vertices in local plane coordinates (x-y plane, z=0)
         local_vertices = np.array([
-            [plane_width, 0, plane_height_bottom],   # bottom right in local coords
-            [-plane_width, 0, plane_height_bottom],  # bottom left in local coords
-            [plane_width, 0, plane_height_top],      # top right in local coords
-            [-plane_width, 0, plane_height_top],     # top left in local coords
+            [plane_width, plane_height_bottom, 0],   # bottom right in local coords
+            [-plane_width, plane_height_bottom, 0],  # bottom left in local coords
+            [plane_width, plane_height_top, 0],      # top right in local coords
+            [-plane_width, plane_height_top, 0],     # top left in local coords
         ])
         
         # Transform vertices to real space using crystal basis vectors
         scatter_plane_vertices = np.zeros_like(local_vertices)
         for i, vertex in enumerate(local_vertices):
             # Transform each vertex using the basis vectors
-            # x component uses x_basis, y component uses y_basis (normal to plane), z component uses z_basis
+            # x component uses x_basis, y component uses y_basis, z component uses z_basis (normal to plane)
             scatter_plane_vertices[i] = (vertex[0] * x_basis + 
                                        vertex[1] * y_basis + 
                                        vertex[2] * z_basis)
@@ -328,9 +328,9 @@ class UnitcellVisualizer(FigureCanvas):
             zorder=10,
         )
 
-        # Plot scattered beam (k_out) - scale beam length to match unit cell
+        # Plot scattered beam (k_out) - scale beam length to match unit cell (now in x-y plane)
         k_out_length = 1.3 * scale_factor
-        k_out_vec = ccm @ np.array([-np.cos(np.radians(tth)), 0, np.sin(np.radians(tth))]) * k_out_length
+        k_out_vec = ccm @ np.array([-np.cos(np.radians(tth)), np.sin(np.radians(tth)), 0]) * k_out_length
         k_out_vec = rotate_vector(k_out_vec, ccm, theta, phi, chi)
         # Draw colored arrow on top
         self.axes.quiver(
@@ -370,12 +370,14 @@ class UnitcellVisualizer(FigureCanvas):
 def rotate_vector(vec, ccm, theta, phi, chi):
     """Convert angles theta, phi, chi to rotation matrix.
     Pay attention to the direction of the rotation.
+    
+    Updated for x-y scattering plane (z-axis is normal to scattering plane).
 
     Args:
         vec (np.ndarray): vector to rotate
         ccm (np.ndarray): coordinate change matrix
-        theta (float): rotation about the y-axis in degrees, right-hand rule
-        phi (float): rotation about the z-axis in degrees, right-hand rule
+        theta (float): rotation about the z-axis in degrees, right-hand rule
+        phi (float): rotation about the y-axis in degrees, right-hand rule
         chi (float): rotation about the x-axis in degrees, right-hand rule
 
     Returns:
@@ -384,15 +386,15 @@ def rotate_vector(vec, ccm, theta, phi, chi):
 
     theta_rad, phi_rad, chi_rad = (np.radians(theta), np.radians(phi), np.radians(chi))
 
-    # theta rotation around the y-axis
+    # theta rotation around the z-axis (perpendicular to scattering plane)
     theta_mat = np.array(
         [
-            [np.cos(theta_rad), 0, np.sin(theta_rad)],
-            [0, 1, 0],
-            [-np.sin(theta_rad), 0, np.cos(theta_rad)],
+            [np.cos(theta_rad), np.sin(theta_rad), 0],
+            [-np.sin(theta_rad), np.cos(theta_rad), 0],
+            [0, 0, 1],
         ]
     )
-    # chi rotation around the x-axis
+    # chi rotation around the x-axis (in scattering plane)
     chi_mat = np.array(
         [
             [1, 0, 0],
@@ -401,12 +403,12 @@ def rotate_vector(vec, ccm, theta, phi, chi):
         ]
     )
 
-    # phi rotation around the z-axis
+    # phi rotation around the y-axis (in scattering plane)
     phi_mat = np.array(
         [
-            [np.cos(phi_rad), -np.sin(phi_rad), 0],
-            [np.sin(phi_rad), np.cos(phi_rad), 0],
-            [0, 0, 1],
+            [np.cos(phi_rad), 0, np.sin(phi_rad)],
+            [0, 1, 0],
+            [-np.sin(phi_rad), 0, np.cos(phi_rad)],
         ]
     )
 
@@ -415,11 +417,26 @@ def rotate_vector(vec, ccm, theta, phi, chi):
     return matrix @ vec
 
 def _rotate_vertices_wrt_plane(vertices, ccm, phi, chi):
-    """Rotate the vertices of the sample with respect to the scattering plane"""
+    """Rotate the vertices of the sample with respect to the scattering plane
+    
+    Updated for x-y scattering plane (z-axis is normal to scattering plane).
+    phi: rotation about y-axis
+    chi: rotation about x-axis
+    """
     phi_rad = np.radians(phi)
     chi_rad = np.radians(chi)
-    component_phi = np.array([[np.cos(phi_rad), np.sin(phi_rad), 0], [-np.sin(phi_rad), np.cos(phi_rad), 0], [0, 0, 1]])
-    component_chi = np.array([[1, 0, 0], [0, np.cos(chi_rad), np.sin(chi_rad)], [0, -np.sin(chi_rad), np.cos(chi_rad)]])
+    # phi rotation about y-axis
+    component_phi = np.array([
+        [np.cos(phi_rad), 0,  -np.sin(phi_rad)], 
+        [0, 1, 0], 
+        [np.sin(phi_rad), 0, np.cos(phi_rad)]
+    ])
+    # chi rotation about x-axis
+    component_chi = np.array([
+        [1, 0, 0], 
+        [0, np.cos(chi_rad), np.sin(chi_rad)], 
+        [0, -np.sin(chi_rad), np.cos(chi_rad)]
+    ])
     rotation_matrix = component_phi @ component_chi
     rotation_matrix = ccm @ rotation_matrix @ ccm.T
     vertices = np.array(vertices)

@@ -27,8 +27,8 @@ class CoordinateVisualizer(FigureCanvas):
         self.fig.patch.set_facecolor("white")
         self.axes.set_facecolor("white")
 
-        # Set initial view
-        self.axes.view_init(elev=135, azim=-105, roll=-20)
+        # Set initial view (adjusted for x-y scattering plane)
+        self.axes.view_init(elev=20, azim=-60, roll=0)
 
 
         # Set initial limits
@@ -67,13 +67,13 @@ class CoordinateVisualizer(FigureCanvas):
         # Clear previous plot
         self.axes.clear()
 
-        # Plot the scattering plane
+        # Plot the scattering plane (x-y plane, z=0)
         scatter_plane_vertices = np.array(
             [
-                [0.75, 0, -0.25],  # bottom right
-                [-0.75, 0, -0.25],  # bottom left
-                [0.75, 0, 1.25],  # top right
-                [-0.75, 0, 1.25],  # top left
+                [0.75, -0.25, 0],  # bottom right
+                [-0.75, -0.25, 0],  # bottom left
+                [0.75, 1.25, 0],  # top right
+                [-0.75, 1.25, 0],  # top left
             ]
         )
 
@@ -87,17 +87,17 @@ class CoordinateVisualizer(FigureCanvas):
             )
         )
 
-        # Define vertices of the cube
+        # Define vertices of the cube (standing perpendicular to scattering plane)
         ver = np.array(
             [
-                [0.5, 0.5, 0],  # top front right
-                [0.5, -0.5, 0],  # top front left
-                [-0.5, -0.5, 0],  # top back left
-                [-0.5, 0.5, 0],  # top back right
-                [0.5, 0.5, -0.25],  # bottom front right
-                [0.5, -0.5, -0.25],  # bottom front left
-                [-0.5, -0.5, -0.25],  # bottom back left
-                [-0.5, 0.5, -0.25],  # bottom back right
+                [0.25, 0.125, 0.5],  # top front right
+                [0.25, -0.125, 0.5],  # top front left
+                [-0.25, -0.125, 0.5],  # top back left
+                [-0.25, 0.125, 0.5],  # top back right
+                [0.25, 0.125, -0.5],  # bottom front right
+                [0.25, -0.125, -0.5],  # bottom front left
+                [-0.25, -0.125, -0.5],  # bottom back left
+                [-0.25, 0.125, -0.5],  # bottom back right
             ]
         )
 

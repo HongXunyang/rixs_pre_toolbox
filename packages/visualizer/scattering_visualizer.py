@@ -26,8 +26,8 @@ class ScatteringVisualizer(FigureCanvas):
         self.axes = self.fig.add_subplot(111, projection="3d")
         super().__init__(self.fig)
 
-        # Set initial view
-        self.axes.view_init(elev=135, azim=-105, roll=-20)
+        # Set initial view (adjusted for x-y scattering plane)
+        self.axes.view_init(elev=20, azim=60, roll=0)
         
         # Initialize reciprocal lattice vectors in lab frame
         self.a_star_lab = np.array([1, 0, 0])
@@ -62,17 +62,17 @@ class ScatteringVisualizer(FigureCanvas):
             # Clear previous plot
             self.axes.clear()
 
-        # Define vertices of the sample
+        # Define vertices of the sample (standing perpendicular to scattering plane)
         vertices_sample = np.array(
             [
-                [0.5, 0.5, 0],  # top front right
-                [0.5, -0.5, 0],  # top front left
-                [-0.5, -0.5, 0],  # top back left
-                [-0.5, 0.5, 0],  # top back right
-                [0.5, 0.5, -0.25],  # bottom front right
-                [0.5, -0.5, -0.25],  # bottom front left
-                [-0.5, -0.5, -0.25],  # bottom back left
-                [-0.5, 0.5, -0.25],  # bottom back right
+                [0.25, 0.125, 0.5],  # top front right
+                [0.25, -0.125, 0.5],  # top front left
+                [-0.25, -0.125, 0.5],  # top back left
+                [-0.25, 0.125, 0.5],  # top back right
+                [0.25, 0.125, -0.5],  # bottom front right
+                [0.25, -0.125, -0.5],  # bottom front left
+                [-0.25, -0.125, -0.5],  # bottom back left
+                [-0.25, 0.125, -0.5],  # bottom back right
             ]
         )
         vertices_sample = _rotate_vertices(vertices_sample, phi, chi)
@@ -210,13 +210,13 @@ class ScatteringVisualizer(FigureCanvas):
             # Clear previous plot
             self.axes.clear()
 
-        # Plot the scattering plane
+        # Plot the scattering plane (x-y plane, z=0)
         scatter_plane_vertices = np.array(
             [
-                [0.75, 0, -0.25],  # bottom right
-                [-0.75, 0, -0.25],  # bottom left
-                [0.75, 0, 1.25],  # top right
-                [-0.75, 0, 1.25],  # top left
+                [0.75, -0.25, 0],  # bottom right
+                [-0.75, -0.25, 0],  # bottom left
+                [0.75, 1.25, 0],  # top right
+                [-0.75, 1.25, 0],  # top left
             ]
         )
 
@@ -241,12 +241,12 @@ class ScatteringVisualizer(FigureCanvas):
         theta = scattering_angles.get("theta", 50)  # theta angle
         tth = scattering_angles.get("tth", 150)  # two theta angle
 
-        # Plot incident beam (k_in)
+        # Plot incident beam (k_in) - now in x-y plane
         offset = 0
         k_in_length = 1.3
         k_in_x = k_in_length * np.cos(np.radians(theta))
-        k_in_z = k_in_length * np.sin(np.radians(theta))
-        k_in_y = 0
+        k_in_y = k_in_length * np.sin(np.radians(theta))
+        k_in_z = 0
         # Draw colored arrow on top
         self.axes.quiver(
             k_in_x,
@@ -262,11 +262,11 @@ class ScatteringVisualizer(FigureCanvas):
             zorder=10,
         )
 
-        # Plot scattered beam (k_out)
+        # Plot scattered beam (k_out) - now in x-y plane
         k_out_length = 1.3
         k_out_x = -k_out_length * np.cos(np.radians(tth - theta))
-        k_out_z = k_out_length * np.sin(np.radians(tth - theta))
-        k_out_y = 0
+        k_out_y = k_out_length * np.sin(np.radians(tth - theta))
+        k_out_z = 0
 
         # Draw colored arrow on top
         self.axes.quiver(
