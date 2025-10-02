@@ -120,9 +120,9 @@ def angle_to_matrix(theta, phi, chi, is_inverse = False):
     # chi rotation around the y-axis (in scattering plane)
     chi_mat = np.array(
         [
-            [np.cos(chi_rad), 0, -np.sin(chi_rad)],
+            [np.cos(chi_rad), 0, np.sin(chi_rad)],
             [0, 1, 0],
-            [np.sin(chi_rad), 0, np.cos(chi_rad)],
+            [-np.sin(chi_rad), 0, np.cos(chi_rad)],
         ]
     )
 
@@ -155,9 +155,9 @@ def get_rotation(phi, chi, is_inverse = False):
     # chi rotation about y-axis (in scattering plane)
     chi_mat_sample = np.array(
         [
-            [np.cos(chi_rad), 0, -np.sin(chi_rad)],
+            [np.cos(chi_rad), 0, np.sin(chi_rad)],
             [0, 1, 0],
-            [np.sin(chi_rad), 0, np.cos(chi_rad)],
+            [-np.sin(chi_rad), 0, np.cos(chi_rad)],
         ]
     )
     # phi rotation about x-axis (in scattering plane)

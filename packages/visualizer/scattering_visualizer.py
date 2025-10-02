@@ -164,7 +164,7 @@ class ScatteringVisualizer(FigureCanvas):
         e_Y = np.array([0, 1, 0]) / 0.65
         e_Z = np.array([0, 0, 1]) / 0.65
         vectors = [e_X, e_Y, e_Z]
-        vectors = _rotate_vertices(vectors, phi, chi)
+        #vectors = _rotate_vertices(vectors, phi, chi)
         colors = ["r", "g", "b"]
         labels = ["$X$", "$Y$", "$Z$"]
 
