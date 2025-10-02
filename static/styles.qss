@@ -107,6 +107,7 @@ QDoubleSpinBox::up-arrow, QDoubleSpinBox::down-arrow {
 
 QDoubleSpinBox::up-arrow {
     image: url(static/icons/plus.svg);
+    
 }
 
 QDoubleSpinBox::down-arrow {
