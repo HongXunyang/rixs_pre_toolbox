@@ -54,19 +54,19 @@ class CustomizedPlaneControls(QWidget):
         uvc_layout.setContentsMargins(0, 0, 0, 0)
         
         self.u_line = QLineEdit()
-        self.u_line.setPlaceholderText("110")
-        self.u_line.setText("110")
+        self.u_line.setPlaceholderText("1,1,0")
+        self.u_line.setText("1,1,0")
         
-        self.u_line.setFixedWidth(60)
+        self.u_line.setFixedWidth(80)
         self.v_line = QLineEdit()
-        self.v_line.setPlaceholderText("001")
-        self.v_line.setText("001")
-        self.v_line.setFixedWidth(60)
+        self.v_line.setPlaceholderText("0,0,1")
+        self.v_line.setText("0,0,1")
+        self.v_line.setFixedWidth(80)
         
         self.c_line = QLineEdit()
-        self.c_line.setPlaceholderText("000")
-        self.c_line.setText("000")
-        self.c_line.setFixedWidth(60)
+        self.c_line.setPlaceholderText("0,0,0")
+        self.c_line.setText("0,0,0")
+        self.c_line.setFixedWidth(80)
 
         uvc_layout.addWidget(QLabel("U"))
         uvc_layout.addWidget(self.u_line)
@@ -82,12 +82,12 @@ class CustomizedPlaneControls(QWidget):
         ranges_layout.setContentsMargins(0, 0, 0, 0)
         
         self.u_range_spin = QSpinBox()
-        self.u_range_spin.setRange(0, 5)
+        self.u_range_spin.setRange(0, 50)
         self.u_range_spin.setValue(3)
         
         self.v_range_spin = QSpinBox()
-        self.v_range_spin.setRange(0, 5)
-    
+        self.v_range_spin.setRange(0, 50)
+        self.v_range_spin.setValue(3)
         
         ranges_layout.addWidget(QLabel("U range"))
         ranges_layout.addWidget(self.u_range_spin)
@@ -138,29 +138,29 @@ class CustomizedPlaneControls(QWidget):
         return self.energy_input.energy_ev
         
     def get_custom_vectors(self):
-        """Return U, V, and Center vectors parsed from text inputs."""
+        """Return U, V, and Center vectors parsed from text inputs.
+        
+        Expected format: comma-separated values like '1,3,11' for h=1, k=3, l=11.
+        Negative values are supported, e.g. '-1,2,-3'.
+        """
         def parse_hkl(text: str, default: tuple) -> tuple:
             try:
-                t = text.strip().replace(" ", "")
-                if len(t) != 3 or not all(ch in "0123456789-" for ch in t):
+                # Remove all spaces and split by comma
+                parts = text.strip().replace(" ", "").split(",")
+                
+                # Must have exactly 3 values
+                if len(parts) != 3:
                     return default
-                # Support simple forms like 110, 0-11, -10-1 etc.
-                # Split by position: allow leading '-' for each digit
+                
+                # Parse each part as an integer (supports negative values)
                 vals = []
-                i = 0
-                while i < len(t):
-                    sign = 1
-                    if t[i] == "-":
-                        sign = -1
-                        i += 1
-                    if i >= len(t) or not t[i].isdigit():
+                for part in parts:
+                    if not part:  # Empty string after split
                         return default
-                    vals.append(sign * int(t[i]))
-                    i += 1
-                if len(vals) != 3:
-                    return default
+                    vals.append(int(part))
+                
                 return tuple(vals)
-            except Exception:
+            except (ValueError, AttributeError):
                 return default
                 
         U = parse_hkl(self.u_line.text(), (1, 1, 0))

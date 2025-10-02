@@ -32,6 +32,8 @@ env/
 ENV/
 .virtualenv/
 .pythonenv/
+figures/
+
 
 # --- Build outputs (if needed in future) ---
 /build/

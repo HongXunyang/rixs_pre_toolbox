@@ -81,7 +81,7 @@ class StructureFactorVisualizer3D(FigureCanvas):
             self.axes.grid(True, alpha=0.3)
 
             # Set default viewing angle (rotate 180° around Z compared to prior)
-            self.axes.view_init(elev=45, azim=200)
+            self.axes.view_init(elev=12.5, azim=200)
 
         except Exception as e:
             print(f"Error creating 3D plot: {e}")
@@ -391,7 +391,7 @@ class StructureFactorVisualizer3D(FigureCanvas):
             print(f"Set axis limits: X(0, {h_max}), Y(0, {k_max}), Z(0, {l_max})")
 
             # Improve 3D viewing angle (rotated 180° around Z)
-            self.axes.view_init(elev=45, azim=200)
+            self.axes.view_init(elev=12.5, azim=200)
 
             # Enable grid with low alpha
             self.axes.grid(True, alpha=0.3)

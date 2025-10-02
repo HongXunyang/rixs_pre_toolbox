@@ -34,10 +34,10 @@ class EnergySpinBox(QWidget):
         from PyQt5.QtWidgets import QDoubleSpinBox
         
         self.spinbox = QDoubleSpinBox()
-        self.spinbox.setRange(0.001, 100.0)  # keV range: 1 eV to 100 keV
+        self.spinbox.setRange(0.001, 1000.0)  # keV range: 1 eV to 100 keV
         self.spinbox.setDecimals(3)  # More precision for keV
         self.spinbox.setSuffix(" keV")
-        self.spinbox.setValue(10.0)  # 10 keV default
+        self.spinbox.setValue(100.0)  # 10 keV default
         
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -206,13 +206,13 @@ class FixedIndexControls(QWidget):
         
         # Spin box
         self.spin = QSpinBox()
-        self.spin.setRange(0, 5)
+        self.spin.setRange(0, 50)
         self.spin.setValue(default_value)
         
         # Slider
         self.slider = QSlider()
         self.slider.setOrientation(Qt.Horizontal)
-        self.slider.setRange(0, 5)
+        self.slider.setRange(0, 50)
         self.slider.setValue(default_value)
         
         row_layout.addWidget(self.spin)

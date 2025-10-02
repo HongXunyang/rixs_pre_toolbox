@@ -110,7 +110,6 @@ class StructureFactorVisualizer2D(FigureCanvas):
                 subtitle = f" centered at [{cx} {cy} {cz}]"
             else:
                 subtitle = ""
-            ax.set_title(f"Diffraction spots on user-defined plane{subtitle}")
 
             # Limits and integer ticks
             u_min, u_max = u.min(), u.max()
