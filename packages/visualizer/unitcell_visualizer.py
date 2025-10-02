@@ -19,7 +19,7 @@ from Dans_Diffraction import functions_general as fg
 from Dans_Diffraction import functions_plotting as fp
 from Dans_Diffraction import functions_crystallography as fc
 
-
+from ..utils import angle_to_matrix, get_rotation
 
 # Apply the colormap patch for Dans_Diffraction compatibility
 _old_ensure_cmap = cm._ensure_cmap
@@ -279,9 +279,9 @@ class UnitcellVisualizer(FigureCanvas):
 
         # Define vertices in local plane coordinates (x-y plane, z=0)
         local_vertices = np.array([
-            [plane_width, plane_height_bottom, 0],   # bottom right in local coords
+            [plane_width*4, plane_height_bottom, 0],   # bottom right in local coords
             [-plane_width, plane_height_bottom, 0],  # bottom left in local coords
-            [plane_width, plane_height_top, 0],      # top right in local coords
+            [plane_width*4, plane_height_top, 0],      # top right in local coords
             [-plane_width, plane_height_top, 0],     # top left in local coords
         ])
         
@@ -332,7 +332,7 @@ class UnitcellVisualizer(FigureCanvas):
         # Plot scattered beam (k_out) - in x-y plane, rotated 90° to match -y incident beam
         k_out_length = 1.3 * scale_factor
         # Rotated 90° in local coords: incident from -y, scattered at angle tth
-        k_out_vec = ccm @ np.array([-np.sin(np.radians(tth)), -np.cos(np.radians(tth)), 0]) * k_out_length
+        k_out_vec = ccm @ np.array([np.sin(np.radians(tth)), -np.cos(np.radians(tth)), 0]) * k_out_length
         k_out_vec = rotate_vector(k_out_vec, ccm, theta, phi, chi)
         # Draw colored arrow on top
         self.axes.quiver(
@@ -370,7 +370,8 @@ class UnitcellVisualizer(FigureCanvas):
     
 
 def rotate_vector(vec, ccm, theta, phi, chi):
-    """Convert angles theta, phi, chi to rotation matrix.
+    """Convert angles theta, phi, chi to rotation matrix. This rotate the beam or the scattering
+    plane, not the sample. 
     Pay attention to the direction of the rotation.
     
     Updated for x-y scattering plane (z-axis is normal to scattering plane).
@@ -379,42 +380,14 @@ def rotate_vector(vec, ccm, theta, phi, chi):
         vec (np.ndarray): vector to rotate
         ccm (np.ndarray): coordinate change matrix
         theta (float): rotation about the z-axis in degrees, right-hand rule
-        phi (float): rotation about the y-axis in degrees, right-hand rule
-        chi (float): rotation about the x-axis in degrees, right-hand rule
+        phi (float): rotation about the x-axis in degrees, right-hand rule
+        chi (float): rotation about the y-axis in degrees, right-hand rule
 
     Returns:
         rotated_vec (np.ndarray): Rotated vector
     """
 
-    theta_rad, phi_rad, chi_rad = (np.radians(theta), np.radians(phi), np.radians(chi))
-
-    # theta rotation around the z-axis (perpendicular to scattering plane)
-    theta_mat = np.array(
-        [
-            [np.cos(theta_rad), np.sin(theta_rad), 0],
-            [-np.sin(theta_rad), np.cos(theta_rad), 0],
-            [0, 0, 1],
-        ]
-    )
-    # chi rotation around the x-axis (in scattering plane)
-    chi_mat = np.array(
-        [
-            [1, 0, 0],
-            [0, np.cos(chi_rad), -np.sin(chi_rad)],
-            [0, np.sin(chi_rad), np.cos(chi_rad)],
-        ]
-    )
-
-    # phi rotation around the y-axis (in scattering plane)
-    phi_mat = np.array(
-        [
-            [np.cos(phi_rad), 0, np.sin(phi_rad)],
-            [0, 1, 0],
-            [-np.sin(phi_rad), 0, np.cos(phi_rad)],
-        ]
-    )
-
-    matrix = theta_mat @ chi_mat @ phi_mat
+    matrix = angle_to_matrix(theta, phi, chi)
     matrix = ccm @ matrix.T @ ccm.T
     return matrix @ vec
 
@@ -425,22 +398,9 @@ def _rotate_vertices_wrt_plane(vertices, ccm, phi, chi):
     phi: rotation about y-axis
     chi: rotation about x-axis
     """
-    phi_rad = np.radians(phi)
-    chi_rad = np.radians(chi)
-    # phi rotation about y-axis
-    component_phi = np.array([
-        [np.cos(phi_rad), 0,  -np.sin(phi_rad)], 
-        [0, 1, 0], 
-        [np.sin(phi_rad), 0, np.cos(phi_rad)]
-    ])
-    # chi rotation about x-axis
-    component_chi = np.array([
-        [1, 0, 0], 
-        [0, np.cos(chi_rad), np.sin(chi_rad)], 
-        [0, -np.sin(chi_rad), np.cos(chi_rad)]
-    ])
-    rotation_matrix = component_phi @ component_chi
-    rotation_matrix = ccm @ rotation_matrix @ ccm.T
+
+    rotation_matrix = get_rotation(phi, chi)
+    rotation_matrix = ccm @ rotation_matrix.T @ ccm.T
     vertices = np.array(vertices)
     for i, vertex in enumerate(vertices):
         vertices[i] = rotation_matrix @ vertex
