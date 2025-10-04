@@ -82,11 +82,11 @@ class CustomizedPlaneControls(QWidget):
         ranges_layout.setContentsMargins(0, 0, 0, 0)
         
         self.u_range_spin = QSpinBox()
-        self.u_range_spin.setRange(0, 50)
+        self.u_range_spin.setRange(0, 35)
         self.u_range_spin.setValue(3)
         
         self.v_range_spin = QSpinBox()
-        self.v_range_spin.setRange(0, 50)
+        self.v_range_spin.setRange(0, 35)
         self.v_range_spin.setValue(3)
         
         ranges_layout.addWidget(QLabel("U range"))

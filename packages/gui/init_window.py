@@ -165,7 +165,7 @@ class InitWindow(QWidget):
         energy_layout = QFormLayout(energy_group)
 
         self.energy_input = QDoubleSpinBox()
-        self.energy_input.setRange(0, 10000)
+        self.energy_input.setRange(0, 1000000)
         self.energy_input.setValue(950.0)
         self.energy_input.setSuffix(" eV")
         self.energy_input.valueChanged.connect(self.on_energy_changed)

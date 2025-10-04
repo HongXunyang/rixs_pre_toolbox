@@ -206,13 +206,13 @@ class FixedIndexControls(QWidget):
         
         # Spin box
         self.spin = QSpinBox()
-        self.spin.setRange(0, 50)
+        self.spin.setRange(0, 35)
         self.spin.setValue(default_value)
         
         # Slider
         self.slider = QSlider()
         self.slider.setOrientation(Qt.Horizontal)
-        self.slider.setRange(0, 50)
+        self.slider.setRange(0, 35)
         self.slider.setValue(default_value)
         
         row_layout.addWidget(self.spin)

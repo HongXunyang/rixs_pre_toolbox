@@ -68,7 +68,7 @@ QPushButton:disabled {
 }
 
 /* QDoubleSpinBox with plus/minus signs */
-QDoubleSpinBox {
+QDoubleSpinBox, QSpinBox{
     border: 1px solid #C4C4C4;
     border-radius: 3px;
     padding: 4px;
@@ -77,40 +77,40 @@ QDoubleSpinBox {
     background-color: #FFFFFF;
 }
 
-QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
+QDoubleSpinBox::up-button, QDoubleSpinBox::down-button, QSpinBox::up-button, QSpinBox::down-button {
     subcontrol-origin: border;
     width: 18px;
     border-left: 1px solid #C4C4C4;
     background-color: #F0F0F0;
 }
 
-QDoubleSpinBox::up-button {
+QDoubleSpinBox::up-button, QSpinBox::up-button{
     subcontrol-position: top right;
 }
 
-QDoubleSpinBox::down-button {
+QDoubleSpinBox::down-button, QSpinBox::down-button {
     subcontrol-position: bottom right;
 }
 
-QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {
+QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover, QSpinBox::up-button:hover, QSpinBox::down-button:hover {
     background-color: #E6E6E6;
 }
 
-QDoubleSpinBox::up-button:pressed, QDoubleSpinBox::down-button:pressed {
+QDoubleSpinBox::up-button:pressed, QDoubleSpinBox::down-button:pressed, QSpinBox::up-button:pressed, QSpinBox::down-button:pressed {
     background-color: #D6D6D6;
 }
 
-QDoubleSpinBox::up-arrow, QDoubleSpinBox::down-arrow {
+QDoubleSpinBox::up-arrow, QDoubleSpinBox::down-arrow, QSpinBox::up-arrow, QSpinBox::down-arrow {
     width: 12px;
     height: 12px;
 }
 
-QDoubleSpinBox::up-arrow {
+QDoubleSpinBox::up-arrow, QSpinBox::up-arrow {
     image: url(static/icons/plus.svg);
     
 }
 
-QDoubleSpinBox::down-arrow {
+QDoubleSpinBox::down-arrow, QSpinBox::down-arrow {
     image: url(static/icons/minus.svg);
 }
 

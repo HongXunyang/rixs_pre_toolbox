@@ -47,7 +47,7 @@ class RangeInputWidget(QWidget):
         start_layout.setContentsMargins(0, 0, 0, 0)
 
         self.start_input = QDoubleSpinBox()
-        self.start_input.setRange(-10.0, 10.0)
+        self.start_input.setRange(-100.0, 100)
         self.start_input.setDecimals(3)
         self.start_input.setValue(0.0)
         start_layout.addRow("Start:", self.start_input)
@@ -60,7 +60,7 @@ class RangeInputWidget(QWidget):
         end_layout.setContentsMargins(0, 0, 0, 0)
 
         self.end_input = QDoubleSpinBox()
-        self.end_input.setRange(-10.0, 10.0)
+        self.end_input.setRange(-100.0, 100)
         self.end_input.setDecimals(3)
         self.end_input.setValue(-0.3)
         end_layout.addRow("End:", self.end_input)
